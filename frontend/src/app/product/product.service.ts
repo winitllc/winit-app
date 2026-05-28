@@ -85,19 +85,17 @@ export class ProductService {
     console.log(`ProductService.searchProductByCategory: url: ${getProductByBarcodeURL}`);
     try {
       // const apiKey: string = this.authState.getSpoonacularAPIKey();
-      const params: Record<string, string> = {
-        countries_tags_en: 'united-states',
-        categories_tags: category
-      };
+      const searchUrl = new URL(getProductByBarcodeURL);
+      searchUrl.searchParams.set('countries_tags_en', 'united-states');
+      searchUrl.searchParams.set('categories_tags', category);
       if (nextPage) {
-        params['page'] = nextPage;
+        searchUrl.searchParams.set('page', nextPage);
       }
       const requestOptions: HttpOptions = {
-        url: getProductByBarcodeURL,
+        url: searchUrl.toString(),
         headers: {
           'User-Agent': EnvironmentConfig.api.openFoodFactsProducts.headerUserAgent
-        },
-        params
+        }
       };
       console.log(`ProductService.searchProductByCategory: request options: ${JSON.stringify(requestOptions)}`);
       const result: HttpResponse = await CapacitorHttp.get(requestOptions);
