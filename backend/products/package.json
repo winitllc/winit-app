@@ -12,7 +12,7 @@
   "dependencies": {
     "source-map-support": "^0.5.10",
     "uuid": "^3.3.3",
-    "wuzinit-common": "git+ssh://git@bitbucket.org/glennium/wuzinit-common.git"
+    "wuzinit-common": "file:../../common"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.17",
