@@ -41,137 +41,17 @@ export const AppConfig = {
     }
   },
   categories: {
+    // tag: verified OpenFoodFacts category slug (without "en:" prefix — service adds it)
+    // image: local asset path under assets/browse/
     mainCategories: [
-      {
-        left: {
-          searchName: 'Cheese',
-          displayName: 'Cheeses'
-        },
-        right: {
-          searchName: 'Chicken',
-          displayName: 'Chicken'
-        }
-      },
-      {
-        left: {
-          searchName: 'Pizza',
-          displayName: 'Pizza'
-        },
-        right:{
-          searchName: 'Pasta',
-          displayName: 'Pasta'
-        }
-      },
-      {
-        left: {
-          searchName: 'Cereal',
-          displayName: 'Cereal'
-        },
-        right:{
-          searchName: 'Bread',
-          displayName: 'Bread'
-        }
-      },
-      {
-        left: {
-          searchName: 'Yogurt',
-          displayName: 'Yogurt'
-        },
-        right:{
-          searchName: 'Plant Based',
-          displayName: 'Plant Based'
-        }
-      },
-      {
-        left: {
-          searchName: 'Vegetable',
-          displayName: 'Vegetables'
-        },
-        right:{
-          searchName: 'Vegan',
-          displayName: 'Vegan'
-        }
-      },
-      {
-        left: {
-          searchName: 'Granola',
-          displayName: 'Granola'
-        },
-        right:{
-          searchName: 'Dairy',
-          displayName: 'Dairy'
-        }
-      },
-      {
-        left: {
-          searchName: 'Organic',
-          displayName: 'Organic'
-        },
-        right: {
-          searchName: 'Fruit',
-          displayName: 'Fruit'
-        }
-      },
-      {
-        left: {
-          searchName: 'Beverage',
-          displayName: 'Beverages'
-        },
-        right: {
-          searchName: 'Juice',
-          displayName: 'Juices'
-        }
-      },
-      {
-        left: {
-          searchName: 'Noodle',
-          displayName: 'Noodles'
-        },
-        right:{
-          searchName: 'Instant',
-          displayName: 'Instant Foods'
-        }
-      },
-      {
-        left: {
-          searchName: 'Frozen',
-          displayName: 'Frozen Foods'
-        },
-        right:{
-          searchName: 'Breakfast',
-          displayName: 'Breakfast Foods'
-        }
-      },
-      {
-        left: {
-          searchName: 'Sauce',
-          displayName: 'Sauces'
-        },
-        right: {
-          searchName: 'Chocolate',
-          displayName: 'Chocolates'
-        }
-      },
-      {
-        left: {
-          searchName: 'Snack',
-          displayName: 'Snacks'
-        },
-        right: {
-          searchName: 'Sweet',
-          displayName: 'Sweets'
-        }
-      },
-      {
-        left: {
-          searchName: 'Cookie',
-          displayName: 'Cookis'
-        },
-        right: {
-          searchName: 'Candy',
-          displayName: 'Candy'
-        }
-      }
+      { tag: 'cheese',            displayName: 'Cheeses',         image: 'assets/browse/cheeses.png' },
+      { tag: 'chicken',           displayName: 'Chicken',         image: 'assets/browse/chicken.png' },
+      { tag: 'pizza',             displayName: 'Pizza',           image: 'assets/browse/pizza.png' },
+      { tag: 'pasta',             displayName: 'Pasta',           image: 'assets/browse/pasta.png' },
+      { tag: 'breakfast-cereals', displayName: 'Cereals',         image: 'assets/browse/cereal.png' },
+      { tag: 'bread',             displayName: 'Bread',           image: 'assets/browse/bread.png' },
+      { tag: 'yogurts',           displayName: 'Yogurt',          image: 'assets/browse/yogurt.png' },
+      { tag: 'plant-based-foods', displayName: 'Plant Based',     image: 'assets/browse/plant.png' },
     ]
   },
   emptySpoonacularProduct: {

@@ -3,16 +3,58 @@ a.home-link {
   text-decoration: unset;
 }
 
-img.header-icon {
-  height: 1em;
-  padding-left: 0.15em;
-  padding-right: 0.15em;
+.browse-header {
+  padding: 8px 16px 0;
+
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  img.header-icon {
+    height: 1em;
+    vertical-align: middle;
+  }
 }
 
-ion-button ion-card {
-  margin: 0;
+.category-grid {
+  padding: 8px;
+
+  ion-col {
+    padding: 4px;
+  }
 }
 
-ion-col.centered-content {
-  align-content: center;  
+.category-tile {
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--ion-color-light);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:active {
+    transform: scale(0.97);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+  }
+
+  .category-label {
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 4px;
+    color: var(--ion-text-color);
+  }
+}
+
+.browse-links {
+  padding: 8px;
 }

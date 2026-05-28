@@ -1,24 +1,54 @@
-ion-row.product-row {
+.product-item {
+  --min-height: 72px;
+}
 
-  height: 6em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.thumb-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
 
-  img {
-    max-height: 100%;
+  .product-thumb {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: var(--ion-color-light);
   }
 
-  ion-card-subtitle {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  ion-card-content {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .warning-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    font-size: 0.65rem;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    padding: 0;
   }
 }
 
+.product-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-brand {
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.no-results {
+  .no-results-img {
+    width: 120px;
+    opacity: 0.5;
+  }
+}

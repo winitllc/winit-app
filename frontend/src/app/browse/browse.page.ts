@@ -3,9 +3,7 @@ import { AppConfig } from '../app.config';
 
 import { NavController, LoadingController, LoadingOptions, ModalController } from '@ionic/angular';
 import { NavigationExtras } from '@angular/router';
-import { AuthService } from '../util/auth.service';
-import { ProfileService } from '../profile/profile.service';
-import { OpenFoodFactsProduct, ProductService } from '../product/product.service';
+import { ProductSearchResult, ProductService } from '../product/product.service';
 import { SearchProductModalComponent } from './search-productModal.page';
 
 @Component({
@@ -16,90 +14,62 @@ import { SearchProductModalComponent } from './search-productModal.page';
 export class BrowsePage implements OnInit {
 
   loading: HTMLIonLoadingElement | null = null;
-  public categories: any[] = AppConfig.categories.mainCategories;
-  public searchBox: string = '';
+  public categories = AppConfig.categories.mainCategories;
 
   constructor(
     public navCtrl: NavController,
     private loadingCtrl: LoadingController,
     private modalCtrl: ModalController,
     private productService: ProductService
-  ) {
-    // this.resetSearchbox();
-  }
+  ) {}
 
-  async ngOnInit(): Promise<void> {
-    try {
+  async ngOnInit(): Promise<void> {}
 
-    } catch (error) {
-      console.error(`BrowsePage.ngOnInit Error: ${JSON.stringify(error)}`);
-      throw error;
-    }
-  }
-  
-  async browseProducts(category: string) {
-    console.log(`BrowsePage.browseProducts: category to search: ${category}`);
+  async browseProducts(tag: string, displayName: string) {
+    console.log(`BrowsePage.browseProducts: tag=${tag}`);
     try {
-      await this.presentLoading(`searching for ${category}`, 10000);
-      const productSearchResults: any = await this.productService.searchProductByCategory(category);
-      console.log(`BrowsePage.browseProducts: results from the category search: ${JSON.stringify(productSearchResults)}`);
+      await this.presentLoading(`Loading ${displayName}…`);
+      const productSearchResults: ProductSearchResult = await this.productService.searchProductByCategory(tag);
+      console.log(`BrowsePage.browseProducts: count=${productSearchResults.count}`);
       await this.dismissLoading();
-      this.pushToResultsPage(productSearchResults, category);
+      this.pushToResultsPage(productSearchResults, displayName, tag);
     } catch (error) {
+      await this.dismissLoading();
       console.error(`BrowsePage.browseProducts Error: ${JSON.stringify(error)}`);
-      throw error;
     }
   }
 
   async searchProductModal() {
-
     const modal: HTMLIonModalElement = await this.modalCtrl.create({
       component: SearchProductModalComponent,
       showBackdrop: false
     });
-    console.log(`BrowsePage.searchProductModal: modal set up`);
     modal.present();
 
     const { data, role } = await modal.onWillDismiss();
-    console.log(`BrowsePage.searchProductModal: modal dismissed, data: ${JSON.stringify(data)}`);
-    console.log(`BrowsePage.searchProductModal: modal dismissed, role: ${JSON.stringify(role)}`);
-    if (role !== 'confirm') {
+    if (role !== 'confirm' || !data) {
       return;
     }
-    if (data) {
-      console.log(`BrowsePage.searchProductModal: search item: ${JSON.stringify(data)}`);
-      this.browseProducts(data);
-    }
+    // Modal returns { tag, displayName }
+    this.browseProducts(data.tag, data.displayName);
   }
 
-  private pushToResultsPage(productSearchResults: any, category: string): void {
-    try {
-      // this.profileService.addToProfilePoints(AppConfig.pointAwards.scan);
-      console.log(`BrowsePage.pushToResultsPage: pushing the product results to results page: ${JSON.stringify(productSearchResults)}`);
-      const navExtras: NavigationExtras = {
-        state: {
-          productSearchResults,
-          category
-        }
-      };
-      console.log(`BrowsePage.pushToResultsPage: nav extras for results page: ${JSON.stringify(navExtras)}`);
-      this.navCtrl.navigateForward('tabs/results', navExtras);
-    } catch (error) {
-      console.error(`BrowsePage.pushToResultsPage: Error pushing to the results page: ${JSON.stringify(error)}`);
-    }
+  private pushToResultsPage(productSearchResults: ProductSearchResult, category: string, tag: string): void {
+    const navExtras: NavigationExtras = {
+      state: { productSearchResults, category, tag }
+    };
+    this.navCtrl.navigateForward('tabs/results', navExtras);
   }
 
-  async presentLoading(loadingMessage: string, duration?: number) {
-    this.dismissLoading();
+  private async presentLoading(message: string) {
+    await this.dismissLoading();
     const loadingOpts: LoadingOptions = {
-      message: loadingMessage,
+      message,
       showBackdrop: true,
       spinner: 'circular',
-      duration: duration || 2000,
       cssClass: 'loading-modal'
     };
     this.loading = await this.loadingCtrl.create(loadingOpts);
-
     this.loading.present();
   }
 

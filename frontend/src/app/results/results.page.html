@@ -1,38 +1,45 @@
 <ion-header>
   <ion-toolbar color="primary">
-    <ion-title class="ion-text-center">Results</ion-title>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/browse"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="ion-text-center">{{category || 'Results'}}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <div *ngIf="!noResults">
-    <ion-grid>
-      <ion-row *ngFor="let product of products" class="product-row">
-        <ion-col>
-          <img [src]="product.image_thumb_url || 'assets/imgs/noProduct.png'" (error)="$any($event.target).src='assets/imgs/noProduct.png'"/>
-        </ion-col>
-        <ion-col size="10">
-          <ion-card (click)="selectProduct(product.id)">
-            <ion-card-subtitle>{{product.product_name}}</ion-card-subtitle>
-            <ion-card-content>{{product.ingredients_text}}</ion-card-content>
-          </ion-card>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
+  <div *ngIf="!noResults && products.length > 0">
+    <ion-list lines="full">
+      <ion-item *ngFor="let product of products" (click)="selectProduct(product.id)" button detail="true" class="product-item">
+        <div slot="start" class="thumb-wrap">
+          <img
+            [src]="getThumbUrl(product) || 'assets/imgs/noProduct.png'"
+            (error)="$any($event.target).src='assets/imgs/noProduct.png'"
+            loading="lazy"
+            class="product-thumb"
+            [alt]="product.product_name || ''">
+          <ion-badge *ngIf="hasWarning(product)" color="danger" class="warning-badge">!</ion-badge>
+        </div>
+        <ion-label>
+          <h2 class="product-name">{{product.product_name || product.product_name_en || 'Unknown product'}}</h2>
+          <p class="product-brand" *ngIf="product.brands">{{product.brands}}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
   </div>
-  <div *ngIf="noResults">
+
+  <div *ngIf="noResults || products.length === 0" class="no-results">
     <ion-grid>
-      <ion-row class="ion-justify-content-center">
-        <ion-col>
-          <div class="productImage">
-            <img src="assets/imgs/noProduct.png">
-          </div>
+      <ion-row class="ion-justify-content-center ion-padding">
+        <ion-col class="ion-text-center">
+          <img src="assets/imgs/noProduct.png" class="no-results-img" alt="No results">
+          <p>No products found.</p>
         </ion-col>
       </ion-row>
     </ion-grid>
   </div>
 
-  <ion-infinite-scroll (ionInfinite)="scrollEvent($event)" threshold="35%">
-    <ion-infinite-scroll-content></ion-infinite-scroll-content>
+  <ion-infinite-scroll (ionInfinite)="scrollEvent($event)" threshold="25%">
+    <ion-infinite-scroll-content loadingText="Loading more…"></ion-infinite-scroll-content>
   </ion-infinite-scroll>
 </ion-content>

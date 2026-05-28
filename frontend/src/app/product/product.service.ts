@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { CapacitorHttp, HttpOptions, HttpResponse } from '@capacitor/core';
-import { model } from 'wuzinit-common';
 import { EnvironmentConfig } from '../environment.config';
 import { AuthState } from '../util/auth.state';
 import { AppConfig } from '../app.config';
@@ -79,73 +78,60 @@ export class ProductService {
     }
   }
 
-  public async searchProductByCategory(category: string, nextPage?: string): Promise<any> {
-    const getProductByBarcodeURL = `${EnvironmentConfig.api.openFoodFactsProducts.baseUrl}${EnvironmentConfig.api.openFoodFactsProducts.searchByTag}`;
-    console.log(`ProductService.searchProductByCategory: searching by category: ${category}`);
-    console.log(`ProductService.searchProductByCategory: url: ${getProductByBarcodeURL}`);
-    try {
-      // OpenFoodFacts categories_tags requires "en:<tag>" format: lowercase, spaces as hyphens
-      const tagValue = 'en:' + category.toLowerCase().replace(/\s+/g, '-');
-      console.log(`ProductService.searchProductByCategory: formatted tag: ${tagValue}`);
-      const searchUrl = new URL(getProductByBarcodeURL);
-      searchUrl.searchParams.set('countries_tags_en', 'united-states');
-      searchUrl.searchParams.set('categories_tags', tagValue);
-      if (nextPage) {
-        searchUrl.searchParams.set('page', nextPage);
-      }
-      const requestOptions: HttpOptions = {
-        url: searchUrl.toString(),
-        headers: {
-          'User-Agent': EnvironmentConfig.api.openFoodFactsProducts.headerUserAgent
-        }
-      };
-      console.log(`ProductService.searchProductByCategory: request options: ${JSON.stringify(requestOptions)}`);
-      const result: HttpResponse = await CapacitorHttp.get(requestOptions);
-      console.log(`ProductService.searchProductByCategory: result from OpenFoodFacts: ${JSON.stringify(result)}`);
-      console.log(`ProductService.searchProductByCategory: result fields from OpenFoodFacts: ${Object.keys(result.data)}`);
-      console.log(`ProductService.searchProductByCategory: page field from OpenFoodFacts: ${result.data.page}`);
-      console.log(`ProductService.searchProductByCategory: result page_size from OpenFoodFacts: ${result.data.page_size}`);
-      console.log(`ProductService.searchProductByCategory: result page_count from OpenFoodFacts: ${result.data.page_count}`);
-      console.log(`ProductService.searchProductByCategory: result count from OpenFoodFacts: ${result.data.count}`);
-      console.log(`ProductService.searchProductByCategory: skip field from OpenFoodFacts: ${result.data.skip}`);
-      console.log(`ProductService.searchProductByCategory: first product fields: ${Object.keys(result.data?.products[0])}`);
-      console.log(`ProductService.searchProductByCategory: names of products: ${result.data?.products.map((product: OpenFoodFactsProduct)=>{return product.product_name || '';})}`);
-      const products: OpenFoodFactsProduct[] = result.data?.products;
+  // Fields requested from OpenFoodFacts — only what the UI needs, keeps payloads small
+  private static readonly SEARCH_FIELDS = [
+    'code', 'id', 'product_name', 'product_name_en', 'brands',
+    'image_thumb_url', 'image_front_thumb_url', 'image_front_url',
+    'image_nutrition_url', 'selected_images',
+    'categories_tags', 'labels_tags', 'ingredients_text',
+    'allergens_tags', 'nutriments', 'nutriscore_grade'
+  ].join(',');
 
-      const product_name_en_list: string[] = [];
-      const brands_list: string[] = [];
-      const labels_tags_list: string[][] = [];
-      const categories_tags_list: string[][] = [];
-      const categories_list: string[] = [];
-      products.forEach((product) => {
-        product_name_en_list.push(product.product_name_en);
-        brands_list.push(product.brands);
-        labels_tags_list.push(product.labels_tags);
-        categories_tags_list.push(product.categories_tags);
-        categories_list.push(product.categories);
+  public async searchProductByCategory(tag: string, nextPage?: string): Promise<ProductSearchResult> {
+    // Accepts a pre-validated OpenFoodFacts tag slug (e.g. "en:cheese") or a raw display
+    // label — raw labels are lowercased and hyphenated but callers should prefer passing
+    // verified slugs from AppConfig.categories.
+    const tagValue = tag.startsWith('en:') ? tag : 'en:' + tag.toLowerCase().replace(/\s+/g, '-');
+    const searchUrl = new URL(`${EnvironmentConfig.api.openFoodFactsProducts.baseUrl}${EnvironmentConfig.api.openFoodFactsProducts.searchByTag}`);
+    searchUrl.searchParams.set('categories_tags', tagValue);
+    searchUrl.searchParams.set('fields', ProductService.SEARCH_FIELDS);
+    searchUrl.searchParams.set('page_size', '24');
+    if (nextPage) {
+      searchUrl.searchParams.set('page', nextPage);
+    }
+    console.log(`ProductService.searchProductByCategory: tag=${tagValue} page=${nextPage || '1'}`);
+    try {
+      const result: HttpResponse = await CapacitorHttp.get({
+        url: searchUrl.toString(),
+        headers: { 'User-Agent': EnvironmentConfig.api.openFoodFactsProducts.headerUserAgent }
       });
-      console.log(`ProductService.searchProductByCategory: product product_name_en_list: ${JSON.stringify(product_name_en_list)}`);
-      console.log(`ProductService.searchProductByCategory: product brands_list: ${JSON.stringify(brands_list)}`);
-      console.log(`ProductService.searchProductByCategory: labels_tags field from OpenFoodFacts: ${JSON.stringify(labels_tags_list)}`);
-      console.log(`ProductService.searchProductByCategory: categories_tags field from OpenFoodFacts: ${JSON.stringify(categories_tags_list)}`);
-      console.log(`ProductService.searchProductByCategory: categories field from OpenFoodFacts: ${JSON.stringify(categories_list)}`);
+      if (result.status !== 200) {
+        console.error(`ProductService.searchProductByCategory: HTTP ${result.status} for tag=${tagValue}`);
+        return { products: [], page: 1, page_size: 24, page_count: 0, count: 0 };
+      }
+      const data = result.data;
+      const products: OpenFoodFactsProduct[] = data?.products || [];
+      console.log(`ProductService.searchProductByCategory: count=${data.count} returned=${products.length}`);
       return {
         products,
-        page: result.data.page,
-        page_size: result.data.page_size,
-        page_count: result.data.page_count,
-        count: result.data.count,
-        skip: result.data.skip,
-        labels_tags: labels_tags_list,
-        categories_tags: categories_tags_list,
-        categories: categories_list
+        page: data.page || 1,
+        page_size: data.page_size || 24,
+        page_count: data.page_count || 0,
+        count: data.count || 0
       };
     } catch (error) {
-      console.error(`ProductService.searchProductByCategory: Error getting by category ${category}`);
-      console.error(`ProductService.searchProductByCategory: Error: ${JSON.stringify(error)}`);
-      return JSON.parse(JSON.stringify(AppConfig.emptyWuzinitProduct));
+      console.error(`ProductService.searchProductByCategory: error for tag=${tagValue}: ${JSON.stringify(error)}`);
+      return { products: [], page: 1, page_size: 24, page_count: 0, count: 0 };
     }
   }
+}
+
+export interface ProductSearchResult {
+  products: OpenFoodFactsProduct[];
+  page: number;
+  page_size: number;
+  page_count: number;
+  count: number;
 }
 
 export interface OpenFoodFactsProductUpdate {
