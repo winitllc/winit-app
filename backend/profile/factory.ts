@@ -72,7 +72,7 @@ export default class ProfileFactory {
         : [],
       symptoms: newUserObject.hasOwnProperty('symptoms') && newUserObject.symptoms.hasOwnProperty('length')
         ? newUserObject.symptoms.map((symptom: model.Symptom): string => {
-          return symptom.id;
+          return symptom.symptomId;
         })
         : []
     };
