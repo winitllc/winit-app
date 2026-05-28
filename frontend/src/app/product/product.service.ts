@@ -84,10 +84,12 @@ export class ProductService {
     console.log(`ProductService.searchProductByCategory: searching by category: ${category}`);
     console.log(`ProductService.searchProductByCategory: url: ${getProductByBarcodeURL}`);
     try {
-      // const apiKey: string = this.authState.getSpoonacularAPIKey();
+      // OpenFoodFacts categories_tags requires "en:<tag>" format: lowercase, spaces as hyphens
+      const tagValue = 'en:' + category.toLowerCase().replace(/\s+/g, '-');
+      console.log(`ProductService.searchProductByCategory: formatted tag: ${tagValue}`);
       const searchUrl = new URL(getProductByBarcodeURL);
       searchUrl.searchParams.set('countries_tags_en', 'united-states');
-      searchUrl.searchParams.set('categories_tags', category);
+      searchUrl.searchParams.set('categories_tags', tagValue);
       if (nextPage) {
         searchUrl.searchParams.set('page', nextPage);
       }

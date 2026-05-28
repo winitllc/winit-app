@@ -76,6 +76,10 @@ export class BarcodePage implements OnInit {
 
   async scan() {
     console.log(`BarcodePage.scan: scan called`);
+    if (!this.isSupported) {
+      console.warn(`BarcodePage.scan: BarcodeScanner not supported on this platform`);
+      return;
+    }
     const lensFacing = LensFacing.Back;
     const modal: HTMLIonModalElement = await this.modalCtrl.create({
       component: BarcodeScanningModalComponent,

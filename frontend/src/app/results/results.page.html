@@ -9,10 +9,10 @@
     <ion-grid>
       <ion-row *ngFor="let product of products" class="product-row">
         <ion-col>
-          <img src="{{product.image_thumb_url}}"/>
+          <img [src]="product.image_thumb_url || 'assets/imgs/noProduct.png'" (error)="$any($event.target).src='assets/imgs/noProduct.png'"/>
         </ion-col>
         <ion-col size="10">
-          <ion-card (click)="selectProduct(product.code)">
+          <ion-card (click)="selectProduct(product.id)">
             <ion-card-subtitle>{{product.product_name}}</ion-card-subtitle>
             <ion-card-content>{{product.ingredients_text}}</ion-card-content>
           </ion-card>
