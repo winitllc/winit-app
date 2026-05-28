@@ -14,7 +14,6 @@ module.exports = {
     filename: '[name].js',
   },
   target: 'node',
-  externals: { 'aws-sdk': 'aws-sdk' },
   module: {
     rules: [
       // all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`

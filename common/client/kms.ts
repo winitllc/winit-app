@@ -11,7 +11,7 @@ export default class KMS {
   async decrypt(encryptedString: string): Promise<string> {
     try {
       const decryptResponse: any = await this.client.decrypt({
-        CiphertextBlob: new Buffer(encryptedString, 'base64')
+        CiphertextBlob: Buffer.from(encryptedString, 'base64')
       }).promise();
       console.log(`KMS.decrypt: decrypt response: ${JSON.stringify(JSON.stringify(decryptResponse))}`);
       const decryptedText: string = decryptResponse.Plaintext.toString('utf8');
