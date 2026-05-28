@@ -2,7 +2,8 @@ import { InputCustomEvent, IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ModalController } from '@ionic/angular';
-import { Barcode, BarcodeFormat, BarcodeScanner, LensFacing, PluginListenerHandle, StartScanOptions } from '@capacitor-mlkit/barcode-scanning';
+import { Barcode, BarcodeFormat, BarcodeScanner, LensFacing, StartScanOptions } from '@capacitor-mlkit/barcode-scanning';
+import { PluginListenerHandle } from '@capacitor/core';
 
 @Component({
   templateUrl: 'barcode-scanningModal.page.html',
@@ -127,7 +128,7 @@ export class BarcodeScanningModalComponent implements OnInit, AfterViewInit, OnD
         });
       });
       console.log(`BarcodeScanningModalComponent.startScan: listener set up`);
-      console.log(`BarcodeScanningModalComponent.startScan: listener: ${JSON.stringify(listener)}`);
+      console.log(`BarcodeScanningModalComponent.startScan: listener: ${JSON.stringify(this.barcodeScanListener)}`);
   
       console.log(`BarcodeScanningModalComponent.startScan: class list for body: ${document.querySelector('body')?.classList}`);
       await BarcodeScanner.startScan(options);

@@ -77,6 +77,19 @@ const Dev = {
 
 const Prod = {
   api: {
+    imageService: {
+      baseUrl: 'https://pj4pduykha.execute-api.us-west-2.amazonaws.com/prod/',
+      uploadToS3: 'uploadToS3',
+      imageToText: 'imageToText'
+    },
+    openFoodFactsProducts: {
+      baseUrl: 'https://us.openfoodfacts.org',
+      testUrl: 'https://world.openfoodfacts.net',
+      addProductUpdate: '/cgi/product_jqm2.pl',
+      getByCode: '/api/v2/product/',
+      searchByTag: '/api/v2/search',
+      headerUserAgent: 'What\'s In It/1.0 - (info@winitclinic.com)'
+    },
     wuzinitProducts: {
       baseUrl: 'https://dj5mommsj7.execute-api.us-west-2.amazonaws.com/prod/',
       addProductUpdate: 'addProductUpdate',
