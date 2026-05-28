@@ -5,6 +5,8 @@ import SymptomsService from './service';
 
 const service = new SymptomsService();
 
+const corsHeaders = { 'Access-Control-Allow-Origin': '*' };
+
 export const getSymptoms: Handler = async (event, _context) => {
   /** Immediate response for WarmUP plugin */
   if (event.source === 'serverless-plugin-warmup') {
@@ -16,6 +18,7 @@ export const getSymptoms: Handler = async (event, _context) => {
     const symptoms: model.Symptom[] = await service.getSymptoms();
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Success',
         symptoms
@@ -24,6 +27,7 @@ export const getSymptoms: Handler = async (event, _context) => {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Error',
         error

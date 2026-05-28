@@ -5,6 +5,8 @@ import LifestyleDietService from './service';
 
 const service = new LifestyleDietService();
 
+const corsHeaders = { 'Access-Control-Allow-Origin': '*' };
+
 export const getLifestyleDiets: Handler = async (event, _context) => {
   /** Immediate response for WarmUP plugin */
   if (event.source === 'serverless-plugin-warmup') {
@@ -16,6 +18,7 @@ export const getLifestyleDiets: Handler = async (event, _context) => {
     const lifestyleDiets: model.Lifestyle[] = await service.getLifestyleDiets();
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Success',
         lifestyleDiets
@@ -24,6 +27,7 @@ export const getLifestyleDiets: Handler = async (event, _context) => {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Error',
         error

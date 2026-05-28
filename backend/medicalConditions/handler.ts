@@ -5,6 +5,8 @@ import MedicalConditionsService from './service';
 
 const service = new MedicalConditionsService();
 
+const corsHeaders = { 'Access-Control-Allow-Origin': '*' };
+
 export const getMedicalConditions: Handler = async (event, _context) => {
   /** Immediate response for WarmUP plugin */
   if (event.source === 'serverless-plugin-warmup') {
@@ -16,6 +18,7 @@ export const getMedicalConditions: Handler = async (event, _context) => {
     const medicalConditions: model.Medical[] = await service.getMedicalConditions();
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Success',
         medicalConditions
@@ -24,6 +27,7 @@ export const getMedicalConditions: Handler = async (event, _context) => {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Error',
         error

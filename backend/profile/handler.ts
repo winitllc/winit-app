@@ -8,6 +8,8 @@ import { view, model, requestModel } from 'wuzinit-common';
 const factory = new ProfileFactory();
 const controller = new ProfileController(new ProfileService(factory), factory);
 
+const corsHeaders = { 'Access-Control-Allow-Origin': '*' };
+
 export const getProfileById: Handler = async (event, _context) => {
   /** Immediate response for WarmUP plugin */
   if (event.source === 'serverless-plugin-warmup') {
@@ -19,6 +21,7 @@ export const getProfileById: Handler = async (event, _context) => {
     if (typeof profileView === 'string') {
       return {
         statusCode: 200,
+        headers: corsHeaders,
         body: JSON.stringify({
           message: profileView,
           data: {}
@@ -27,6 +30,7 @@ export const getProfileById: Handler = async (event, _context) => {
     } else {
       return {
         statusCode: 200,
+        headers: corsHeaders,
         body: JSON.stringify({
           message: 'Found a profile',
           data: profileView
@@ -36,6 +40,7 @@ export const getProfileById: Handler = async (event, _context) => {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify(error, null, 2)
     };
   }
@@ -52,6 +57,7 @@ export const getProfileByEmail: Handler = async (event, _context) => {
     if (typeof profileView === 'string') {
       return {
         statusCode: 200,
+        headers: corsHeaders,
         body: JSON.stringify({
           message: profileView,
           data: {}
@@ -60,6 +66,7 @@ export const getProfileByEmail: Handler = async (event, _context) => {
     } else {
       return {
         statusCode: 200,
+        headers: corsHeaders,
         body: JSON.stringify({
           message: 'Found a profile',
           data: profileView
@@ -69,6 +76,7 @@ export const getProfileByEmail: Handler = async (event, _context) => {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify(error, null, 2)
     };
   }
@@ -87,6 +95,7 @@ export const updateProfile: Handler = async (event, _context) => {
     await controller.updateProfile(postBody);
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'profile updated',
         data: {}
@@ -95,6 +104,7 @@ export const updateProfile: Handler = async (event, _context) => {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify(error, null, 2)
     };
   }
@@ -113,6 +123,7 @@ export const createProfile: Handler = async (event, _context) => {
     const newProfile = await controller.createProfile(postBody);
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'profile updated',
         data: newProfile
@@ -121,6 +132,7 @@ export const createProfile: Handler = async (event, _context) => {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify(error, null, 2)
     };
   }
@@ -136,6 +148,7 @@ export const getProfilePoints: Handler = async (event, _context) => {
     const profilePoints: model.WuzinitPoints = await controller.getProfilePoints(event.queryStringParameters.profileId);
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Found profile points',
         data: profilePoints
@@ -144,6 +157,7 @@ export const getProfilePoints: Handler = async (event, _context) => {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify(error, null, 2)
     };
   }
@@ -162,6 +176,7 @@ export const updateProfilePoints: Handler = async (event, _context) => {
     await controller.updateProfilePoints(postBody);
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'profile updated',
         data: {}
@@ -170,6 +185,7 @@ export const updateProfilePoints: Handler = async (event, _context) => {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify(error, null, 2)
     };
   }
@@ -185,6 +201,7 @@ export const getFeatures: Handler = async (event, _context) => {
     const features: model.PremiumFeature[] = await controller.getFeatures();
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Found profile points',
         features
@@ -193,6 +210,7 @@ export const getFeatures: Handler = async (event, _context) => {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify(error, null, 2)
     };
   }
@@ -211,6 +229,7 @@ export const makePurchase: Handler = async (event, _context) => {
     const purchaseConfirmation: model.PremiumFeaturePurchaseConfirmation = await controller.makePurchase(postBody as requestModel.PremiumFeaturePurchaseRequest);
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'profile updated',
         purchaseConfirmation
@@ -219,6 +238,7 @@ export const makePurchase: Handler = async (event, _context) => {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify(error, null, 2)
     };
   }
@@ -237,6 +257,7 @@ export const storeInAppPurchaseConfirmation: Handler = async (event, _context) =
     await controller.storeInAppPurchaseConfirmation(postBody as model.InAppPurchaseConfirmation);
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'profile updated'
       }, null, 2)
@@ -244,6 +265,7 @@ export const storeInAppPurchaseConfirmation: Handler = async (event, _context) =
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify(error, null, 2)
     };
   }
@@ -260,6 +282,7 @@ export const getInAppPurchaseConfirmationsByProfileId: Handler = async (event, _
     const inAppPurchaseConfirmation: model.InAppPurchaseConfirmation[] = await controller.getInAppPurchaseConfirmationsByProfileId(postBody.profileId);
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Found in app purchase confirmations for user id',
         inAppPurchaseConfirmation
@@ -268,6 +291,7 @@ export const getInAppPurchaseConfirmationsByProfileId: Handler = async (event, _
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify(error, null, 2)
     };
   }
@@ -284,6 +308,7 @@ export const getPremiumFeaturePurchaseConfirmationsByProfileId: Handler = async 
     const premiumFeaturePurchaseConfirmation: model.PremiumFeaturePurchaseConfirmation[] = await controller.getPremiumFeaturePurchaseConfirmationsByProfileId(postBody.profileId);
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: 'Found profile points',
         premiumFeaturePurchaseConfirmation
@@ -292,6 +317,7 @@ export const getPremiumFeaturePurchaseConfirmationsByProfileId: Handler = async 
   } catch (error) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify(error, null, 2)
     };
   }
