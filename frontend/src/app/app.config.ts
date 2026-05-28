@@ -42,16 +42,18 @@ export const AppConfig = {
   },
   categories: {
     // tag: verified OpenFoodFacts category slug (without "en:" prefix — service adds it)
-    // image: local asset path under assets/browse/
+    // image: local asset path or Pexels URL
     mainCategories: [
-      { tag: 'cheese',            displayName: 'Cheeses',         image: 'assets/browse/cheeses.png' },
-      { tag: 'chicken',           displayName: 'Chicken',         image: 'assets/browse/chicken.png' },
-      { tag: 'pizza',             displayName: 'Pizza',           image: 'assets/browse/pizza.png' },
-      { tag: 'pasta',             displayName: 'Pasta',           image: 'assets/browse/pasta.png' },
-      { tag: 'breakfast-cereals', displayName: 'Cereals',         image: 'assets/browse/cereal.png' },
-      { tag: 'bread',             displayName: 'Bread',           image: 'assets/browse/bread.png' },
-      { tag: 'yogurts',           displayName: 'Yogurt',          image: 'assets/browse/yogurt.png' },
-      { tag: 'plant-based-foods', displayName: 'Plant Based',     image: 'assets/browse/plant.png' },
+      { tag: 'snacks',            displayName: 'Snacks',           image: 'https://images.pexels.com/photos/1583884/pexels-photo-1583884.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'beverages',         displayName: 'Beverages',        image: 'https://images.pexels.com/photos/1292294/pexels-photo-1292294.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'breakfast-cereals', displayName: 'Breakfast Cereals', image: 'assets/browse/cereal.png' },
+      { tag: 'bread',             displayName: 'Bread',            image: 'assets/browse/bread.png' },
+      { tag: 'yogurts',           displayName: 'Yogurts',          image: 'assets/browse/yogurt.png' },
+      { tag: 'cheese',            displayName: 'Cheese',           image: 'assets/browse/cheeses.png' },
+      { tag: 'plant-based-foods', displayName: 'Plant-Based Foods', image: 'assets/browse/plant.png' },
+      { tag: 'sauces',            displayName: 'Sauces',           image: 'https://images.pexels.com/photos/1435706/pexels-photo-1435706.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'frozen-foods',      displayName: 'Frozen Foods',     image: 'https://images.pexels.com/photos/3872373/pexels-photo-3872373.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'desserts',          displayName: 'Desserts',         image: 'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=400' },
     ]
   },
   emptySpoonacularProduct: {
