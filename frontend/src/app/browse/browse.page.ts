@@ -44,7 +44,7 @@ export class BrowsePage implements OnInit {
       const productSearchResults: any = await this.productService.searchProductByCategory(category);
       console.log(`BrowsePage.browseProducts: results from the category search: ${JSON.stringify(productSearchResults)}`);
       await this.dismissLoading();
-      this.pushToResultsPage(productSearchResults);
+      this.pushToResultsPage(productSearchResults, category);
     } catch (error) {
       console.error(`BrowsePage.browseProducts Error: ${JSON.stringify(error)}`);
       throw error;
@@ -72,13 +72,14 @@ export class BrowsePage implements OnInit {
     }
   }
 
-  private pushToResultsPage(productSearchResults: any): void {
+  private pushToResultsPage(productSearchResults: any, category: string): void {
     try {
       // this.profileService.addToProfilePoints(AppConfig.pointAwards.scan);
       console.log(`BrowsePage.pushToResultsPage: pushing the product results to results page: ${JSON.stringify(productSearchResults)}`);
       const navExtras: NavigationExtras = {
         state: {
-          productSearchResults
+          productSearchResults,
+          category
         }
       };
       console.log(`BrowsePage.pushToResultsPage: nav extras for results page: ${JSON.stringify(navExtras)}`);

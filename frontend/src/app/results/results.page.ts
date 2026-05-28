@@ -64,7 +64,9 @@ export class ResultsPage implements OnInit {
         const routerState = JSON.parse(JSON.stringify(currNavigation.extras.state));
         console.log(`ResultsPage.ionViewWillEnter: routerState: ${JSON.stringify(routerState)}`);
         const productSearchResults = routerState['productSearchResults'];
+        this.category = routerState['category'] || '';
         console.log(`ResultsPage.ionViewWillEnter: productSearchResults from navParams: ${JSON.stringify(productSearchResults)}`);
+        console.log(`ResultsPage.ionViewWillEnter: category from navParams: ${this.category}`);
         let code_list: string[] = [];
         let id_list: string[] = [];
         if (productSearchResults.products) {
