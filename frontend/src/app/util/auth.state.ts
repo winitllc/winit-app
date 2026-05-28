@@ -72,7 +72,7 @@ export class AuthState {
       return this.iamCredentials;
     }
     return {
-      accessKeyId: " "
+      accessKeyId: " ",
       secretAccessKey: " "
     };
   }

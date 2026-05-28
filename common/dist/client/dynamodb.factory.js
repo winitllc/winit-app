@@ -13,6 +13,7 @@ class DynamoDBFactory {
         return resultsObject;
     }
     makeScanParams(tableName, pageSize, searchKey, searchString, startKey) {
+        console.log(`DynamoDBFactory.makeScanParams: beginning of function: tableName: ${tableName}, pageSize: ${pageSize}, searchKey: ${searchKey}, searchString: ${searchString}, startKey: ${startKey}`);
         const params = {
             TableName: tableName,
             Limit: pageSize

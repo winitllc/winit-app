@@ -12,7 +12,7 @@
   },
   "author": "Glennium, LLC",
   "homepage": "https://glennium.com/",
-  "private": true,
+  "private": false,
   "license": "UNLICENSED",
   "devDependencies": {
     "typescript": "^3.5.2"

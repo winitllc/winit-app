@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.S3 = exports.Rekognition = exports.KMS = exports.Http = exports.ElasticSearch = exports.DynamoDB = void 0;
 const dynamodb_1 = __importDefault(require("./dynamodb"));
 exports.DynamoDB = dynamodb_1.default;
 const elasticsearch_1 = __importDefault(require("./elasticsearch"));

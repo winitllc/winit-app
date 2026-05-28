@@ -22,13 +22,14 @@ class DynamoDB {
             throw error;
         }
     }
-    async getAllPaginated(tableName, pageSize) {
-        const params = this.factory.makeScanParams(tableName, pageSize);
+    async getAllPaginated(tableName, pageSize, startKey) {
+        console.log(`DynamoDB.getAllPaginated: beginning of function: tableName: ${tableName}, pageSize: ${pageSize}, startKey: ${startKey}`);
+        const params = this.factory.makeScanParams(tableName, pageSize, undefined, undefined, startKey);
+        console.log(`DynamoDB.getAllPaginated: params for scan: ${JSON.stringify(params)}`);
         try {
             const scanResult = await this.client.scan(params).promise();
             console.log(`DynamoDB.getAllPaginated: Did we get all the items: ${scanResult.LastEvaluatedKey ? 'no' : 'yes'}`);
-            const interpretedScanResult = this.factory.interpretScanResult(scanResult);
-            return interpretedScanResult.results;
+            return this.factory.interpretScanResult(scanResult);
         }
         catch (error) {
             console.error(`DynamoDB.getAllPaginated: error scanning table ${JSON.stringify(error)}`);
@@ -45,6 +46,19 @@ class DynamoDB {
             console.error(`DynamoDB.putItem: {tableName: ${tableName}, item: ${item}}`);
             console.error(`DynamoDB.putItem: params: ${JSON.stringify(params)}`);
             console.error(`DynamoDB.putItem: ${error}`);
+            throw error;
+        }
+    }
+    async deleteItemByHashKey(tableName, hashKeyName, valueToDelete) {
+        const params = this.factory.makeGetItemParams(tableName, hashKeyName, valueToDelete);
+        try {
+            await this.client.deleteItem(params).promise();
+        }
+        catch (error) {
+            console.error('DynamoDB.deleteItem: Error putting item');
+            console.error(`DynamoDB.deleteItem: {tableName: ${tableName}, hashKeyName: ${hashKeyName}, valueToDelete: ${valueToDelete}}`);
+            console.error(`DynamoDB.deleteItem: params: ${JSON.stringify(params)}`);
+            console.error(`DynamoDB.deleteItem: ${error}`);
             throw error;
         }
     }
@@ -164,3 +178,6 @@ class DynamoDB {
     }
 }
 exports.default = DynamoDB;
+
+
+export default DynamoDB
