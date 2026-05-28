@@ -1,5 +1,4 @@
-service:
-  name: lifestyle-diets
+service: lifestyle-diets
 #app: your-app-name
 #tenant: your-tenant-name
 

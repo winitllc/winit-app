@@ -1,5 +1,4 @@
-service:
-  name: allergies
+service: allergies
 #app: your-app-name
 #tenant: your-tenant-name
 

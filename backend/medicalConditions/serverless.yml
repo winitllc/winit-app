@@ -1,5 +1,4 @@
-service:
-  name: medical-conditions
+service: medical-conditions
 #app: your-app-name
 #tenant: your-tenant-name
 
