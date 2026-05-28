@@ -95,8 +95,7 @@ export class ProductService {
       const requestOptions: HttpOptions = {
         url: getProductByBarcodeURL,
         headers: {
-          'User-Agent': EnvironmentConfig.api.openFoodFactsProducts.headerUserAgent,
-          'Access-Control-Allow-Origin': '*'
+          'User-Agent': EnvironmentConfig.api.openFoodFactsProducts.headerUserAgent
         },
         params
       };
