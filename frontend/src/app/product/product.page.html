@@ -1,0 +1,105 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <!-- <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+      <ion-button menuToggle (click)="addMenu()"><ion-icon name="menu"></ion-icon></ion-button>
+    </ion-buttons> -->
+    <ion-title class="ion-text-center">Product</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div *ngIf="!noProduct">
+    <ion-grid>
+      <!-- <ion-row>
+        <ion-col>
+          <div class="productBadge">
+            <ion-badge class="productBadge" *ngIf="insufficientData" color="blank"><ion-icon name="help"></ion-icon></ion-badge>
+            <ion-badge class="productBadge" *ngIf="!insufficientData && !poisonWarning && !dangerWarning" color="primary"><ion-icon name="checkmark"></ion-icon></ion-badge>
+            <ion-badge class="productBadge" *ngIf="!insufficientData && !poisonWarning && dangerWarning" color="secondary"><ion-icon name="close"></ion-icon></ion-badge>
+            <ion-badge class="productBadge" *ngIf="!insufficientData && poisonWarning" color="secondary"><ion-icon name="close"></ion-icon></ion-badge>
+          </div>
+        </ion-col>
+      </ion-row> -->
+      <ion-row>
+        <ion-col>
+          <h2 class="ion-text-center">{{product?.product_name}}</h2>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col class="ion-text-center ion-justify-content-center">
+          <div>
+            <img src="{{product && product.selected_images && product.selected_images.front && product.selected_images.front.display && product.selected_images.front.display.en && product.selected_images.front.display.en.length > 0 ? product.selected_images.front.display.en : product?.image_front_url || 'assets/imgs/noProduct.png'}}">
+          </div>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col class="ion-text-center">
+          <h2>Ingredients</h2>
+          <div [innerHtml]="ingredientsTextHTML"></div>
+          <br>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col class="ion-text-center ion-justify-content-center">
+          <h2>Nutrition</h2>
+          <div>
+            <img src="{{product && product.selected_images && product.selected_images.nutrition && product.selected_images.nutrition.display && product.selected_images.nutrition.display.en && product.selected_images.nutrition.display.en.length > 0 ? product.selected_images.nutrition.display.en : product?.image_nutrition_url || 'assets/imgs/noProduct.png'}}">
+          </div>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col>
+          <h4>Categories</h4>
+          <p>
+            <span *ngFor="let categoryKeyword of (product && product.categories_tags || []) | getKeywordValues"><span class="categoryLink" [ngClass]="categoryKeyword" (click)="searchKeyword(categoryKeyword)">{{categoryKeyword}}</span>, </span>
+          </p>
+          <br>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col>
+          <h4>Labels</h4>
+          <p>
+            <span *ngFor="let labelKeyword of (product && product.labels_tags || []) | getKeywordValues"><span class="categoryLink" [ngClass]="labelKeyword" (click)="searchLabel(labelKeyword)">{{labelKeyword}}</span>, </span>
+          </p>
+          <br>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+  <div *ngIf="noProduct">
+    <ion-grid>
+      <!-- <ion-row>
+        <ion-col>
+          <div class="productBadge">
+            <ion-badge class="productBadge" color="blank"><ion-icon name="help"></ion-icon></ion-badge>
+          </div>
+        </ion-col>
+      </ion-row> -->
+      <ion-row class="ion-justify-content-center">
+        <ion-col>
+          <div>
+            <img src="assets/imgs/noProduct.png">
+          </div>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col class="ion-text-center">
+          <h3><ion-text color="secondary">No product info</ion-text></h3>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col class="ion-text-center">
+          <h3><ion-text>Add Product Info & Earn Points!</ion-text></h3>
+          <br>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col class="ion-text-center">
+          <ion-button color="primary" expand="block" (click)="addNewProductInfo()">Add product info</ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>

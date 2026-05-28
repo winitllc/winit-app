@@ -1,0 +1,80 @@
+service:
+  name: util
+#app: your-app-name
+#tenant: your-tenant-name
+
+# Add the serverless-webpack plugin
+plugins:
+  - serverless-webpack
+  - serverless-plugin-warmup
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  region: us-west-2
+  role: arn:aws:iam::238754394093:role/WuzinitLambdaRole
+
+functions:
+  awsCredentials:
+    handler: handler.awsCredentials
+    warmup: true
+    events:
+      - http:
+          method: get
+          path: awsCredentials
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  spoonacularAPIKey:
+    handler: handler.spoonacularAPIKey
+    warmup: true
+    events:
+      - http:
+          method: get
+          path: spoonacularAPIKey
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  saveImage:
+    handler: handler.saveImage
+    warmup: true
+    events:
+      - http:
+          method: post
+          path: saveImage
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  imageToText:
+    handler: handler.imageToText
+    warmup: true
+    events:
+      - http:
+          method: post
+          path: imageToText
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+resources:
+  Resources:
+    ApiGatewayAuthorizer:
+      DependsOn:
+        - ApiGatewayRestApi
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: cognito-authorizer
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - arn:aws:cognito-idp:us-west-2:238754394093:userpool/us-west-2_FbdljGJSe

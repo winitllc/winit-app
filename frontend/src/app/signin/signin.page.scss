@@ -1,0 +1,124 @@
+ion-content {
+  width: 100%;
+  height: 100%;
+  --background: #ffffff 0 0/100% 100% no-repeat;
+}
+
+ion-grid {
+  padding-inline: 2rem;
+  padding-bottom: 2rem;
+  padding-top: 1rem;
+  width: 100%;
+}
+
+.default-padding {
+  padding: 0;
+  margin: auto;
+}
+
+img {
+  width: 100% !important;
+}
+
+.custom-item {
+  --background: transparent;
+  --padding-start: 0;
+  --padding-end: 0;
+  --inner-padding-end: 0;
+  --inner-padding-start: 0;
+
+  ion-icon {
+    color: #8167ef;
+  }
+}
+
+.input-email {
+  ion-label {
+    color: #8167ef;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0%;
+    margin: auto;
+  }
+}
+
+.input-password {
+  padding-top: 1rem;
+  ion-label {
+    color: #8167ef;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0%;
+    margin: auto;
+  }
+}
+
+ion-input {
+  --padding-start: 0;
+  --padding-end: 0;
+  background: transparent;
+  --placeholder-color: #000;
+}
+
+.forgot-password {
+  text-align: center;
+  padding-block: 1.5rem;
+  ion-label {
+    color: #8167ef;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0%;
+    margin: auto;
+  }
+}
+
+.signIn-btn {
+  padding: 0%;
+  width: 100%;
+  margin: auto;
+  padding-top: 1rem;
+
+  ion-col {
+    padding: 0%;
+    text-align: center;
+    margin: auto;
+
+    ion-button {
+      text-transform: none;
+      width: 100%;
+      height: 3rem;
+      padding: 0%;
+      margin: auto;
+      --border-radius: 2rem;
+      --background-activated: transparent;
+      --box-shadow: none;
+      --background: #8167ef;
+
+      ion-label {
+        margin: auto;
+        padding: 0%;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #ffffff;
+      }
+    }
+  }
+}
+
+.create-account {
+  text-align: center;
+  padding-block: 1rem;
+}
+
+.create-account-label {
+  cursor: pointer;
+  color: #000;
+}
+
+.create-account-label span {
+  color: #8167ef;
+}
+
+.health-pro-label {
+  color: #8167ef;
+}

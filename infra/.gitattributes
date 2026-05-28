@@ -1,0 +1,2 @@
+.terraform/plugins/**/terraform-provider-* filter=lfs diff=lfs merge=lfs -text
+.terraform/providers/**/terraform-provider-* filter=lfs diff=lfs merge=lfs -text

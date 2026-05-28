@@ -1,0 +1,20 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-button color="medium" slot="start" (click)="cancel()">Cancel</ion-button>
+    <ion-title>Crop to Nutrition Information</ion-title>
+    <ion-button slot="end" (click)="confirm()" [strong]="true">Confirm</ion-button>
+  </ion-toolbar>
+</ion-header>
+<ion-content>
+  <image-cropper
+      [imageBase64]="imageInput"
+      [maintainAspectRatio]="false"
+      [aspectRatio]="4 / 3"
+      format="jpeg"
+      output="base64"
+      (imageCropped)="imageCropped($event)"
+      (imageLoaded)="imageLoaded($event)"
+      (cropperReady)="cropperReady()"
+      (loadImageFailed)="loadImageFailed()"
+  ></image-cropper>
+</ion-content>

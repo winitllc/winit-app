@@ -1,0 +1,40 @@
+import Allergy from './allergy';
+import CognitoTokens from './cognitoTokens';
+import CognitoTokensResponse from './cognitoTokensResponse';
+import Condition from './condition';
+import InAppPurchaseConfirmation from './inAppPurchaseConfirmation';
+import Ingredient from './ingredient';
+import Lifestyle from './lifestyle';
+import Medical from './medical';
+import PremiumFeature from './premiumFeature';
+import PremiumFeaturePurchaseConfirmation from './premiumFeaturePurchaseConfirmation';
+import Product from './product';
+import ProductSearchResult from './productSearchResult';
+import Profile from './profile';
+import Symptom from '../model/symptom';
+import User from './user';
+import WuzinitPoints from './wuzinitPoints';
+import WuzinitProduct from './wuzinitProduct';
+import { WuzinitProductBase, ProductNutrition } from './wuzinitProductBase';
+
+export {
+    Allergy,
+    CognitoTokens,
+    CognitoTokensResponse,
+    Condition,
+    InAppPurchaseConfirmation,
+    Ingredient,
+    Lifestyle,
+    Medical,
+    PremiumFeature,
+    PremiumFeaturePurchaseConfirmation,
+    Product,
+    ProductSearchResult,
+    Profile,
+    Symptom,
+    User,
+    WuzinitPoints,
+    WuzinitProduct,
+    WuzinitProductBase,
+    ProductNutrition
+}

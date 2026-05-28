@@ -1,0 +1,7 @@
+{
+  "name": "WINIT",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

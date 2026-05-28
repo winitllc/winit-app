@@ -1,0 +1,164 @@
+service:
+  name: profile
+#app: your-app-name
+#tenant: your-tenant-name
+
+# Add the serverless-webpack plugin
+plugins:
+  - serverless-webpack
+  - serverless-plugin-warmup
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  region: us-west-2
+  role: arn:aws:iam::238754394093:role/WuzinitLambdaRole
+
+functions:
+  getById:
+    handler: handler.getProfileById
+    warmup: true
+    events:
+      - http:
+          method: get
+          path: getById
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  getByEmail:
+    handler: handler.getProfileByEmail
+    warmup: true
+    events:
+      - http:
+          method: get
+          path: getByEmail
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  updateProfile:
+    handler: handler.updateProfile
+    warmup: true
+    events:
+      - http:
+          method: post
+          path: updateProfile
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  createProfile:
+    handler: handler.createProfile
+    warmup: true
+    events:
+      - http:
+          method: post
+          path: createProfile
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  getProfilePoints:
+    handler: handler.getProfilePoints
+    warmup: true
+    events:
+      - http:
+          method: get
+          path: getProfilePoints
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  updateProfilePoints:
+    handler: handler.updateProfilePoints
+    warmup: true
+    events:
+      - http:
+          method: post
+          path: updateProfilePoints
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  getFeatures:
+    handler: handler.getFeatures
+    warmup: true
+    events:
+      - http:
+          method: get
+          path: getFeatures
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  makePurchase:
+    handler: handler.makePurchase
+    warmup: true
+    events:
+      - http:
+          method: post
+          path: makePurchase
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  storeInAppPurchaseConfirmation:
+    handler: handler.storeInAppPurchaseConfirmation
+    warmup: true
+    events:
+      - http:
+          method: post
+          path: storeInAppPurchaseConfirmation
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  getInAppPurchaseConfirmationsByProfileId:
+    handler: handler.getInAppPurchaseConfirmationsByProfileId
+    warmup: true
+    events:
+      - http:
+          method: get
+          path: getInAppPurchaseConfirmationsByProfileId
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  getPremiumFeaturePurchaseConfirmationsByProfileId:
+    handler: handler.getPremiumFeaturePurchaseConfirmationsByProfileId
+    warmup: true
+    events:
+      - http:
+          method: get
+          path: getPremiumFeaturePurchaseConfirmationsByProfileId
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+resources:
+  Resources:
+    ApiGatewayAuthorizer:
+      DependsOn:
+        - ApiGatewayRestApi
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: cognito-authorizer
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - arn:aws:cognito-idp:us-west-2:238754394093:userpool/us-west-2_FbdljGJSe

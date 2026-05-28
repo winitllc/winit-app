@@ -1,0 +1,21 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Search Product</ion-title>
+    <ion-buttons slot="end">
+      <ion-button color="secondary" (click)="cancel()">Cancel <ion-icon name="close"></ion-icon></ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-grid>
+    <ion-row>
+      <ion-input label="Product Search:" labelPlacement="stacked" (keyup)="filterList()" [(ngModel)]="searchInput"></ion-input>
+    </ion-row>
+    <ion-row *ngFor="let category of currentCategoryList | slice:0:100">
+      <ion-card (click)="search(category)">
+        <ion-card-title>{{category}}</ion-card-title>
+      </ion-card>
+    </ion-row>
+  </ion-grid>
+</ion-content>

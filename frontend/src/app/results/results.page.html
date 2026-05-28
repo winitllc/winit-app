@@ -1,0 +1,38 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title class="ion-text-center">Results</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div *ngIf="!noResults">
+    <ion-grid>
+      <ion-row *ngFor="let product of products" class="product-row">
+        <ion-col>
+          <img src="{{product.image_thumb_url}}"/>
+        </ion-col>
+        <ion-col size="10">
+          <ion-card (click)="selectProduct(product.code)">
+            <ion-card-subtitle>{{product.product_name}}</ion-card-subtitle>
+            <ion-card-content>{{product.ingredients_text}}</ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+  <div *ngIf="noResults">
+    <ion-grid>
+      <ion-row class="ion-justify-content-center">
+        <ion-col>
+          <div class="productImage">
+            <img src="assets/imgs/noProduct.png">
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+
+  <ion-infinite-scroll (ionInfinite)="scrollEvent($event)" threshold="35%">
+    <ion-infinite-scroll-content></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

@@ -1,0 +1,73 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title class="ion-text-center">
+      Add product info
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content *ngIf="!imageCaptured">
+  <ion-grid>
+    <ion-row>
+      <ion-col class="ion-text-center">
+        <h3>Please photograph or enter the name of the product</h3>
+      </ion-col>
+    </ion-row>
+    <ion-row class="ion-justify-content-center">
+      <ion-col>
+        <ion-textarea label="Product name" labelPlacement="stacked" placeholder="[enter product name here]" [(ngModel)]="nameText"></ion-textarea>
+      </ion-col>
+    </ion-row>
+    <ion-row class="ion-justify-content-center">
+      <ion-col>
+        <ion-textarea label="Product brands" labelPlacement="stacked" placeholder="[enter product brands here]" [(ngModel)]="brandsText"></ion-textarea>
+      </ion-col>
+    </ion-row>
+    <ion-row class="ion-justify-content-center">
+      <ion-col>
+        <div class="ingredientsImage">
+          <img class="ingredientsImage" src="assets/imgs/productName.png">
+        </div>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col class="ion-text-center">
+        <ion-button color="primary" (click)="scanName()"><ion-icon class="buttonIcon" name="camera"></ion-icon></ion-button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>
+<ion-content *ngIf="imageCaptured">
+  <div class="alert-div">
+    <ion-grid>
+      <ion-row>
+        <ion-col class="ion-text-center">
+          <h3>Does the name look correct? Feel free to edit to remove brand name.</h3>
+        </ion-col>
+      </ion-row>
+      <ion-row class="ion-justify-content-center">
+        <ion-col>
+          <ion-img  src="{{imageSrc}}"  alt="Image containing product name"></ion-img>
+        </ion-col>
+      </ion-row>
+      <ion-row class="ion-justify-content-center">
+        <ion-col>
+          <ion-textarea label="Product name" labelPlacement="stacked" placeholder="[enter product name here]" [(ngModel)]="nameText"></ion-textarea>
+        </ion-col>
+      </ion-row>
+      <ion-row class="ion-justify-content-center">
+        <ion-col>
+          <ion-textarea label="Product brands" labelPlacement="stacked" [autoGrow]="true" placeholder="[enter product brands here]" [(ngModel)]="brandsText"></ion-textarea>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col class="ion-text-center">
+          <ion-button color="secondary" expand="block" class="submit continue-scan" (click)="scanName()">Rescan Name <ion-icon class="buttonIcon" name="camera"></ion-icon></ion-button>
+        </ion-col>
+        <ion-col class="ion-text-center">
+          <ion-button color="primary" expand="block" class="submit continue-scan" (click)="continue()">Continue <ion-icon class="buttonIcon" name="arrow-forward"></ion-icon></ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>

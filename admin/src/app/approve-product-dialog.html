@@ -1,0 +1,25 @@
+<section role="listitem">
+  <h2>Product Name</h2>
+  <p>{{product?.productName}}</p>
+</section>
+<mat-divider></mat-divider>
+<section role="listitem" class="ion-justify-content-center">
+  <h2>Front Image</h2>
+  <div class="productImage">
+    <img class="productImage" crossOrigin="anonymous" src="{{product && product.images && product.images.front && product.images.front.length > 0 ? product.images.front : 'assets/imgs/noProduct.png'}}">
+  </div>
+</section>
+<mat-divider></mat-divider>
+<section role="listitem">
+  <h2>Ingredients</h2>
+  <p>{{product?.ingredientsText}}</p>
+</section>
+<mat-divider></mat-divider>
+<section>
+  <div>Approve or Delete</div>
+  <div>
+    <button mat-stroked-button (click)="approveProduct()">Approve</button>
+    <button mat-stroked-button (click)="denyProduct()">Delete</button>
+  </div>
+</section>
+

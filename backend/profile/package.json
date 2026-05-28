@@ -1,0 +1,30 @@
+{
+  "name": "profile",
+  "version": "1.3.0",
+  "description": "Serverless webpack example using Typescript",
+  "main": "dist/handler.js",
+  "scripts": {
+    "deploy": "serverless --aws-profile wuzinit deploy",
+    "prod": "npm run deploy -- --stage prod",
+    "dev": "npm run deploy -- --stage dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@types/uuid": "^3.4.5",
+    "source-map-support": "^0.5.10",
+    "uuid": "^3.3.3",
+    "wuzinit-common": "git+ssh://git@bitbucket.org/glennium/wuzinit-common.git"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.17",
+    "serverless-plugin-warmup": "^4.7.1-rc.1",
+    "serverless-webpack": "^5.2.0",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.2.4",
+    "webpack": "^4.29.0"
+  },
+  "author": "Glennium, LLC",
+  "homepage": "https://glennium.com/",
+  "private": true,
+  "license": "UNLICENSED"
+}

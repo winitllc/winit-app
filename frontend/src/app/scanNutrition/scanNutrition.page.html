@@ -1,0 +1,58 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title class="ion-text-center">
+      Add Nutrition Information
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content *ngIf="!imageCaptured">
+  <ion-grid>
+    <ion-row>
+      <ion-col class="ion-text-center">
+        <h3>Please photograph the nutrition of the product</h3>
+      </ion-col>
+    </ion-row>
+    <ion-row class="ion-justify-content-center">
+      <ion-col>
+        <div class="ingredientsImage">
+          <img class="ingredientsImage" src="assets/imgs/productBack.png">
+        </div>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col class="ion-text-center">
+        <ion-button color="primary" (click)="scanNutrition()"><ion-icon class="buttonIcon" name="camera"></ion-icon></ion-button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>
+<ion-content *ngIf="imageCaptured">
+  <div class="alert-div">
+    <ion-grid>
+      <ion-row>
+        <ion-col class="ion-text-center">
+          <h3>How does it look?</h3>
+        </ion-col>
+      </ion-row>
+      <ion-row class="ion-justify-content-center">
+        <ion-col>
+          <ion-img  src="{{imageSrc}}"  alt="Image containing nutrition information of product"></ion-img>
+        </ion-col>
+      </ion-row>
+      <ion-row class="ion-justify-content-center">
+        <ion-col>
+          <ion-textarea label="Nutrition text" labelPlacement="stacked" [autoGrow]="true" placeholder="[enter nutrition here]" [(ngModel)]="nutritionDataText"></ion-textarea>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col class="ion-text-center">
+          <ion-button color="secondary" expand="block" (click)="scanNutrition()">Rescan Nutrition <ion-icon class="buttonIcon" name="camera"></ion-icon></ion-button>
+        </ion-col>
+        <ion-col class="ion-text-center">
+          <ion-button color="primary" expand="block" (click)="continue()">Continue <ion-icon class="buttonIcon" name="arrow-forward"></ion-icon></ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>

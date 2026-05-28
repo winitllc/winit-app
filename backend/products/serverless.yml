@@ -1,0 +1,88 @@
+org: rcgwiiclinic
+service: products
+app: products
+#tenant: your-tenant-name
+
+# Add the serverless-webpack plugin
+plugins:
+  - serverless-webpack
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-west-2
+  role: arn:aws:iam::238754394093:role/WuzinitLambdaRole
+  timeout: 25
+
+functions:
+  addProductUpdate:
+    handler: handler.addProductUpdate
+    events:
+      - http:
+          method: post
+          path: addProductUpdate
+          cors: true
+          # authorizer:
+          #   type: COGNITO_USER_POOLS
+          #   authorizerId:
+          #     Ref: ApiGatewayAuthorizer
+  getByCode:
+    handler: handler.getByCode
+    events:
+      - http:
+          method: get
+          path: getByCode
+          cors: true
+          # authorizer:
+          #   type: COGNITO_USER_POOLS
+          #   authorizerId:
+          #     Ref: ApiGatewayAuthorizer
+  searchText:
+    handler: handler.searchText
+    vpc:
+      securityGroupIds:
+        - 'sg-0095bf88149edf96d'
+      subnetIds:
+        - 'subnet-039cadb2b70dc6ee1'
+        - 'subnet-057c30136acddb0df'
+    events:
+      - http:
+          method: post
+          path: searchText
+          cors: true
+          # authorizer:
+          #   type: COGNITO_USER_POOLS
+          #   authorizerId:
+          #     Ref: ApiGatewayAuthorizer
+  scrollSearch:
+    handler: handler.scrollSearch
+    vpc:
+      securityGroupIds:
+        - 'sg-0095bf88149edf96d'
+      subnetIds:
+        - 'subnet-039cadb2b70dc6ee1'
+        - 'subnet-057c30136acddb0df'
+    events:
+      - http:
+          method: get
+          path: scrollSearch
+          cors: true
+          # authorizer:
+          #   type: COGNITO_USER_POOLS
+          #   authorizerId:
+          #     Ref: ApiGatewayAuthorizer
+
+# resources:
+#   Resources:
+#     ApiGatewayAuthorizer:
+#       DependsOn:
+#         - ApiGatewayRestApi
+#       Type: AWS::ApiGateway::Authorizer
+#       Properties:
+#         Name: cognito-authorizer
+#         IdentitySource: method.request.header.Authorization
+#         RestApiId:
+#           Ref: ApiGatewayRestApi
+#         Type: COGNITO_USER_POOLS
+#         ProviderARNs:
+#           - arn:aws:cognito-idp:us-west-2:238754394093:userpool/us-west-2_FbdljGJSe

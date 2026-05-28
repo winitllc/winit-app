@@ -1,0 +1,12 @@
+import Allergy from './allergy';
+import Condition from './condition';
+import InAppPurchaseProduct from './inAppPurchaseProduct';
+import InAppPurchaseConfirmation from './inAppPurchaseConfirmation';
+import Ingredient from './ingredient';
+import Medical from './medical';
+import Product from './product';
+import ProductSearchResult from './productSearchResult';
+import ProductSearchResponse from './productSearchResponse';
+import Profile from './profile';
+import User from './user';
+export { Allergy, Condition, InAppPurchaseProduct, InAppPurchaseConfirmation, Ingredient, Medical, Product, ProductSearchResult, ProductSearchResponse, Profile, User };

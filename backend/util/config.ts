@@ -1,0 +1,11 @@
+export const Config = {
+  imageService: {
+    bucketName: '',
+    bucketURL: ''
+  },
+  kmsService: {
+    encryptedAccessKey: 'AQICAHjqQvEqb1wCBSZ49zWTLnTwLp5DqEc7KoYhO/bDSaceKQG0au/XgfVxfJeyWw8L9TxbAAAAcjBwBgkqhkiG9w0BBwagYzBhAgEAMFwGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMm9sBLCpwKXU7sJKNAgEQgC8N6SUGoV+uOpJ/WFOrFf7V8CVaqYoWrFwf4CLzMScDal3NF1RJ7ypkS5iVt4JfZA==',
+    encryptedSecretKey: 'AQICAHjqQvEqb1wCBSZ49zWTLnTwLp5DqEc7KoYhO/bDSaceKQFie4WSxk2Y27NmcfXzYKDKAAAAhzCBhAYJKoZIhvcNAQcGoHcwdQIBADBwBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDCaDJHwe0CrycnR66AIBEIBD0eiD31VPastQxv82gloyqv5BnLOYBaCHwDydE1TsYnQvSWjS5psTg6Po0dXg4R9f8w31x31sOhQMm0C/r+gYinLn+A==',
+    encryptedSpoonacularAPIKey: 'AQICAHjqQvEqb1wCBSZ49zWTLnTwLp5DqEc7KoYhO/bDSaceKQGfGa8kWGH8bZXtNHhFO87dAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMbDYZptC4BceSlO0NAgEQgDvEr24GtalW04N9kOuGGS98Lw+3skQQ/GzEt6ByuBufpIuuFDGUhUPrYLxbBT9DVNb1c9JF0RxWl20aVw=='
+  }
+};

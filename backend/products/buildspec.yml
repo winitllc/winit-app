@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo Install phase started on `date`
+      - cd products
+      - npm i -g serverless
+    finally:
+      - echo Install phase completed on `date`
+  pre_build:
+    commands:
+      - echo Pre-Test phase started on `date`
+      - npm i
+    finally:
+      - echo Pre-Test phase completed on `date`
+  build:
+    commands:
+      - echo Test phase started on `date`
+    finally:
+      - echo Test phase completed on `date`
+  post_build:
+    commands:
+      - echo Deploy phase started on `date`
+      - npm run prod
+    finally:
+      - echo Deploy phase completed on `date`

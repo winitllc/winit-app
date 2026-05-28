@@ -1,0 +1,140 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title class="ion-text-center">
+      Browse
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="home-area">
+    <ion-grid>
+      <ion-row>
+        <ion-col></ion-col>
+        <ion-col size="8">
+          <h2 class="ion-text-center"><img class="header-icon" src="assets/icon/favicon.png"> Explore Products</h2>
+        </ion-col>
+        <ion-col class="centered-content">
+          <ion-button fill="clear" (click)="searchProductModal()">
+            <ion-icon slot="icon-only" name="search"></ion-icon>
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+    <ion-grid>
+      <ion-row>
+        <ion-col>
+          <ion-button fill="clear" (click)="browseProducts('cheese')">
+            <ion-card>
+              <ion-card-content>
+                <img src="assets/browse/cheeses.png"/>
+              </ion-card-content>
+            </ion-card>
+          </ion-button>
+        </ion-col>
+        <ion-col>
+          <ion-button fill="clear" (click)="browseProducts('chicken')">
+            <ion-card>
+              <ion-card-content>
+                <img src="assets/browse/chicken.png"/>
+              </ion-card-content>
+            </ion-card>
+          </ion-button>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col>
+          <ion-button fill="clear" (click)="browseProducts('pizza')">
+            <ion-card>
+              <ion-card-content>
+                <img src="assets/browse/pizza.png"/>
+              </ion-card-content>
+            </ion-card>
+          </ion-button>
+        </ion-col>
+        <ion-col>
+          <ion-button fill="clear" (click)="browseProducts('pasta')">
+            <ion-card>
+              <ion-card-content>
+                <img src="assets/browse/pasta.png"/>
+              </ion-card-content>
+            </ion-card>
+          </ion-button>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col>
+          <ion-button fill="clear" (click)="browseProducts('breakfast_cereals')">
+            <ion-card>
+              <ion-card-content>
+                <img src="assets/browse/cereal.png"/>
+              </ion-card-content>
+            </ion-card>
+          </ion-button>
+        </ion-col>
+        <ion-col>
+          <ion-button fill="clear" (click)="browseProducts('bread')">
+            <ion-card>
+              <ion-card-content>
+                <img src="assets/browse/bread.png"/>
+              </ion-card-content>
+            </ion-card>
+          </ion-button>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col>
+          <ion-button fill="clear" (click)="browseProducts('yogurt')">
+            <ion-card>
+              <ion-card-content>
+                <img src="assets/browse/yogurt.png"/>
+              </ion-card-content>
+            </ion-card>
+          </ion-button>
+        </ion-col>
+        <ion-col>
+          <ion-button fill="clear" (click)="browseProducts('plant_based_foods')">
+            <ion-card>
+              <ion-card-content>
+                <img src="assets/browse/plant.png"/>
+              </ion-card-content>
+            </ion-card>
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+    <a class="home-link" href="https://winitclinic.com/products/">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-subtitle>Search a Curated List of Health Tests</ion-card-subtitle>
+          <ion-card-title>Our Health Tests</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+           Comprehensive tests to help you identify biomarkers
+        </ion-card-content>
+      </ion-card>
+    </a>
+    <a class="home-link" href="https://winitclinic.com/patients/">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-subtitle>Search for a Specialty</ion-card-subtitle>
+          <ion-card-title>Patient Portal</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          Prevent, alleviate, or heal disease–naturally
+        </ion-card-content>
+      </ion-card>
+    </a>
+    <a class="home-link" href="https://winitclinic.com/health-pros/">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-subtitle>Search for a Health Professional</ion-card-subtitle>
+          <ion-card-title>Health Professionals</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          Book a consultation with a health professional today!
+        </ion-card-content>
+      </ion-card>
+    </a>
+  </div>
+</ion-content>

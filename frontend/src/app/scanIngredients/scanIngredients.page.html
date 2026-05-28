@@ -1,0 +1,58 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title class="ion-text-center">
+      Add product info
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content *ngIf="!imageCaptured">
+  <ion-grid>
+    <ion-row>
+      <ion-col class="ion-text-center">
+        <h3>Please photograph the list of ingredients</h3>
+      </ion-col>
+    </ion-row>
+    <ion-row class="ion-justify-content-center">
+      <ion-col>
+        <div class="ingredientsImage">
+          <img class="ingredientsImage" src="assets/imgs/productIngredients.png">
+        </div>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col class="ion-text-center">
+        <ion-button color="primary" (click)="scanIngredients()"><ion-icon class="buttonIcon" name="camera"></ion-icon></ion-button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>
+<ion-content *ngIf="imageCaptured">
+  <div class="alert-div">
+    <ion-grid>
+      <ion-row>
+        <ion-col class="ion-text-center">
+          <h3>Does the ingredients text match the image? Feel free to edit.</h3>
+        </ion-col>
+      </ion-row>
+      <ion-row class="ion-justify-content-center">
+        <ion-col>
+          <ion-img  src="{{imageSrc}}"  alt="Image containing product ingredients"></ion-img>
+        </ion-col>
+      </ion-row>
+      <ion-row class="ion-justify-content-center">
+        <ion-col>
+          <ion-textarea label="Ingredients text" labelPlacement="stacked" [autoGrow]="true" placeholder="[enter ingredients here]" [(ngModel)]="ingredientsText"></ion-textarea>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col class="ion-text-center">
+          <ion-button color="secondary" expand="block" class="submit continue-scan" (click)="scanIngredients()">Rescan Ingredients <ion-icon class="buttonIcon" name="camera"></ion-icon></ion-button>
+        </ion-col>
+        <ion-col class="ion-text-center">
+          <ion-button color="primary" expand="block" (click)="continue()">Continue <ion-icon class="buttonIcon" name="arrow-forward"></ion-icon></ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>
