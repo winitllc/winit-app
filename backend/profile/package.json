@@ -7,7 +7,8 @@
     "deploy": "serverless --aws-profile wuzinit deploy",
     "prod": "npm run deploy -- --stage prod",
     "dev": "npm run deploy -- --stage dev",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "sed -i \"s/runtime: 'nodejs12.x'/runtime: 'nodejs18.x'/g\" node_modules/serverless-plugin-warmup/src/index.js"
   },
   "dependencies": {
     "@types/uuid": "^3.4.5",
@@ -17,7 +18,7 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.17",
-    "serverless-plugin-warmup": "^4.7.1-rc.1",
+    "serverless-plugin-warmup": "4.9.0",
     "serverless-webpack": "^5.2.0",
     "ts-loader": "^5.3.3",
     "typescript": "^3.2.4",
