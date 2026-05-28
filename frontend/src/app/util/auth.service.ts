@@ -206,7 +206,12 @@ export class AuthService {
 
   private async goodSpoonacularAPIKey(): Promise<boolean> {
     try {
-      const authStateAPIKey: string = this.authState.getSpoonacularAPIKey();
+      let authStateAPIKey: string;
+      try {
+        authStateAPIKey = this.authState.getSpoonacularAPIKey();
+      } catch {
+        authStateAPIKey = '';
+      }
       if (authStateAPIKey && authStateAPIKey.length > 0) {
         return true;
       }

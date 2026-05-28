@@ -63,7 +63,7 @@ export class BrowsePage implements OnInit {
     const { data, role } = await modal.onWillDismiss();
     console.log(`BrowsePage.searchProductModal: modal dismissed, data: ${JSON.stringify(data)}`);
     console.log(`BrowsePage.searchProductModal: modal dismissed, role: ${JSON.stringify(role)}`);
-    if (role == 'cancel' || role != 'confirm') {
+    if (role !== 'confirm') {
       return;
     }
     if (data) {

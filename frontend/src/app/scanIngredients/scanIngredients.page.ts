@@ -87,13 +87,17 @@ export class ScanIngredientsPage implements OnInit {
   }
 
   async scanIngredients() {
-    const imageToTextData = await this.imageToText();
-    this.imageCaptured = true;
-    this.imageSrc = imageToTextData.image;
-    this.ingredientsText = imageToTextData.text;
-    this.ingredientsS3ImageKey = imageToTextData.s3ImageKey;
-    console.log(`ScanIngredientsPage.scan: imageToTextData: ${JSON.stringify(imageToTextData)}`);
-    this.profileService.addToProfilePoints(1);
+    try {
+      const imageToTextData = await this.imageToText();
+      this.imageCaptured = true;
+      this.imageSrc = imageToTextData.image;
+      this.ingredientsText = imageToTextData.text;
+      this.ingredientsS3ImageKey = imageToTextData.s3ImageKey;
+      console.log(`ScanIngredientsPage.scan: imageToTextData: ${JSON.stringify(imageToTextData)}`);
+      this.profileService.addToProfilePoints(1);
+    } catch (error) {
+      console.error(`ScanIngredientsPage.scanIngredients: failed, user can try again: ${JSON.stringify(error)}`);
+    }
   }
 
   resetSection() {
@@ -149,7 +153,8 @@ export class ScanIngredientsPage implements OnInit {
       };
     } catch (error) {
       console.error(`ScanIngredientsPage.imageToText: error capturing image and converting to text: ${JSON.stringify(error)}`);
-      return this.imageToText();
+      this.dismissLoading();
+      throw error;
     }
   }
 

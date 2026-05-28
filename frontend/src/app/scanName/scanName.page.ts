@@ -64,14 +64,18 @@ export class ScanNamePage implements OnInit {
   }
 
   async scanName() {
-    const imageToTextData = await this.imageToText();
-    this.imageCaptured = true;
-    this.imageSrc = imageToTextData.image;
-    this.nameText = imageToTextData.text;
-    this.brandsText = imageToTextData.text;
-    this.nameS3ImageKey = imageToTextData.s3ImageKey;
-    console.log(`ScanNamePage.scan: imageToTextData: ${JSON.stringify(imageToTextData)}`);
-    this.profileService.addToProfilePoints(1);
+    try {
+      const imageToTextData = await this.imageToText();
+      this.imageCaptured = true;
+      this.imageSrc = imageToTextData.image;
+      this.nameText = imageToTextData.text;
+      this.brandsText = imageToTextData.text;
+      this.nameS3ImageKey = imageToTextData.s3ImageKey;
+      console.log(`ScanNamePage.scan: imageToTextData: ${JSON.stringify(imageToTextData)}`);
+      this.profileService.addToProfilePoints(1);
+    } catch (error) {
+      console.error(`ScanNamePage.scanName: failed, user can try again: ${JSON.stringify(error)}`);
+    }
   }
 
   resetSection() {
@@ -115,7 +119,8 @@ export class ScanNamePage implements OnInit {
       };
     } catch (error) {
       console.error(`ScanNamePage.imageToText: error capturing image and converting to text: ${JSON.stringify(error)}`);
-      return this.imageToText();
+      this.dismissLoading();
+      throw error;
     }
   }
 

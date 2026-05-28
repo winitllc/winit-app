@@ -2,7 +2,7 @@ import { InputCustomEvent, IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ModalController } from '@ionic/angular';
-import { Barcode, BarcodeFormat, BarcodeScanner, LensFacing, StartScanOptions } from '@capacitor-mlkit/barcode-scanning';
+import { Barcode, BarcodeFormat, BarcodeScanner, LensFacing, PluginListenerHandle, StartScanOptions } from '@capacitor-mlkit/barcode-scanning';
 
 @Component({
   templateUrl: 'barcode-scanningModal.page.html',
@@ -28,6 +28,7 @@ export class BarcodeScanningModalComponent implements OnInit, AfterViewInit, OnD
   public isTorchAvailable = false;
   public minZoomRatio: number | undefined;
   public maxZoomRatio: number | undefined;
+  private barcodeScanListener: PluginListenerHandle | undefined;
 
   constructor(
     private modalCtrl: ModalController,
@@ -101,7 +102,7 @@ export class BarcodeScanningModalComponent implements OnInit, AfterViewInit, OnD
         : undefined;
       console.log(`BarcodeScanningModalComponent.startScan: detection corner points: ${JSON.stringify(detectionCornerPoints)}`);
   
-      const listener = await BarcodeScanner.addListener('barcodeScanned', async (event) => {
+      this.barcodeScanListener = await BarcodeScanner.addListener('barcodeScanned', async (event) => {
         console.log(`BarcodeScanningModalComponent.startScan: in the scan listener; a barcode was scanned!`);
         this.ngZone.run(() => {
           const cornerPoints = event.barcode.cornerPoints;
@@ -120,7 +121,7 @@ export class BarcodeScanningModalComponent implements OnInit, AfterViewInit, OnD
             }
           }
           console.log(`BarcodeScanningModalComponent.startScan: in the scan listener; looks in bounds`);
-          listener.remove();
+          this.barcodeScanListener?.remove();
           console.log(`BarcodeScanningModalComponent.startScan: in the scan listener; listener removed, closing modal`);
           this.closeModal(event.barcode);
         });
@@ -145,6 +146,8 @@ export class BarcodeScanningModalComponent implements OnInit, AfterViewInit, OnD
     // Show everything behind the modal again
     document.querySelector('body')?.classList.remove('barcode-scanning-active');
 
+    await this.barcodeScanListener?.remove();
+    this.barcodeScanListener = undefined;
     await BarcodeScanner.stopScan();
   }
 }

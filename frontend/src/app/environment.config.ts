@@ -113,7 +113,8 @@ const Prod = {
       getAll: 'getLifestyleDiets'
     },
     symptoms: {
-      baseUrl: 'https://.execute-api.us-west-2.amazonaws.com/prod/',
+      // TODO: replace MISSING with the prod symptoms API Gateway ID
+      baseUrl: 'https://MISSING.execute-api.us-west-2.amazonaws.com/prod/',
       getAll: 'getSymptoms'
     },
     utilService: {
@@ -137,16 +138,6 @@ const Prod = {
   }
 };
 
-let config: any = Dev;
+import { environment } from '../environments/environment';
 
-// switch (process.env.ENV) {
-//   case 'prod':
-//       config = Prod;
-//       break;
-//   case 'dev':
-//   default:
-//       config = Dev;
-//       break;
-// }
-
-export const EnvironmentConfig = config;
+export const EnvironmentConfig = environment.production ? Prod : Dev;

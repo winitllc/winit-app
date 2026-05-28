@@ -82,15 +82,14 @@ export class AuthState {
   }
 
   getSpoonacularAPIKey(): string {
-    return '981e3414aaa34454878dc613a3fb91e8'; // TODO: no push
-    // if (this.spoonacularAPIKey) {
-    //   return this.spoonacularAPIKey;
-    // }
-    // throw new Error('Trying to get Spoonacular API Key before it is set!');
+    if (this.spoonacularAPIKey) {
+      return this.spoonacularAPIKey;
+    }
+    throw new Error('Trying to get Spoonacular API Key before it is set!');
   }
 
   setSpoonacularAPIKey(spoonacularAPIKey: string): void {
-    console.log(`Not yet implemented`);
+    this.spoonacularAPIKey = spoonacularAPIKey;
   }
 
   setTokens(tokens: model.CognitoTokens): void {
