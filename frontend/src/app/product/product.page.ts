@@ -1,11 +1,10 @@
 import { Component, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { ActivatedRoute, Router, NavigationExtras } from '@angular/router';
 import { NavController, ActionSheetController, Platform, LoadingController, LoadingOptions } from '@ionic/angular';
-import { Share } from '@capacitor/share';
 import { AppConfig } from '../app.config';
-import { model } from 'wuzinit-common';
 import { ProfileState } from '../profile/profile.state';
 import { OpenFoodFactsProduct, ProductService } from './product.service';
+import { SupabaseProduct, SupabaseProductService } from '../util/supabase-product.service';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
@@ -19,17 +18,16 @@ export class ProductPage implements OnInit {
   public noProduct: boolean = false;
   public noProductBarcode: string = '';
 
-  // public allergensText: WarningInfo[] = [];
   public allergenPoisonWarning: boolean = false;
   public allergenDangerWarning: boolean = false;
-  // public tracesText: WarningInfo[] = [];
   public tracesPoisonWarning: boolean = false;
   public tracesDangerWarning: boolean = false;
   public ingredientsTextHTML: any = '';
   public ingredientsPoisonWarning: boolean = false;
   public ingredientsDangerWarning: boolean = false;
   public product?: OpenFoodFactsProduct;
-  public productType: string = 'spoonacular';
+  public supabaseProduct?: SupabaseProduct;
+  public productType: string = 'supabase';
   public productKeywords: string[] = [];
   public iPhone: boolean = false;
 
@@ -53,6 +51,7 @@ export class ProductPage implements OnInit {
     private sanitizer: DomSanitizer,
     private router: Router,
     private productService: ProductService,
+    private supabaseProductService: SupabaseProductService,
     private profileState: ProfileState
   ) { }
 
@@ -62,49 +61,47 @@ export class ProductPage implements OnInit {
 
   async ionViewWillEnter(): Promise<void> {
     try {
-      console.log(`ScanPage.ionViewWillEnter - beginning of ionViewWillEnter`);
       this.profile = this.profileState.getHealthProfile();
-      console.log(`ScanPage.ionViewWillEnter: profile from state: ${JSON.stringify(this.profile)}`);
-      this.warnings = this.profile.medical.allergies.map((allergy: any) => {return allergy.name as string;});
+      const allergies: string[] = this.profile?.medical?.allergies?.map((a: any) => a.name as string) ?? [];
+      const intolerances: string[] = this.profile?.medical?.foodIntolerances?.map((a: any) => a.name as string) ?? [];
+      this.warnings = [...allergies, ...intolerances];
       this.noProduct = true;
-      console.log(`ProductPage.ionViewWillEnter: beginning of ionViewWillEnter`);
-      let currNavigation = this.router.getCurrentNavigation();
-      if (!currNavigation) {
-        console.log(`ProductPage.ionViewWillEnter: no currNavigation found, using last successful`);
-        currNavigation = this.router.lastSuccessfulNavigation;
-      }
-      console.log(`ProductPage.ionViewWillEnter: curr navigation properties: ${Object.keys(currNavigation || {})}`);
-      if (currNavigation) {
-        const routerState = JSON.parse(JSON.stringify(currNavigation.extras.state));
-        console.log(`ProductPage.ionViewWillEnter: routerState: ${JSON.stringify(routerState)}`);
-        const confirmProductMode: boolean = Boolean(routerState['confirmProductMode']);
-        this.confirmProductMode = confirmProductMode;
-        const product = routerState['product'];
-        console.log(`ProductPage.ionViewWillEnter: product from navParams: ${JSON.stringify(product)}`);
-        this.productType = product.type;
+
+      let currNavigation = this.router.getCurrentNavigation() ?? this.router.lastSuccessfulNavigation;
+      if (!currNavigation?.extras?.state) return;
+
+      const routerState = JSON.parse(JSON.stringify(currNavigation.extras.state));
+
+      // Prefer Supabase product if passed from results page
+      if (routerState['supabaseProduct']) {
+        this.supabaseProduct = routerState['supabaseProduct'] as SupabaseProduct;
         this.noProduct = false;
-        if (product && product.hasOwnProperty('message') && product.message === AppConfig.controlMessages.noProduct) {
-          this.noProduct = true;
-          this.product = JSON.parse(JSON.stringify(AppConfig.emptyWuzinitProduct));
-          this.noProductBarcode = product.barcode;
-        } else if (product && product.hasOwnProperty('code')) {
-          console.log(`ProductPage.ionViewWillEnter: using OpenFoodFacts product from navParams`);
-          console.log(`ProductPage.ionViewWillEnter: front images: ${JSON.stringify(product.selected_images.front)}`);
-          this.product = JSON.parse(JSON.stringify(product));
-          await this.setAlerts();
-        } else if (this.product && this.product.hasOwnProperty('id')) {
-          console.log(`ProductPage.ionViewWillEnter: using local product`);
-          await this.setAlerts();
-          return;
-        } else {
-          this.noProduct = true;
-          this.product = JSON.parse(JSON.stringify(AppConfig.emptyWuzinitProduct));
-          this.noProductBarcode = product.barcode;
-        }
+        this.ingredientsTextHTML = this.sanitizer.bypassSecurityTrustHtml(
+          this.addAlertHighlights(this.supabaseProduct.ingredients_text || '')
+        );
+        this.addFeedback();
+        return;
+      }
+
+      // Legacy: OFF product passed from barcode scanner
+      const product = routerState['product'];
+      if (!product) return;
+      this.productType = product.type || 'off';
+      this.noProduct = false;
+      if (product?.message === AppConfig.controlMessages.noProduct) {
+        this.noProduct = true;
+        this.product = JSON.parse(JSON.stringify(AppConfig.emptyWuzinitProduct));
+        this.noProductBarcode = product.barcode;
+      } else if (product?.code) {
+        this.product = JSON.parse(JSON.stringify(product));
+        await this.setAlerts();
+      } else {
+        this.noProduct = true;
+        this.product = JSON.parse(JSON.stringify(AppConfig.emptyWuzinitProduct));
+        this.noProductBarcode = product.barcode;
       }
     } catch (error) {
       console.error(`ProductPage.ionViewWillEnter Error: ${JSON.stringify(error)}`);
-      throw error;
     }
   }
 
@@ -234,12 +231,12 @@ export class ProductPage implements OnInit {
   }
 
   private addFeedback(): void {
-    if (this.ingredientsTextHTML.hasOwnProperty('length') && this.ingredientsTextHTML.length === 0) {
+    const hasIngredients = !!(this.supabaseProduct?.ingredients_text || this.product?.ingredients_text);
+    if (!hasIngredients) {
       this.insufficientData = true;
       return;
-    } else {
-      this.insufficientData = false;
     }
+    this.insufficientData = false;
     if (this.allergenPoisonWarning || this.tracesPoisonWarning || this.ingredientsPoisonWarning) {
       this.poisonWarning = true;
       return;
@@ -247,6 +244,13 @@ export class ProductPage implements OnInit {
     if (this.allergenDangerWarning || this.tracesDangerWarning || this.ingredientsDangerWarning) {
       this.dangerWarning = true;
       return;
+    }
+    // Check warning matches via ingredient text for both product types
+    if (this.warnings.length) {
+      const text = (this.supabaseProduct?.ingredients_text || this.product?.ingredients_text || '').toLowerCase();
+      if (this.warnings.some(w => text.includes(w.toLowerCase()))) {
+        this.dangerWarning = true;
+      }
     }
   }
 

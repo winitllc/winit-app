@@ -17,12 +17,15 @@
             (error)="$any($event.target).src='assets/imgs/noProduct.png'"
             loading="lazy"
             class="product-thumb"
-            [alt]="product.product_name || ''">
+            [alt]="product.name || ''">
           <ion-badge *ngIf="hasWarning(product)" color="danger" class="warning-badge">!</ion-badge>
         </div>
         <ion-label>
-          <h2 class="product-name">{{product.product_name || product.product_name_en || 'Unknown product'}}</h2>
-          <p class="product-brand" *ngIf="product.brands">{{product.brands}}</p>
+          <h2 class="product-name">{{product.name || 'Unknown product'}}</h2>
+          <p class="product-brand" *ngIf="product.brand">{{product.brand}}</p>
+          <p class="nutriscore" *ngIf="product.nutriscore_grade">
+            Nutri-Score: <strong>{{product.nutriscore_grade | uppercase}}</strong>
+          </p>
         </ion-label>
       </ion-item>
     </ion-list>
@@ -34,6 +37,7 @@
         <ion-col class="ion-text-center">
           <img src="assets/imgs/noProduct.png" class="no-results-img" alt="No results">
           <p>No products found.</p>
+          <p *ngIf="!noResults" class="no-results-hint">Products for this category haven't been imported yet. Check back soon.</p>
         </ion-col>
       </ion-row>
     </ion-grid>

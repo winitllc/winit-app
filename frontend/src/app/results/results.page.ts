@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router, NavigationExtras } from '@angular/router';
 import { NavController, LoadingController, InfiniteScrollCustomEvent, IonContent } from '@ionic/angular';
 import { ProfileState } from '../profile/profile.state';
-import { OpenFoodFactsProduct, ProductSearchResult, ProductService } from '../product/product.service';
+import { SupabaseProduct, SupabaseProductPage, SupabaseProductService } from '../util/supabase-product.service';
 
 @Component({
   selector: 'app-results',
@@ -12,14 +12,15 @@ import { OpenFoodFactsProduct, ProductSearchResult, ProductService } from '../pr
 export class ResultsPage implements OnInit {
 
   public noResults = false;
-  public products: OpenFoodFactsProduct[] = [];
+  public products: SupabaseProduct[] = [];
   public category = '';
 
-  private tag = '';
+  private slug = '';
   private nextPageRequested = false;
   private resultsSoFar = 0;
   private page = 0;
-  private resultsCount = 0;
+  private resultsTotal = 0;
+  private pageSize = 24;
   private warnings: string[] = [];
 
   @ViewChild(IonContent) content: IonContent | undefined;
@@ -28,7 +29,7 @@ export class ResultsPage implements OnInit {
     private navCtrl: NavController,
     private router: Router,
     private profileState: ProfileState,
-    private productService: ProductService
+    private supabaseProducts: SupabaseProductService,
   ) {}
 
   ngOnInit() {}
@@ -41,24 +42,26 @@ export class ResultsPage implements OnInit {
       this.noResults = false;
 
       const profile = this.profileState.getHealthProfile();
-      this.warnings = profile?.medical?.allergies?.map((a: any) => a.name as string) ?? [];
+      // Collect all user health flags for warning matching
+      const allergies: string[] = profile?.medical?.allergies?.map((a: any) => a.name as string) ?? [];
+      const intolerances: string[] = profile?.medical?.foodIntolerances?.map((a: any) => a.name as string) ?? [];
+      const diets: string[] = profile?.medical?.lifestyleDiet?.map((a: any) => a.name as string) ?? [];
+      this.warnings = [...allergies, ...intolerances];
 
       let nav = this.router.getCurrentNavigation() ?? this.router.lastSuccessfulNavigation;
-      if (!nav?.extras?.state) {
-        this.noResults = true;
-        return;
-      }
+      if (!nav?.extras?.state) { this.noResults = true; return; }
 
       const state = JSON.parse(JSON.stringify(nav.extras.state));
-      const searchResults: ProductSearchResult = state['productSearchResults'];
       this.category = state['category'] || '';
-      this.tag = state['tag'] || this.category;
+      this.slug = state['slug'] || this.category;
 
-      if (searchResults?.products?.length) {
-        this.products = searchResults.products;
-        this.resultsCount = searchResults.count;
-        this.resultsSoFar = searchResults.products.length;
-        this.page = searchResults.page || 1;
+      const supabaseResults: SupabaseProductPage = state['supabaseResults'];
+      if (supabaseResults?.products?.length) {
+        this.products = supabaseResults.products;
+        this.resultsTotal = supabaseResults.total;
+        this.resultsSoFar = supabaseResults.products.length;
+        this.page = supabaseResults.page || 0;
+        this.pageSize = supabaseResults.pageSize || 24;
         this.noResults = false;
       } else {
         this.noResults = true;
@@ -72,13 +75,13 @@ export class ResultsPage implements OnInit {
   selectProduct(id: string): void {
     const product = this.products.find(p => p.id === id);
     if (!product) return;
-    const navExtras: NavigationExtras = { state: { product } };
+    const navExtras: NavigationExtras = { state: { supabaseProduct: product } };
     this.navCtrl.navigateForward('tabs/product', navExtras);
   }
 
   public async scrollEvent(infiniteScroll: InfiniteScrollCustomEvent): Promise<void> {
     try {
-      if (this.resultsSoFar >= this.resultsCount || this.nextPageRequested) {
+      if (this.resultsSoFar >= this.resultsTotal || this.nextPageRequested) {
         infiniteScroll.target.complete();
         return;
       }
@@ -94,29 +97,38 @@ export class ResultsPage implements OnInit {
 
   private async requestNextPage(): Promise<void> {
     try {
-      const nextPage = String(this.page + 1);
-      const newResults: ProductSearchResult = await this.productService.searchProductByCategory(this.tag, nextPage);
+      const nextPage = this.page + 1;
+      const newResults = await this.supabaseProducts.getProductsByCategory(this.slug, nextPage, this.pageSize);
       for (const product of newResults.products) {
         this.products.push(product);
       }
       this.resultsSoFar += newResults.products.length;
-      this.page += 1;
-      console.log(`ResultsPage.requestNextPage: page=${this.page} total=${this.resultsSoFar}`);
+      this.page = nextPage;
     } catch (error) {
       console.error(`ResultsPage.requestNextPage: ${JSON.stringify(error)}`);
     }
   }
 
-  getThumbUrl(product: OpenFoodFactsProduct): string {
-    return product.image_thumb_url
-      || product.image_front_thumb_url
-      || product.image_front_url
-      || '';
+  getThumbUrl(product: SupabaseProduct): string {
+    return product.image_front_url || '';
   }
 
-  hasWarning(product: OpenFoodFactsProduct): boolean {
-    if (!this.warnings.length || !product.ingredients_text) return false;
-    const text = product.ingredients_text.toLowerCase();
-    return this.warnings.some(w => text.includes(w.toLowerCase()));
+  hasWarning(product: SupabaseProduct): boolean {
+    if (!this.warnings.length) return false;
+    // Check normalized allergen_tags first (reliable)
+    if (product.allergen_tags?.length) {
+      const allergens = product.allergen_tags.map(t => t.toLowerCase());
+      if (this.warnings.some(w => allergens.includes(w.toLowerCase()))) return true;
+    }
+    // Fall back to ingredient text scan
+    if (product.ingredients_text) {
+      const text = product.ingredients_text.toLowerCase();
+      if (this.warnings.some(w => text.includes(w.toLowerCase()))) return true;
+    }
+    return false;
+  }
+
+  matchesDiet(product: SupabaseProduct, diet: string): boolean {
+    return product.diet_tags?.some(t => t.toLowerCase() === diet.toLowerCase()) ?? false;
   }
 }

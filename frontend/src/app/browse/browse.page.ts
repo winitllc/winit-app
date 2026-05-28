@@ -3,8 +3,8 @@ import { AppConfig } from '../app.config';
 
 import { NavController, LoadingController, LoadingOptions, ModalController } from '@ionic/angular';
 import { NavigationExtras } from '@angular/router';
-import { ProductSearchResult, ProductService } from '../product/product.service';
 import { SearchProductModalComponent } from './search-productModal.page';
+import { SupabaseProductService, SupabaseCategory, SupabaseProductPage } from '../util/supabase-product.service';
 
 @Component({
   selector: 'app-browse',
@@ -14,25 +14,38 @@ import { SearchProductModalComponent } from './search-productModal.page';
 export class BrowsePage implements OnInit {
 
   loading: HTMLIonLoadingElement | null = null;
-  public categories = AppConfig.categories.mainCategories;
+  public categories: SupabaseCategory[] = AppConfig.categories.mainCategories.map(c => ({
+    id: c.tag,
+    slug: c.tag,
+    display_name: c.displayName,
+    image_url: c.image,
+    sort_order: 0,
+    off_tag: `en:${c.tag}`,
+  }));
 
   constructor(
     public navCtrl: NavController,
     private loadingCtrl: LoadingController,
     private modalCtrl: ModalController,
-    private productService: ProductService
+    private supabaseProducts: SupabaseProductService,
   ) {}
 
-  async ngOnInit(): Promise<void> {}
+  async ngOnInit(): Promise<void> {
+    // Load categories from Supabase so image_url and display_name are always up-to-date
+    try {
+      const cats = await this.supabaseProducts.getCategories();
+      if (cats.length) this.categories = cats;
+    } catch {
+      // Falls back to AppConfig categories already set above
+    }
+  }
 
-  async browseProducts(tag: string, displayName: string) {
-    console.log(`BrowsePage.browseProducts: tag=${tag}`);
+  async browseProducts(slug: string, displayName: string) {
     try {
       await this.presentLoading(`Loading ${displayName}…`);
-      const productSearchResults: ProductSearchResult = await this.productService.searchProductByCategory(tag);
-      console.log(`BrowsePage.browseProducts: count=${productSearchResults.count}`);
+      const result: SupabaseProductPage = await this.supabaseProducts.getProductsByCategory(slug);
       await this.dismissLoading();
-      this.pushToResultsPage(productSearchResults, displayName, tag);
+      this.pushToResultsPage(result, displayName, slug);
     } catch (error) {
       await this.dismissLoading();
       console.error(`BrowsePage.browseProducts Error: ${JSON.stringify(error)}`);
@@ -47,16 +60,13 @@ export class BrowsePage implements OnInit {
     modal.present();
 
     const { data, role } = await modal.onWillDismiss();
-    if (role !== 'confirm' || !data) {
-      return;
-    }
-    // Modal returns { tag, displayName }
+    if (role !== 'confirm' || !data) return;
     this.browseProducts(data.tag, data.displayName);
   }
 
-  private pushToResultsPage(productSearchResults: ProductSearchResult, category: string, tag: string): void {
+  private pushToResultsPage(result: SupabaseProductPage, category: string, slug: string): void {
     const navExtras: NavigationExtras = {
-      state: { productSearchResults, category, tag }
+      state: { supabaseResults: result, category, slug }
     };
     this.navCtrl.navigateForward('tabs/results', navExtras);
   }
