@@ -44,10 +44,15 @@ export interface AppCategory {
 
 export interface ImportJob {
   id: string
+  source: 'api' | 'csv'
   category_slug: string
   off_tag: string
+  filename: string | null
   pages_imported: number
   products_upserted: number
+  products_skipped: number
+  auto_mapped: number
+  needs_review: number
   status: 'running' | 'completed' | 'failed'
   error_message: string
   started_at: string
@@ -175,6 +180,69 @@ export async function triggerImport(
   })
   if (!res.ok) throw new Error(`Import failed: ${res.status}`)
   return res.json()
+}
+
+// ─── CSV import ───────────────────────────────────────────────────────────────
+
+const CSV_CHUNK_LINES = 2000 // ~1-2 MB of text per chunk
+
+export interface CsvChunkResult {
+  processed: number
+  skipped: number
+  auto_mapped: number
+  needs_review: number
+}
+
+export interface CsvImportResult {
+  job_id: string
+  products_upserted: number
+  products_skipped: number
+  auto_mapped: number
+  needs_review: number
+}
+
+async function callImportCsv(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/import-csv`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = await res.json()
+  if (!res.ok || data.error) throw new Error(data.error ?? `HTTP ${res.status}`)
+  return data
+}
+
+export async function createCsvImportJob(filename: string): Promise<string> {
+  const data = await callImportCsv({ action: 'create_job', filename })
+  return data.job_id as string
+}
+
+export async function processCsvChunk(
+  jobId: string,
+  header: string,
+  chunk: string,
+): Promise<CsvChunkResult> {
+  const data = await callImportCsv({ action: 'process_chunk', job_id: jobId, header, chunk })
+  return data as unknown as CsvChunkResult
+}
+
+export async function finishCsvImportJob(jobId: string): Promise<CsvImportResult> {
+  const data = await callImportCsv({ action: 'finish_job', job_id: jobId })
+  return data as unknown as CsvImportResult
+}
+
+export async function failCsvImportJob(jobId: string, message: string): Promise<void> {
+  await patch('import_jobs', { status: 'failed', error_message: message, completed_at: new Date().toISOString() }, `id=eq.${jobId}`)
+}
+
+/** Split CSV text (already loaded) into line-chunks for streaming upload */
+export function splitIntoChunks(text: string, linesPerChunk = CSV_CHUNK_LINES): string[] {
+  const lines = text.split('\n')
+  const chunks: string[] = []
+  for (let i = 0; i < lines.length; i += linesPerChunk) {
+    chunks.push(lines.slice(i, i + linesPerChunk).join('\n'))
+  }
+  return chunks
 }
 
 export async function getProductStats(): Promise<{ pending: number; approved: number; rejected: number; total: number }> {
