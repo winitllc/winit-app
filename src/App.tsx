@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
 import ProductEdit from './pages/ProductEdit'
 import Import from './pages/Import'
+import Users from './pages/Users'
 import styles from './App.module.css'
 
 export default function App() {
@@ -27,6 +28,10 @@ export default function App() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Import
             </NavLink>
+            <NavLink to="/users" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Users
+            </NavLink>
           </nav>
         </aside>
         <main className={styles.content}>
@@ -36,6 +41,7 @@ export default function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/products/:id/edit" element={<ProductEdit />} />
             <Route path="/import" element={<Import />} />
+            <Route path="/users" element={<Users />} />
           </Routes>
         </main>
       </div>

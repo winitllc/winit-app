@@ -3,14 +3,32 @@ import { Link } from 'react-router-dom'
 import { getProductStats } from '../lib/supabase'
 import styles from './Dashboard.module.css'
 
+const SUPABASE_URL = 'https://twosrdqyaxhdfyqgefjm.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3b3NyZHF5YXhoZGZ5cWdlZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMDQzMDksImV4cCI6MjA5NTU4MDMwOX0.qJ8ZQaMobmuL29-A3swShTbF-D7SVf1oUK9LU7vO7RE'
+
 interface Stats { pending: number; approved: number; rejected: number; total: number }
+
+async function getUserTotal(): Promise<number> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/winit_profiles?select=id`, {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      Prefer: 'count=exact',
+      Range: '0-0',
+    },
+  })
+  return parseInt((res.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0
+}
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats>({ pending: 0, approved: 0, rejected: 0, total: 0 })
+  const [userTotal, setUserTotal] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getProductStats().then(setStats).finally(() => setLoading(false))
+    Promise.all([getProductStats(), getUserTotal()])
+      .then(([s, u]) => { setStats(s); setUserTotal(u) })
+      .finally(() => setLoading(false))
   }, [])
 
   return (
@@ -25,6 +43,7 @@ export default function Dashboard() {
           <StatCard label="Approved" value={stats.approved} color="success" link="/products?status=approved" />
           <StatCard label="Rejected" value={stats.rejected} color="danger" link="/products?status=rejected" />
           <StatCard label="Total Products" value={stats.total} color="primary" link="/products" />
+          <StatCard label="WINIT Users" value={userTotal} color="users" link="/users" />
         </div>
       )}
 
@@ -36,6 +55,9 @@ export default function Dashboard() {
           </Link>
           <Link to="/import" className={`${styles.btn} ${styles.btnSecondary}`}>
             Import from OpenFoodFacts
+          </Link>
+          <Link to="/users" className={`${styles.btn} ${styles.btnSecondary}`}>
+            View Users
           </Link>
         </div>
       </div>

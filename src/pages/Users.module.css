@@ -1,0 +1,152 @@
+.header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 24px; }
+.title { font-size: 1.75rem; font-weight: 700; color: var(--neutral-900); }
+.totalBadge {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 99px;
+  padding: 2px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.toolbar { margin-bottom: 16px; }
+.search {
+  width: 100%;
+  max-width: 400px;
+  padding: 9px 14px;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius);
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.search:focus { border-color: var(--primary); }
+
+.toast {
+  background: var(--success);
+  color: white;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  font-weight: 500;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+.tableWrap {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.table { width: 100%; border-collapse: collapse; }
+.table th {
+  text-align: left;
+  padding: 11px 16px;
+  background: var(--neutral-50);
+  border-bottom: 1px solid var(--neutral-200);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--neutral-500);
+  white-space: nowrap;
+}
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--neutral-100);
+  vertical-align: middle;
+}
+.row:last-child td { border-bottom: none; }
+.row:hover td { background: var(--neutral-50); }
+
+/* user cell — avatar + text inline */
+.table td:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.userInfo { display: flex; flex-direction: column; }
+.userName { font-weight: 600; font-size: 0.9rem; color: var(--neutral-800); }
+.userEmail { font-size: 0.78rem; color: var(--neutral-500); margin-top: 1px; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.badgeActive   { background: #d1fae5; color: #065f46; }
+.badgeInactive { background: #fee2e2; color: #991b1b; }
+.badgeDone     { background: #dbeafe; color: #1e40af; }
+.badgePending  { background: #fef3c7; color: #92400e; }
+
+.points { font-weight: 600; color: var(--primary); }
+.date { color: var(--neutral-500); font-size: 0.85rem; }
+
+.toggleBtn {
+  padding: 5px 12px;
+  border-radius: var(--radius);
+  border: 1px solid;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.toggleBtn:hover { opacity: 0.8; }
+.toggleDeactivate { border-color: #fca5a5; color: #991b1b; background: #fff5f5; }
+.toggleActivate   { border-color: #6ee7b7; color: #065f46; background: #f0fdf4; }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 0 4px;
+}
+.paginationInfo { font-size: 0.85rem; color: var(--neutral-500); }
+.paginationBtns { display: flex; gap: 8px; }
+.pageBtn {
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--neutral-200);
+  background: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pageBtn:hover:not(:disabled) { background: var(--neutral-100); }
+.pageBtn:disabled { opacity: 0.4; cursor: default; }
+
+.empty { text-align: center; padding: 64px; color: var(--neutral-400); }
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--neutral-200);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 64px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
