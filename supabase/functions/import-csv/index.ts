@@ -275,7 +275,11 @@ Deno.serve(async (req: Request) => {
           .upsert(rows, { onConflict: "barcode", ignoreDuplicates: false })
           .select("id, categorization_status");
 
-        if (upsertErr) { console.error("Upsert error:", upsertErr.message); skipped += rows.length; continue; }
+        if (upsertErr) {
+          console.error("Upsert error:", upsertErr.message, upsertErr.details, upsertErr.hint);
+          // Return the error immediately so the frontend can surface it
+          return json({ error: `Upsert failed: ${upsertErr.message} | details: ${upsertErr.details ?? ""} | hint: ${upsertErr.hint ?? ""}`, processed, skipped: skipped + rows.length }, 200);
+        }
 
         processed += upserted?.length ?? 0;
         for (const p of upserted ?? []) {
