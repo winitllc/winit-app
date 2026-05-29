@@ -1,0 +1,61 @@
+.spinner { width: 40px; height: 40px; border: 3px solid var(--neutral-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 64px auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.notFound { text-align: center; padding: 64px; color: var(--neutral-400); }
+
+.header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.title { font-size: 1.75rem; font-weight: 700; color: var(--neutral-900); }
+.backBtn { padding: 8px 14px; border-radius: var(--radius); border: 1px solid var(--neutral-200); background: white; color: var(--neutral-600); font-weight: 500; cursor: pointer; }
+.backBtn:hover { background: var(--neutral-100); }
+
+.savedToast { background: var(--success); color: white; padding: 10px 16px; border-radius: var(--radius); margin-bottom: 16px; font-weight: 500; animation: fadeIn 0.2s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.layout { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+.preview { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 24px; }
+.imgCard { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.imgLabel { padding: 8px 12px; font-size: 0.75rem; color: var(--neutral-500); font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--neutral-100); }
+.productImg { width: 100%; max-height: 220px; object-fit: contain; display: block; background: var(--neutral-50); }
+.previewInfo { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; }
+.barcode { font-family: monospace; font-size: 0.72rem; color: var(--neutral-400); margin-bottom: 6px; }
+.previewName { font-weight: 600; font-size: 1rem; color: var(--neutral-800); }
+.previewBrand { font-size: 0.85rem; color: var(--neutral-500); margin-bottom: 10px; }
+.nutriscore { display: inline-block; padding: 3px 12px; border-radius: 99px; font-size: 0.78rem; font-weight: 700; color: white; margin-right: 6px; }
+.gradeA { background: #038141; } .gradeB { background: #85bb2f; } .gradeC { background: #fecb02; color: #333; } .gradeD { background: #ee8100; } .gradeE { background: #e63e11; }
+.nova { display: inline-block; padding: 3px 10px; border-radius: 99px; background: #e0e7ff; color: #3730a3; font-size: 0.78rem; font-weight: 600; }
+
+.formCol { display: flex; flex-direction: column; gap: 16px; }
+
+.section { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.sectionTitle { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--neutral-500); padding: 14px 16px 10px; border-bottom: 1px solid var(--neutral-100); background: var(--neutral-50); }
+.sectionBody { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+.label { font-size: 0.82rem; font-weight: 600; color: var(--neutral-600); }
+.input { padding: 8px 12px; border: 1px solid var(--neutral-200); border-radius: var(--radius); outline: none; width: 100%; }
+.input:focus { border-color: var(--primary); }
+.textarea { padding: 8px 12px; border: 1px solid var(--neutral-200); border-radius: var(--radius); outline: none; width: 100%; resize: vertical; }
+.textarea:focus { border-color: var(--primary); }
+.select { padding: 8px 12px; border: 1px solid var(--neutral-200); border-radius: var(--radius); background: white; outline: none; width: 100%; cursor: pointer; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.checkGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.checkLabel { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer; padding: 4px; border-radius: 4px; }
+.checkLabel:hover { background: var(--neutral-50); }
+
+.tagInput { display: flex; flex-direction: column; gap: 8px; }
+.tagRow { display: flex; gap: 8px; }
+.addBtn { padding: 8px 14px; background: var(--primary); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 0.85rem; white-space: nowrap; }
+.addBtn:hover { background: var(--primary-hover); }
+.tagList { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; background: var(--neutral-100); border-radius: 99px; font-size: 0.82rem; color: var(--neutral-700); }
+.tag button { background: none; border: none; cursor: pointer; color: var(--neutral-400); font-size: 1rem; line-height: 1; padding: 0; }
+.tag button:hover { color: var(--danger); }
+
+.formActions { display: flex; justify-content: flex-end; gap: 12px; padding-bottom: 32px; }
+.cancelBtn { padding: 10px 20px; border: 1px solid var(--neutral-200); border-radius: var(--radius); background: white; color: var(--neutral-600); font-weight: 500; cursor: pointer; }
+.cancelBtn:hover { background: var(--neutral-100); }
+.saveBtn { padding: 10px 24px; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer; }
+.saveBtn:hover:not(:disabled) { background: var(--primary-hover); }
+.saveBtn:disabled { opacity: 0.5; cursor: default; }

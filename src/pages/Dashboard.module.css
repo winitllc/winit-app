@@ -1,0 +1,61 @@
+.title { font-size: 1.75rem; font-weight: 700; color: var(--neutral-900); margin-bottom: 24px; }
+.subtitle { font-size: 1.1rem; font-weight: 600; color: var(--neutral-700); margin-bottom: 16px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  text-align: center;
+  display: block;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border-top: 3px solid transparent;
+}
+.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.cardValue { font-size: 2.5rem; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+.cardLabel { font-size: 0.85rem; color: var(--neutral-500); font-weight: 500; }
+
+.warning { border-top-color: var(--warning); }
+.warning .cardValue { color: var(--warning); }
+.success { border-top-color: var(--success); }
+.success .cardValue { color: var(--success); }
+.danger { border-top-color: var(--danger); }
+.danger .cardValue { color: var(--danger); }
+.primary { border-top-color: var(--primary); }
+.primary .cardValue { color: var(--primary); }
+
+.actions { background: white; border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+.actionRow { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+.btnPrimary { background: var(--primary); color: white; }
+.btnPrimary:hover { background: var(--primary-hover); }
+.btnSecondary { background: var(--neutral-100); color: var(--neutral-700); border: 1px solid var(--neutral-200); }
+.btnSecondary:hover { background: var(--neutral-200); }
+
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--neutral-200);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 48px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

@@ -1,0 +1,190 @@
+.title { font-size: 1.75rem; font-weight: 700; color: var(--neutral-900); margin-bottom: 24px; }
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.search {
+  flex: 1;
+  min-width: 260px;
+  padding: 9px 14px;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius);
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.search:focus { border-color: var(--primary); }
+
+.select {
+  padding: 9px 12px;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius);
+  background: white;
+  outline: none;
+  cursor: pointer;
+}
+
+.bulkActions { display: flex; gap: 8px; align-items: center; }
+
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.85; }
+.btnSuccess { background: var(--success); color: white; }
+.btnDanger { background: var(--danger); color: white; }
+.btnGhost { background: var(--neutral-100); color: var(--neutral-600); border: 1px solid var(--neutral-200); }
+
+.toast {
+  background: var(--success);
+  color: white;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  font-weight: 500;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+.tableWrap {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 11px 12px;
+  background: var(--neutral-50);
+  border-bottom: 1px solid var(--neutral-200);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--neutral-500);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--neutral-100);
+  vertical-align: middle;
+}
+
+.row:last-child td { border-bottom: none; }
+.row:hover td { background: var(--neutral-50); }
+
+.thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: var(--neutral-100);
+  display: block;
+}
+.noImg {
+  width: 44px; height: 44px;
+  background: var(--neutral-100);
+  border-radius: 4px;
+}
+
+.productName { font-weight: 500; font-size: 0.9rem; color: var(--neutral-800); }
+.productMeta { font-size: 0.78rem; color: var(--neutral-500); margin-top: 1px; }
+.productBarcode { font-size: 0.72rem; color: var(--neutral-400); font-family: monospace; margin-top: 1px; }
+
+.nutriscore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: white;
+}
+.gradeA { background: #038141; }
+.gradeB { background: #85bb2f; }
+.gradeC { background: #fecb02; color: #333; }
+.gradeD { background: #ee8100; }
+.gradeE { background: #e63e11; }
+
+.statusBadge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pending { background: #fef3c7; color: #92400e; }
+.approved { background: #d1fae5; color: #065f46; }
+.rejected { background: #fee2e2; color: #991b1b; }
+
+.rowActions { display: flex; gap: 4px; align-items: center; }
+.iconBtn {
+  width: 30px; height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+}
+.iconBtn:hover { background: var(--neutral-100); }
+.approveBtn:hover { background: #d1fae5; }
+.rejectBtn:hover { background: #fee2e2; }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 0 4px;
+}
+.paginationInfo { font-size: 0.85rem; color: var(--neutral-500); }
+.paginationBtns { display: flex; gap: 8px; }
+.pageBtn {
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--neutral-200);
+  background: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pageBtn:hover:not(:disabled) { background: var(--neutral-100); }
+.pageBtn:disabled { opacity: 0.4; cursor: default; }
+
+.empty { text-align: center; padding: 64px; color: var(--neutral-400); font-size: 1rem; }
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--neutral-200);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 64px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
