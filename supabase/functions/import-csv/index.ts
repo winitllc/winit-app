@@ -273,9 +273,11 @@ Deno.serve(async (req: Request) => {
         }
         if (!rows.length) continue;
 
+        // Insert new products only — skip any barcode that already exists.
+        // This protects approved/rejected products from being overwritten.
         const { error: upsertErr } = await supabase
           .from("products")
-          .upsert(rows, { onConflict: "barcode", ignoreDuplicates: false });
+          .upsert(rows, { onConflict: "barcode", ignoreDuplicates: true });
 
         if (upsertErr) {
           console.error("Upsert error:", upsertErr.message, upsertErr.details, upsertErr.hint);
