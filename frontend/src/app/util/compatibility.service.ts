@@ -25,6 +25,39 @@ export interface QuickHighlight {
   type: 'good' | 'warn' | 'danger';
 }
 
+// allergen_tag values (from database) → profile IDs they cover
+// e.g. tag "gluten" covers users with wheat/barley/rye/oats/celiac
+// e.g. tag "nuts" covers all tree nut users
+const ALLERGEN_TAG_COVERS: Record<string, string[]> = {
+  'gluten':       ['wheat','barley','rye','oats','celiac'],
+  'wheat':        ['wheat','celiac'],
+  'milk':         ['milk','lactose_intol','galactosemia'],
+  'dairy':        ['milk','lactose_intol','galactosemia'],
+  'eggs':         ['eggs'],
+  'egg':          ['eggs'],
+  'nuts':         ['almonds','cashews','walnuts','pecans','pistachios','hazelnuts','brazil_nuts','macadamia','pine_nuts'],
+  'tree nuts':    ['almonds','cashews','walnuts','pecans','pistachios','hazelnuts','brazil_nuts','macadamia','pine_nuts'],
+  'peanuts':      ['peanuts'],
+  'peanut':       ['peanuts'],
+  'soybeans':     ['soy'],
+  'soy':          ['soy'],
+  'soya':         ['soy'],
+  'fish':         ['fish'],
+  'shellfish':    ['shellfish'],
+  'sesame':       ['sesame'],
+  'sesame-seeds': ['sesame'],
+  'sesame seeds': ['sesame'],
+  'mustard':      ['mustard'],
+  'celery':       ['celery'],
+  'lupin':        ['lupin'],
+  'sulphites':    ['sulphites'],
+  'sulfites':     ['sulphites'],
+  'avoine':       ['oats'],     // French
+  'lait':         ['milk','lactose_intol'], // French
+  'oeuf':         ['eggs'],     // French
+  'blé':          ['wheat','celiac'], // French
+};
+
 // Catalog ID → ingredient keywords for offline matching
 const ALLERGEN_KEYWORDS: Record<string, string[]> = {
   milk:        ['milk','dairy','lactose','cream','butter','cheese','whey','casein','ghee','lactulose'],
@@ -85,28 +118,28 @@ const DIET_GOOD_MAP: Record<string, string> = {
   'keto': 'Keto', 'paleo': 'Paleo', 'halal': 'Halal', 'kosher': 'Kosher',
 };
 
-// Ingredient keywords that disqualify a diet claim
+// Ingredient keywords that disqualify a diet claim (whole-word matched)
 const DIET_DISQUALIFIERS: Record<string, string[]> = {
   'gluten-free':   ['wheat','gluten','barley','rye','oats','spelt','kamut','farro','durum','bulgur','semolina'],
-  'dairy-free':    ['milk','dairy','lactose','cream','butter','cheese','whey','casein','ghee'],
-  'vegan':         ['milk','dairy','lactose','cream','butter','cheese','whey','casein','egg','eggs','albumin','honey','gelatin','meat','chicken','beef','pork','fish','shellfish'],
-  'vegetarian':    ['meat','chicken','beef','pork','veal','lamb','bacon','gelatin','lard','tallow','fish','shellfish','anchovy'],
-  'nut-free':      ['almond','cashew','walnut','pecan','pistachio','hazelnut','brazil nut','macadamia','pine nut','peanut','groundnut'],
-  'soy-free':      ['soy','soya','tofu','tempeh','miso','edamame','soybean'],
-  'egg-free':      ['egg','eggs','albumin','mayonnaise','meringue','ovalbumin'],
-  'keto':          ['sugar','wheat','flour','rice','corn','potato','oat','honey','syrup'],
-  'paleo':         ['wheat','flour','grain','dairy','milk','cream','cheese','legume','peanut','soy','corn','sugar','syrup'],
+  'dairy-free':    ['\\bmilk\\b','\\bdairy\\b','lactose','\\bcream\\b','\\bbutter\\b','\\bcheese\\b','\\bwhey\\b','\\bcasein\\b','\\bghee\\b'],
+  'vegan':         ['\\bmilk\\b','\\bdairy\\b','lactose','\\bcream\\b','\\bbutter\\b','\\bcheese\\b','\\bwhey\\b','\\bcasein\\b','\\begg\\b','\\beggs\\b','albumin','\\bhoney\\b','gelatin','\\bmeat\\b','chicken','\\bbeef\\b','\\bpork\\b','\\bfish\\b','shellfish'],
+  'vegetarian':    ['\\bmeat\\b','chicken','\\bbeef\\b','\\bpork\\b','veal','\\blamb\\b','bacon','gelatin','\\blard\\b','tallow','\\bfish\\b','shellfish','anchovy'],
+  'nut-free':      ['almond','cashew','walnut','pecan','pistachio','hazelnut','brazil nut','macadamia','pine nut','\\bpeanut\\b','groundnut'],
+  'soy-free':      ['\\bsoy\\b','soya','\\btofu\\b','tempeh','\\bmiso\\b','edamame','soybean'],
+  'egg-free':      ['\\begg\\b','\\beggs\\b','albumin','mayonnaise','meringue','ovalbumin'],
+  'keto':          ['\\bsugar\\b','wheat','\\bflour\\b','\\brice\\b','\\bcorn\\b','potato','\\boats\\b','\\bhoney\\b','syrup'],
+  'paleo':         ['wheat','\\bflour\\b','grain','\\bdairy\\b','\\bmilk\\b','\\bcream\\b','\\bcheese\\b','legume','\\bpeanut\\b','\\bsoy\\b','\\bcorn\\b','\\bsugar\\b','syrup'],
 };
 
 // Diet flags auto-inferred as "free from" when no disqualifiers found in ingredients
-const AUTO_DIET_INFERENCES: { tag: string; disqualifierKey: string; label: string }[] = [
-  { tag: 'gluten-free', disqualifierKey: 'gluten-free',  label: 'Gluten Free' },
-  { tag: 'dairy-free',  disqualifierKey: 'dairy-free',   label: 'Dairy Free' },
-  { tag: 'vegan',       disqualifierKey: 'vegan',         label: 'Vegan' },
-  { tag: 'vegetarian',  disqualifierKey: 'vegetarian',    label: 'Vegetarian' },
-  { tag: 'nut-free',    disqualifierKey: 'nut-free',      label: 'Nut Free' },
-  { tag: 'soy-free',    disqualifierKey: 'soy-free',      label: 'Soy Free' },
-  { tag: 'egg-free',    disqualifierKey: 'egg-free',      label: 'Egg Free' },
+const AUTO_DIET_INFERENCES: { disqualifierKey: string; label: string }[] = [
+  { disqualifierKey: 'gluten-free',  label: 'Gluten Free' },
+  { disqualifierKey: 'dairy-free',   label: 'Dairy Free' },
+  { disqualifierKey: 'vegan',        label: 'Vegan' },
+  { disqualifierKey: 'vegetarian',   label: 'Vegetarian' },
+  { disqualifierKey: 'nut-free',     label: 'Nut Free' },
+  { disqualifierKey: 'soy-free',     label: 'Soy Free' },
+  { disqualifierKey: 'egg-free',     label: 'Egg Free' },
 ];
 export class CompatibilityService {
   private dangerIds: string[] = [];   // allergy_ids + condition_ids from user profile
@@ -137,8 +170,15 @@ export class CompatibilityService {
       const keywords = ALLERGEN_KEYWORDS[id] ?? [id];
       const label = CATALOG_LABELS[id] ?? this.capitalize(id);
 
-      const inAllergenTags = allergenTagsLower.some(t => keywords.some(kw => t.includes(kw)));
-      const inIngredients = ingredientsLower && keywords.some(kw => ingredientsLower.includes(kw));
+      // Check allergen_tags using the reverse-lookup map (e.g. "gluten" tag covers wheat/oats users)
+      const inAllergenTags = allergenTagsLower.some(tag => {
+        const coveredIds = ALLERGEN_TAG_COVERS[tag] ?? [tag];
+        if (coveredIds.includes(id)) return true;
+        // Also direct keyword match on the tag string itself
+        return keywords.some(kw => tag.includes(kw));
+      });
+
+      const inIngredients = !!ingredientsLower && keywords.some(kw => ingredientsLower.includes(kw));
 
       if ((inAllergenTags || inIngredients) && !flags.some(f => f.reason === label)) {
         flags.push({ word: keywords[0] ?? id, reason: label, type: 'allergen', severity: 'danger' });
@@ -155,15 +195,18 @@ export class CompatibilityService {
       }
     }
 
-    // ── 3. Auto-infer "free from" diet flags from ingredients ─────────────────
-    if (ingredientsLower) {
-      for (const { tag, disqualifierKey, label } of AUTO_DIET_INFERENCES) {
-        if (goodTags.includes(label)) continue; // already confirmed by db tags
-        const disqualifiers = DIET_DISQUALIFIERS[disqualifierKey] ?? [];
-        const hasDisqualifier = disqualifiers.some(kw => ingredientsLower.includes(kw));
-        if (!hasDisqualifier) {
-          goodTags.push(label);
-        }
+    // ── 3. Auto-infer "free from" diet flags from ingredients + allergen_tags ──
+    // Build a combined text that includes allergen_tags for disqualification checks
+    const allergenTagsText = allergenTagsLower.join(' ');
+    for (const { disqualifierKey, label } of AUTO_DIET_INFERENCES) {
+      if (goodTags.includes(label)) continue;
+      const disqualifiers = DIET_DISQUALIFIERS[disqualifierKey] ?? [];
+      const hasDisqualifier = disqualifiers.some(kw => {
+        const re = new RegExp(kw, 'i');
+        return re.test(ingredientsLower) || re.test(allergenTagsText);
+      });
+      if (!hasDisqualifier) {
+        goodTags.push(label);
       }
     }
 
