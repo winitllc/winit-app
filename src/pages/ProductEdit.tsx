@@ -9,6 +9,98 @@ import styles from './ProductEdit.module.css'
 const KNOWN_ALLERGENS = ['gluten','wheat','milk','eggs','peanuts','tree-nuts','soy','fish','shellfish','sesame','mustard','celery','lupin','sulphites']
 const KNOWN_DIETS = ['vegan','vegetarian','gluten-free','dairy-free','keto','paleo','halal','kosher','low-sodium','low-sugar','organic','non-gmo']
 
+// Maps allergen_tag values from imported data → which KNOWN_ALLERGENS they imply
+const ALLERGEN_TAG_IMPLIES: Record<string, string[]> = {
+  'gluten':       ['gluten','wheat'],
+  'wheat':        ['gluten','wheat'],
+  'milk':         ['milk'],
+  'dairy':        ['milk'],
+  'eggs':         ['eggs'],
+  'egg':          ['eggs'],
+  'nuts':         ['tree-nuts'],
+  'tree nuts':    ['tree-nuts'],
+  'peanuts':      ['peanuts'],
+  'peanut':       ['peanuts'],
+  'soybeans':     ['soy'],
+  'soy':          ['soy'],
+  'soya':         ['soy'],
+  'fish':         ['fish'],
+  'shellfish':    ['shellfish'],
+  'sesame':       ['sesame'],
+  'sesame-seeds': ['sesame'],
+  'sesame seeds': ['sesame'],
+  'mustard':      ['mustard'],
+  'celery':       ['celery'],
+  'lupin':        ['lupin'],
+  'sulphites':    ['sulphites'],
+  'sulfites':     ['sulphites'],
+  'avoine':       ['gluten'],
+}
+
+// Ingredient keywords that imply an allergen checkbox
+const INGREDIENT_IMPLIES: { keywords: string[]; allergens: string[] }[] = [
+  { keywords: ['wheat','gluten','semolina','spelt','kamut','farro','durum','bulgur'], allergens: ['gluten','wheat'] },
+  { keywords: ['barley','rye','oats','oatmeal'], allergens: ['gluten'] },
+  { keywords: ['milk','dairy','lactose','cream','butter','cheese','whey','casein','ghee'], allergens: ['milk'] },
+  { keywords: ['egg','eggs','albumin','ovalbumin'], allergens: ['eggs'] },
+  { keywords: ['peanut','groundnut'], allergens: ['peanuts'] },
+  { keywords: ['almond','cashew','walnut','pecan','pistachio','hazelnut','brazil nut','macadamia','pine nut'], allergens: ['tree-nuts'] },
+  { keywords: ['soy','soya','tofu','tempeh','miso','edamame','soybean','soy lecithin'], allergens: ['soy'] },
+  { keywords: ['fish','anchovy','bass','cod','salmon','tuna','trout','herring','sardine','halibut'], allergens: ['fish'] },
+  { keywords: ['shellfish','shrimp','crab','lobster','prawn','clam','oyster','scallop','mussel'], allergens: ['shellfish'] },
+  { keywords: ['sesame','tahini'], allergens: ['sesame'] },
+  { keywords: ['mustard'], allergens: ['mustard'] },
+  { keywords: ['celery','celeriac'], allergens: ['celery'] },
+  { keywords: ['lupin','lupine'], allergens: ['lupin'] },
+  { keywords: ['sulphite','sulfite','sulphur dioxide','sulfur dioxide'], allergens: ['sulphites'] },
+]
+
+// Ingredient keywords that disqualify a diet label
+const DIET_DISQUALIFIERS: Record<string, string[]> = {
+  'gluten-free':  ['wheat','gluten','barley','rye','oats','spelt','kamut','farro','durum','bulgur','semolina'],
+  'dairy-free':   ['\\bmilk\\b','\\bdairy\\b','lactose','\\bcream\\b','\\bbutter\\b','\\bcheese\\b','\\bwhey\\b','\\bcasein\\b','\\bghee\\b'],
+  'vegan':        ['\\bmilk\\b','\\bdairy\\b','lactose','\\bcream\\b','\\bbutter\\b','\\bcheese\\b','\\bwhey\\b','\\bcasein\\b','\\begg\\b','\\beggs\\b','albumin','\\bhoney\\b','gelatin','\\bmeat\\b','chicken','\\bbeef\\b','\\bpork\\b','\\bfish\\b','shellfish'],
+  'vegetarian':   ['\\bmeat\\b','chicken','\\bbeef\\b','\\bpork\\b','veal','\\blamb\\b','bacon','gelatin','\\blard\\b','tallow','\\bfish\\b','shellfish','anchovy'],
+  'keto':         ['\\bsugar\\b','wheat','\\bflour\\b','\\brice\\b','\\bcorn\\b','potato','\\boats\\b','\\bhoney\\b','syrup'],
+  'paleo':        ['wheat','\\bflour\\b','grain','\\bdairy\\b','\\bmilk\\b','\\bcream\\b','\\bcheese\\b','legume','\\bpeanut\\b','\\bsoy\\b','\\bcorn\\b','\\bsugar\\b','syrup'],
+}
+
+function deriveAllergens(allergenTags: string[], ingredientsText: string): Set<string> {
+  const derived = new Set<string>()
+  const tagsLower = allergenTags.map(t => t.replace(/^en:/, '').toLowerCase())
+  const ingLower = ingredientsText.toLowerCase()
+
+  for (const tag of tagsLower) {
+    for (const implied of (ALLERGEN_TAG_IMPLIES[tag] ?? [])) {
+      if (KNOWN_ALLERGENS.includes(implied)) derived.add(implied)
+    }
+    // direct match fallback
+    if (KNOWN_ALLERGENS.includes(tag)) derived.add(tag)
+  }
+
+  for (const { keywords, allergens } of INGREDIENT_IMPLIES) {
+    if (keywords.some(kw => ingLower.includes(kw))) {
+      for (const a of allergens) derived.add(a)
+    }
+  }
+
+  return derived
+}
+
+function deriveDiets(allergenTags: string[], ingredientsText: string): Set<string> {
+  const derived = new Set<string>()
+  const ingLower = ingredientsText.toLowerCase()
+  const tagsText = allergenTags.map(t => t.replace(/^en:/, '').toLowerCase()).join(' ')
+
+  for (const diet of ['vegan','vegetarian','gluten-free','dairy-free','keto','paleo'] as const) {
+    const disq = DIET_DISQUALIFIERS[diet] ?? []
+    const hasDisqualifier = disq.some(kw => new RegExp(kw, 'i').test(ingLower) || new RegExp(kw, 'i').test(tagsText))
+    if (!hasDisqualifier) derived.add(diet)
+  }
+
+  return derived
+}
+
 // keyword lists for each allergen checkbox — matched against ingredients text
 const ALLERGEN_INGREDIENT_KEYWORDS: Record<string, string[]> = {
   'gluten':     ['wheat','gluten','barley','rye','oats','spelt','kamut','farro','durum','bulgur','semolina'],
@@ -85,14 +177,34 @@ export default function ProductEdit() {
         health_rating: p.health_rating != null ? String(p.health_rating) : '',
         ai_insights: p.ai_insights, admin_notes: p.admin_notes,
       })
-      const knownA = new Set<string>(), customA: string[] = []
-      for (const a of (p.allergen_tags ?? [])) {
-        if (KNOWN_ALLERGENS.includes(a)) knownA.add(a); else customA.push(a)
-      }
-      const knownD = new Set<string>(), customD: string[] = []
-      for (const d of (p.diet_tags ?? [])) {
-        if (KNOWN_DIETS.includes(d)) knownD.add(d); else customD.push(d)
-      }
+      const storedAllergens = p.allergen_tags ?? []
+      const storedDiets = p.diet_tags ?? []
+      const ingredients = p.ingredients_text ?? ''
+
+      // For unreviewed products, derive allergens/diets from data rather than only
+      // using what was stored (imported allergen_tags use generic labels like "gluten"
+      // that need to be expanded, and diet_tags are empty on import).
+      const shouldDerive = p.status === 'pending'
+
+      const knownA = shouldDerive
+        ? deriveAllergens(storedAllergens, ingredients)
+        : (() => {
+            const s = new Set<string>()
+            for (const a of storedAllergens) { if (KNOWN_ALLERGENS.includes(a)) s.add(a) }
+            return s
+          })()
+
+      const customA = storedAllergens.filter(a => !KNOWN_ALLERGENS.includes(a) && !Object.values(ALLERGEN_TAG_IMPLIES).flat().includes(a))
+
+      const knownD = shouldDerive
+        ? deriveDiets(storedAllergens, ingredients)
+        : (() => {
+            const s = new Set<string>()
+            for (const d of storedDiets) { if (KNOWN_DIETS.includes(d)) s.add(d) }
+            return s
+          })()
+
+      const customD = storedDiets.filter(d => !KNOWN_DIETS.includes(d))
 
       // Auto-derive from ingredients and merge — ingredients are the source of truth
       if (p.ingredients_text) {

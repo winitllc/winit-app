@@ -206,7 +206,7 @@ Deno.serve(async (req: Request) => {
 
         const { data: upserted, error: upsertErr } = await supabase
           .from("products")
-          .upsert(rows, { onConflict: "barcode", ignoreDuplicates: false })
+          .upsert(rows, { onConflict: "barcode", ignoreDuplicates: true })
           .select("id");
 
         if (upsertErr) throw new Error(`Upsert error: ${upsertErr.message}`);
