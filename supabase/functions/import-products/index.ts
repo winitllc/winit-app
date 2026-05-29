@@ -166,16 +166,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { data: category } = await supabase
-      .from("app_categories").select("id").eq("slug", category_slug).maybeSingle();
-
-    if (!category) {
-      return new Response(
-        JSON.stringify({ error: `Category '${category_slug}' not found` }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
     const { data: job } = await supabase
       .from("import_jobs")
       .insert({ source: "api", category_slug, off_tag, status: "running" })
@@ -214,11 +204,19 @@ Deno.serve(async (req: Request) => {
         const rows = offProducts.map(mapProduct).filter(r => r.barcode);
         if (!rows.length) break;
 
-        const { error: upsertErr } = await supabase
+        const { data: upserted, error: upsertErr } = await supabase
           .from("products")
-          .upsert(rows, { onConflict: "barcode", ignoreDuplicates: false });
+          .upsert(rows, { onConflict: "barcode", ignoreDuplicates: false })
+          .select("id");
 
         if (upsertErr) throw new Error(`Upsert error: ${upsertErr.message}`);
+
+        // Auto-assign taxonomy for every upserted product
+        if (upserted && upserted.length > 0) {
+          for (const { id } of upserted) {
+            await supabase.rpc("fn_assign_product_taxonomy", { p_product_id: id });
+          }
+        }
 
         totalUpserted += rows.length;
         pagesImported += 1;

@@ -245,6 +245,96 @@ export function splitIntoChunks(text: string, linesPerChunk = CSV_CHUNK_LINES): 
   return chunks
 }
 
+// ─── Taxonomy ─────────────────────────────────────────────────────────────────
+
+export interface TaxonomyParent {
+  id: string
+  slug: string
+  display_name: string
+  icon: string
+  description: string
+  sort_order: number
+  image_url: string
+  created_at: string
+}
+
+export interface TaxonomySubcategory {
+  id: string
+  parent_id: string
+  slug: string
+  display_name: string
+  sort_order: number
+  off_tags: string[]
+  created_at: string
+}
+
+export interface TaxonomyOffMapping {
+  id: string
+  off_pattern: string
+  match_type: 'exact' | 'prefix' | 'contains'
+  parent_id: string
+  subcategory_id: string | null
+  priority: number
+  created_at: string
+}
+
+export async function getTaxonomyParents(): Promise<TaxonomyParent[]> {
+  return get<TaxonomyParent[]>('taxonomy_parents', { order: 'sort_order.asc', select: '*' })
+}
+
+export async function createTaxonomyParent(data: Partial<TaxonomyParent>): Promise<TaxonomyParent> {
+  const rows = await post<TaxonomyParent[]>('taxonomy_parents', data)
+  return (rows as TaxonomyParent[])[0]
+}
+
+export async function updateTaxonomyParent(id: string, data: Partial<TaxonomyParent>): Promise<void> {
+  await patch('taxonomy_parents', data, `id=eq.${id}`)
+}
+
+export async function deleteTaxonomyParent(id: string): Promise<void> {
+  await del('taxonomy_parents', `id=eq.${id}`)
+}
+
+export async function getTaxonomySubcategories(): Promise<TaxonomySubcategory[]> {
+  return get<TaxonomySubcategory[]>('taxonomy_subcategories', { order: 'parent_id.asc,sort_order.asc', select: '*' })
+}
+
+export async function createTaxonomySubcategory(data: Partial<TaxonomySubcategory>): Promise<TaxonomySubcategory> {
+  const rows = await post<TaxonomySubcategory[]>('taxonomy_subcategories', data)
+  return (rows as TaxonomySubcategory[])[0]
+}
+
+export async function updateTaxonomySubcategory(id: string, data: Partial<TaxonomySubcategory>): Promise<void> {
+  await patch('taxonomy_subcategories', data, `id=eq.${id}`)
+}
+
+export async function deleteTaxonomySubcategory(id: string): Promise<void> {
+  await del('taxonomy_subcategories', `id=eq.${id}`)
+}
+
+export async function getTaxonomyMappings(): Promise<TaxonomyOffMapping[]> {
+  return get<TaxonomyOffMapping[]>('taxonomy_off_mappings', { order: 'priority.desc,off_pattern.asc', select: '*' })
+}
+
+export async function createTaxonomyMapping(data: Partial<TaxonomyOffMapping>): Promise<TaxonomyOffMapping> {
+  const rows = await post<TaxonomyOffMapping[]>('taxonomy_off_mappings', data)
+  return (rows as TaxonomyOffMapping[])[0]
+}
+
+export async function deleteTaxonomyMapping(id: string): Promise<void> {
+  await del('taxonomy_off_mappings', `id=eq.${id}`)
+}
+
+export async function bulkReclassifyProducts(): Promise<number> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_bulk_reclassify_products`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({}),
+  })
+  if (!res.ok) throw new Error(`Bulk reclassify failed: ${res.status}`)
+  return res.json()
+}
+
 export async function getProductStats(): Promise<{ pending: number; approved: number; rejected: number; total: number }> {
   const countOf = (h: Headers) => parseInt((h.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0
   const [r1, r2, r3] = await Promise.all([
