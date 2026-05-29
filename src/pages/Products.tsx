@@ -5,11 +5,6 @@ import styles from './Products.module.css'
 
 const PAGE_SIZE = 24
 
-const DEMO_PROFILE = {
-  avoid_allergens: ['en:milk', 'en:peanuts', 'en:sesame'],
-  preferred_diets: ['en:vegan-status-by-ingredients', 'en:gluten-free', 'en:no-gluten'],
-}
-
 const ALLERGEN_LABELS: Record<string, string> = {
   'en:milk': 'Milk', 'en:eggs': 'Eggs', 'en:gluten': 'Gluten', 'en:peanuts': 'Peanuts',
   'en:tree-nuts': 'Tree Nuts', 'en:soy': 'Soy', 'en:fish': 'Fish', 'en:shellfish': 'Shellfish',
@@ -26,57 +21,26 @@ const DIET_LABELS: Record<string, string> = {
 const fmtTag = (map: Record<string, string>, tag: string) =>
   map[tag] ?? tag.replace(/^en:/, '').replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
 
-type Verdict = 'safe' | 'caution' | 'avoid'
-interface Highlight { type: 'good' | 'warn'; label: string }
-
-function getVerdict(p: Product): { verdict: Verdict; highlights: Highlight[] } {
-  const allergens = p.allergen_tags ?? []
-  const diets = p.diet_tags ?? []
-  const highlights: Highlight[] = []
-  const hitAllergen = DEMO_PROFILE.avoid_allergens.some(a => allergens.includes(a))
-
-  DEMO_PROFILE.avoid_allergens.forEach(tag => {
-    if (allergens.includes(tag)) highlights.push({ type: 'warn', label: 'Contains ' + fmtTag(ALLERGEN_LABELS, tag) })
-  })
-  allergens.forEach(tag => {
-    if (!DEMO_PROFILE.avoid_allergens.includes(tag) && highlights.length < 2)
-      highlights.push({ type: 'warn', label: 'Contains ' + fmtTag(ALLERGEN_LABELS, tag) })
-  })
-  DEMO_PROFILE.preferred_diets.forEach(tag => {
-    if (diets.includes(tag) && highlights.length < 3)
-      highlights.push({ type: 'good', label: fmtTag(DIET_LABELS, tag) })
-  })
-  const g = p.nutriscore_grade?.toUpperCase()
-  if ((g === 'A' || g === 'B') && highlights.length < 3) highlights.push({ type: 'good', label: 'Nutri-Score ' + g })
-  if ((g === 'D' || g === 'E') && highlights.filter(h => h.type === 'warn').length < 2)
-    highlights.push({ type: 'warn', label: 'Nutri-Score ' + g })
-
-  const verdict: Verdict = hitAllergen ? 'avoid' : allergens.length > 0 ? 'caution' : 'safe'
-  return { verdict, highlights: highlights.slice(0, 3) }
-}
-
 function NutriScore({ grade }: { grade?: string }) {
-  if (!grade) return null
+  if (!grade || grade === '') return null
   const g = grade.toUpperCase()
-  return <span className={styles['nutriBadge'] + ' ' + (styles['ns' + g] ?? '')}>{g}</span>
+  const colors: Record<string, string> = { A: '#038141', B: '#85bb2f', C: '#fecb02', D: '#ee8100', E: '#e63e11' }
+  const bg = colors[g]
+  if (!bg) return null
+  return (
+    <span className={styles.nutriBadge} style={{ background: bg, color: g === 'C' ? '#333' : 'white' }}>
+      {g}
+    </span>
+  )
 }
 
 function ProductCard({ p, onApprove, onReject }: { p: Product; onApprove(p: Product): void; onReject(p: Product): void }) {
-  const { verdict, highlights } = getVerdict(p)
-  const meta = {
-    safe:    { label: 'Safe for you',             icon: '✓' },
-    caution: { label: 'Check ingredients',        icon: '!' },
-    avoid:   { label: 'Contains your allergen',   icon: '✕' },
-  }[verdict]
+  const allergens = (p.allergen_tags ?? []).slice(0, 4)
+  const diets = (p.diet_tags ?? []).slice(0, 3)
+  const hasIngredients = p.ingredients_text && p.ingredients_text.trim().length > 0
 
   return (
-    <article className={styles.card + ' ' + styles['v_' + verdict]}>
-      <div className={styles.verdictBar + ' ' + styles['vb_' + verdict]}>
-        <span className={styles.verdictIcon}>{meta.icon}</span>
-        <span className={styles.verdictText}>{meta.label}</span>
-        {p.nutriscore_grade && <NutriScore grade={p.nutriscore_grade} />}
-      </div>
-
+    <article className={styles.card}>
       <Link to={'/products/' + p.id + '/edit'} className={styles.imgArea}>
         {p.image_front_url
           ? <img src={p.image_front_url} alt={p.name} className={styles.img}
@@ -95,16 +59,45 @@ function ProductCard({ p, onApprove, onReject }: { p: Product; onApprove(p: Prod
       </Link>
 
       <div className={styles.cardBody}>
-        <p className={styles.productName}>{p.name || '(unnamed product)'}</p>
-        {p.brand && <p className={styles.brandName}>{p.brand}</p>}
-        {highlights.length > 0 && (
-          <ul className={styles.highlights}>
-            {highlights.map((h, i) => (
-              <li key={i} className={styles.hlItem + ' ' + styles['hl_' + h.type]}>
-                {h.type === 'good' ? '✓' : '⚠'} {h.label}
-              </li>
-            ))}
-          </ul>
+        <div className={styles.nameRow}>
+          <p className={styles.productName}>{p.name || '(unnamed product)'}</p>
+          <NutriScore grade={p.nutriscore_grade} />
+        </div>
+        {p.brand && <p className={styles.brandName}>{p.brand}{p.quantity ? ' · ' + p.quantity : ''}</p>}
+
+        {p.nova_group != null && (
+          <span className={styles.novaTag}>NOVA {p.nova_group}</span>
+        )}
+
+        {allergens.length > 0 && (
+          <div className={styles.tagRow}>
+            <span className={styles.tagRowLabel}>Allergens</span>
+            <div className={styles.tagList}>
+              {allergens.map(t => (
+                <span key={t} className={styles.allergenTag}>{fmtTag(ALLERGEN_LABELS, t)}</span>
+              ))}
+              {(p.allergen_tags ?? []).length > 4 && (
+                <span className={styles.moreTag}>+{(p.allergen_tags ?? []).length - 4}</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {diets.length > 0 && (
+          <div className={styles.tagRow}>
+            <span className={styles.tagRowLabel}>Diet</span>
+            <div className={styles.tagList}>
+              {diets.map(t => (
+                <span key={t} className={styles.dietTag}>{fmtTag(DIET_LABELS, t)}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {hasIngredients && (
+          <p className={styles.ingredientsSnippet}>
+            {p.ingredients_text!.slice(0, 110)}{p.ingredients_text!.length > 110 ? '…' : ''}
+          </p>
         )}
       </div>
 
@@ -168,7 +161,7 @@ export default function Products() {
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.title}>Products</h1>
-          <p className={styles.pageDesc}>Instant dietary match — green safe, yellow check, red avoid.</p>
+          <p className={styles.pageDesc}>Review, approve, or reject imported products.</p>
         </div>
         <span className={styles.totalBadge}>{total.toLocaleString()} products</span>
       </div>
@@ -190,12 +183,6 @@ export default function Products() {
             </button>
           ))}
         </div>
-      </div>
-
-      <div className={styles.legend}>
-        <span className={styles.lgItem}><span className={styles.lgDot + ' ' + styles.lgSafe}/>Safe for you</span>
-        <span className={styles.lgItem}><span className={styles.lgDot + ' ' + styles.lgCaution}/>Check ingredients</span>
-        <span className={styles.lgItem}><span className={styles.lgDot + ' ' + styles.lgAvoid}/>Contains your allergen</span>
       </div>
 
       {toast && <div className={styles.toast}>{toast}</div>}
