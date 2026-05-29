@@ -91,95 +91,88 @@ function CsvUploadPanel({ onDone }: { onDone: () => void }) {
 
   const reset = () => { setState(initialUpload); abortRef.current = false }
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     if (!file) return
     abortRef.current = false
-    // Capture filename before any async work / state updates
     const filename = file.name
     setState({ ...initialUpload, phase: 'reading', filename })
 
-    // Use FileReader instead of file.text() — more reliable across browsers
-    // and avoids stale-handle errors that occur when the File reference is
-    // accessed after a React re-render triggered by setState above.
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const text = e.target?.result as string
-      processText(text, filename)
-    }
-    reader.onerror = () => {
-      setState(s => ({ ...s, phase: 'error', error: 'Failed to read file. Please try again.' }))
-    }
-    reader.readAsText(file, 'UTF-8')
-  }
-
-  const processText = async (text: string, filename: string) => {
-    if (!text) {
-      setState(s => ({ ...s, phase: 'error', error: 'File appears empty.' }))
-      return
-    }
-
-    const lines = text.split('\n')
-    // Separate header from data
-    const headerLine = lines[0] ?? ''
-    if (!headerLine.trim()) {
-      setState(s => ({ ...s, phase: 'error', error: 'File appears empty or has no header row.' }))
-      return
-    }
-
+    // Stream the file line-by-line so we never load the whole thing into RAM.
+    // This handles multi-GB OFF CSV files that would otherwise hit browser
+    // memory limits and produce NotReadableError.
     const CHUNK_LINES = 2000
-    const dataLines = lines.slice(1)
-    const chunks: string[] = []
-    for (let i = 0; i < dataLines.length; i += CHUNK_LINES) {
-      const chunk = dataLines.slice(i, i + CHUNK_LINES).join('\n')
-      if (chunk.trim()) chunks.push(chunk)
-    }
-
-    const totalLines = dataLines.filter(l => l.trim()).length
-    setState(s => ({ ...s, phase: 'uploading', totalLines, totalChunks: chunks.length }))
 
     let jobId = ''
-    try {
-      jobId = await createCsvImportJob(filename)
-    } catch (e) {
-      setState(s => ({ ...s, phase: 'error', error: 'Failed to create import job: ' + String(e) }))
-      return
-    }
-
+    let headerLine = ''
+    let pending: string[] = []   // lines buffered for current chunk
+    let lineBuffer = ''          // partial line carried across decoder chunks
     let processed = 0, skipped = 0, autoMapped = 0, needsReview = 0
+    let totalLines = 0, chunksSent = 0
 
-    for (let i = 0; i < chunks.length; i++) {
-      if (abortRef.current) {
-        await failCsvImportJob(jobId, 'Cancelled by user')
-        setState(s => ({ ...s, phase: 'error', error: 'Import cancelled.' }))
-        return
-      }
-      try {
-        const res = await processCsvChunk(jobId, headerLine, chunks[i])
-        processed += res.processed
-        skipped += res.skipped
-        autoMapped += res.auto_mapped
-        needsReview += res.needs_review
-        setState(s => ({
-          ...s,
-          currentChunk: i + 1,
-          processed,
-          skipped,
-          autoMapped,
-          needsReview,
-        }))
-      } catch (e) {
-        await failCsvImportJob(jobId, String(e))
-        setState(s => ({ ...s, phase: 'error', error: 'Chunk upload failed: ' + String(e) }))
-        return
-      }
+    const flushChunk = async (lines: string[]) => {
+      if (!lines.length) return
+      if (abortRef.current) throw new Error('Cancelled by user')
+      const res = await processCsvChunk(jobId, headerLine, lines.join('\n'))
+      processed  += res.processed
+      skipped    += res.skipped
+      autoMapped += res.auto_mapped
+      needsReview += res.needs_review
+      chunksSent++
+      setState(s => ({ ...s, currentChunk: chunksSent, processed, skipped, autoMapped, needsReview }))
     }
 
     try {
+      const stream = file.stream().pipeThrough(new TextDecoderStream('utf-8'))
+      const reader = stream.getReader()
+
+      // Read first decoder chunk to extract the header line
+      let firstChunk = true
+      // eslint-disable-next-line no-constant-condition
+      outer: while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        lineBuffer += value
+        const parts = lineBuffer.split('\n')
+        lineBuffer = parts.pop() ?? ''
+
+        for (const line of parts) {
+          if (firstChunk) {
+            headerLine = line
+            firstChunk = false
+
+            // Create the job now that we have the header
+            jobId = await createCsvImportJob(filename)
+            setState(s => ({ ...s, phase: 'uploading', totalLines: 0, totalChunks: 0 }))
+            continue
+          }
+          if (!line.trim()) continue
+          totalLines++
+          pending.push(line)
+          if (pending.length >= CHUNK_LINES) {
+            if (abortRef.current) break outer
+            await flushChunk(pending)
+            pending = []
+          }
+        }
+      }
+
+      // Flush remainder of lineBuffer
+      if (lineBuffer.trim()) { totalLines++; pending.push(lineBuffer) }
+      if (pending.length) await flushChunk(pending)
+
+      if (!headerLine) throw new Error('File appears empty or has no header row.')
+
       const result = await finishCsvImportJob(jobId)
-      setState(s => ({ ...s, phase: 'done', result }))
+      setState(s => ({ ...s, phase: 'done', result, totalLines }))
       onDone()
+
     } catch (e) {
-      setState(s => ({ ...s, phase: 'error', error: 'Failed to finalize import: ' + String(e) }))
+      const msg = String(e)
+      if (jobId) await failCsvImportJob(jobId, msg).catch(() => {})
+      setState(s => ({
+        ...s, phase: 'error',
+        error: msg.includes('Cancelled') ? 'Import cancelled.' : 'Import failed: ' + msg,
+      }))
     }
   }
 
@@ -190,9 +183,9 @@ function CsvUploadPanel({ onDone }: { onDone: () => void }) {
     if (file) handleFile(file)
   }
 
-  const pct = state.totalChunks > 0
-    ? Math.round((state.currentChunk / state.totalChunks) * 100)
-    : 0
+  const pct = state.totalLines > 0
+    ? Math.min(100, Math.round((state.processed + state.skipped) / state.totalLines * 100))
+    : (state.phase === 'uploading' ? null : 0)
 
   return (
     <>
@@ -232,13 +225,13 @@ function CsvUploadPanel({ onDone }: { onDone: () => void }) {
         <div className={styles.progressBox}>
           <div className={styles.progressHeader}>
             <span className={styles.progressFilename}>{state.filename}</span>
-            <span className={styles.progressPct}>{pct}%</span>
+            <span className={styles.progressPct}>{pct !== null ? `${pct}%` : 'Streaming…'}</span>
           </div>
           <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${pct}%` }} />
+            <div className={styles.progressFill} style={{ width: pct !== null ? `${pct}%` : '100%', opacity: pct !== null ? 1 : 0.4 }} />
           </div>
           <div className={styles.progressStats}>
-            <Stat label="Chunks" value={`${state.currentChunk} / ${state.totalChunks}`} />
+            <Stat label="Chunks sent" value={state.currentChunk.toLocaleString()} />
             <Stat label="Imported" value={state.processed.toLocaleString()} />
             <Stat label="Skipped" value={state.skipped.toLocaleString()} />
             <Stat label="Auto-mapped" value={state.autoMapped.toLocaleString()} color="success" />
