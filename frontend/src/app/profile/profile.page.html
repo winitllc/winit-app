@@ -8,153 +8,51 @@
   <h2 class="ion-text-center"><img class="header-icon" src="assets/icon/favicon.png"> Profile</h2>
   <ion-list>
     <ion-list-header class="list-header">
-      <ion-label>{{profileData.profile.firstName}} {{profileData.profile.lastName}}</ion-label>
+      <ion-label>{{profile?.first_name}} {{profile?.last_name}}</ion-label>
     </ion-list-header>
     <ion-item class="list-content">
       <ion-label position="stacked">Username:</ion-label>
-      <span class="ion-padding-start">{{profileData.profile.showName}}</span>
+      <span class="ion-padding-start">{{profile?.display_name}}</span>
     </ion-item>
     <ion-item class="list-content">
       <ion-label position="stacked">Email:</ion-label>
-      <span class="ion-padding-start">{{profileData.email}}</span>
+      <span class="ion-padding-start">{{profile?.email}}</span>
     </ion-item>
 
-    <ion-item *ngIf="profileData.profile.title != undefined" class="list-content">
-      <ion-label position="stacked">Title:</ion-label>
-      <span class="ion-padding-start">{{profileData.profile.title}}</span>
+    <ion-item *ngIf="profile" class="list-content points-section">
+      <ion-label position="stacked">Points Balance:</ion-label>
+      <ion-badge color="primary" style="margin-left: 20px;">
+        <span>{{profile.points_balance}} </span>
+        <ion-icon name="star"></ion-icon>
+      </ion-badge>
     </ion-item>
 
-    <ion-item *ngIf="profileData.profile.yearsOfExperience != undefined" class="list-content">
-      <ion-label position="stacked">Years Of Experience:</ion-label>
-      <span class="ion-padding-start">{{profileData.profile.yearsOfExperience}}</span>
-    </ion-item>
-
-    <ion-item *ngIf="profileData.profile.description != undefined" class="list-content">
-      <ion-label position="stacked">Description:</ion-label>
-      <span class="ion-padding-start">{{profileData.profile.description}}</span>
-    </ion-item>
-
-    <!-- <ion-item class="list-content" >
-      <ion-label position="stacked">Languages:</ion-label>
-      <ul *ngIf="profileData.profile.languages.length > 0">
-        <li *ngFor="let language of profileData.profile.languages">{{language.name}}</li>
-      </ul>
-    </ion-item> -->
-
-
-    <ion-item *ngIf="healthProfileData != undefined" class="list-content">
-      <ion-label position="stacked">Symptoms:</ion-label>
-      <ion-grid *ngIf="healthProfileData && healthProfileData.medical && healthProfileData.medical.symptoms && healthProfileData.medical.symptoms.length > 0">
-        <ion-row *ngFor="let symptom of healthProfileData.medical.symptoms">{{symptom.name}}</ion-row>
-      </ion-grid>
-      <ion-grid *ngIf="!healthProfileData || !healthProfileData.medical || !healthProfileData.medical.symptoms || healthProfileData.medical.symptoms.length === 0">
-        <ion-row>N/A</ion-row>
-      </ion-grid>
-    </ion-item>
-
-    <ion-item *ngIf="healthProfileData != undefined" class="list-content">
-      <ion-label position="stacked">Medical Conditions:</ion-label>
-      <ion-grid *ngIf="healthProfileData && healthProfileData.medical && healthProfileData.medical.medicalConditions && healthProfileData.medical.medicalConditions.length > 0">
-        <ion-row *ngFor="let condition of healthProfileData.medical.medicalConditions">{{condition.name}}</ion-row>
-      </ion-grid>
-      <ion-grid *ngIf="!healthProfileData || !healthProfileData.medical || !healthProfileData.medical.medicalConditions || healthProfileData.medical.medicalConditions.length === 0">
-        <ion-row>N/A</ion-row>
-      </ion-grid>
-    </ion-item>
-
-    <ion-item *ngIf="healthProfileData != undefined" class="list-content">
-      <ion-label position="stacked">Auto-Immune Diseases:</ion-label>
-      <ion-grid *ngIf="healthProfileData && healthProfileData.medical && healthProfileData.medical.autoImmuneDiseases && healthProfileData.medical.autoImmuneDiseases.length > 0">
-        <ion-row *ngFor="let condition of healthProfileData.medical.autoImmuneDiseases">{{condition.name}}</ion-row>
-      </ion-grid>
-      <ion-grid *ngIf="!healthProfileData || !healthProfileData.medical || !healthProfileData.medical.autoImmuneDiseases || healthProfileData.medical.autoImmuneDiseases.length === 0">
-        <ion-row>N/A</ion-row>
-      </ion-grid>
-    </ion-item>
-
-    <ion-item *ngIf="healthProfileData != undefined" class="list-content">
-      <ion-label position="stacked">Lifestyle Diet:</ion-label>
-      <ion-grid *ngIf="healthProfileData && healthProfileData.medical && healthProfileData.medical.lifestyleDiet && healthProfileData.medical.lifestyleDiet.length > 0">
-        <ion-row *ngFor="let condition of healthProfileData.medical.lifestyleDiet">{{condition.name}}</ion-row>
-      </ion-grid>
-      <ion-grid *ngIf="!healthProfileData || !healthProfileData.medical || !healthProfileData.medical.lifestyleDiet || healthProfileData.medical.lifestyleDiet.length === 0">
-        <ion-row>N/A</ion-row>
-      </ion-grid>
-    </ion-item>
-
-    <ion-item *ngIf="healthProfileData != undefined" class="list-content">
+    <ion-item *ngIf="profile?.allergy_ids?.length" class="list-content">
       <ion-label position="stacked">Allergies:</ion-label>
-      <ion-grid *ngIf="healthProfileData && healthProfileData.medical && healthProfileData.medical.allergies && healthProfileData.medical.allergies.length > 0">
-        <!-- *ngIf="healthProfileData && healthProfileData.medical && healthProfileData.medical.allergies.length > 0 && healthProfileData.medical.allergiesCategory.length > 0"> -->
-        <ion-row *ngFor="let allergy of healthProfileData.medical.allergies">{{allergy.name}}</ion-row>
-        <!-- <li *ngFor="let allergy of healthProfileData.medical.allergiesCategory">{{allergy.name}}</li> -->
-      </ion-grid>
-      <ion-grid *ngIf="!healthProfileData || !healthProfileData.medical || !healthProfileData.medical.allergies || healthProfileData.medical.allergies.length === 0">
-        <ion-row>N/A</ion-row>
+      <ion-grid>
+        <ion-row *ngFor="let id of profile!.allergy_ids">
+          <ion-col>{{id}}</ion-col>
+        </ion-row>
       </ion-grid>
     </ion-item>
 
-    <ion-item *ngIf="healthProfileData != undefined" class="list-content">
-      <ion-label position="stacked">Food Intolerances:</ion-label>
-      <ion-grid *ngIf="healthProfileData && healthProfileData.medical && healthProfileData.medical.foodIntolerances && healthProfileData.medical.foodIntolerances.length > 0">
-      <!-- <ion-grid *ngIf="healthProfileData && healthProfileData.medical && healthProfileData.medical.foodIntolerances.length > 0 && healthProfileData.medical.foodIntolerancesCategory.length > 0"> -->
-        <ion-row *ngFor="let allergy of healthProfileData.medical.foodIntolerances">{{allergy.name}}</ion-row>
-        <!-- <li *ngFor="let allergy of healthProfileData.medical.foodIntolerancesCategory">{{allergy.name}}</li> -->
-      </ion-grid>
-      <ion-grid *ngIf="!healthProfileData || !healthProfileData.medical || !healthProfileData.medical.foodIntolerances || healthProfileData.medical.foodIntolerances.length === 0">
-      <!-- <ion-grid *ngIf="healthProfileData && healthProfileData.medical && healthProfileData.medical.foodIntolerances.length === 0 || healthProfileData.medical.foodIntolerancesCategory.length === 0"> -->
-        <ion-row>N/A</ion-row>
+    <ion-item *ngIf="profile?.diet_ids?.length" class="list-content">
+      <ion-label position="stacked">Lifestyle Diet:</ion-label>
+      <ion-grid>
+        <ion-row *ngFor="let id of profile!.diet_ids">
+          <ion-col>{{id}}</ion-col>
+        </ion-row>
       </ion-grid>
     </ion-item>
 
-    <ion-item *ngIf="healthProfileData != undefined" class="list-content">
-      <ion-label position="stacked">Current Medications:</ion-label>
-      <ion-grid *ngIf="healthProfileData && healthProfileData.medical && healthProfileData.medical.currentMedications && healthProfileData.medical.currentMedications.length > 0">
-        <ion-row *ngFor="let condition of healthProfileData.medical.currentMedications">{{condition.text}}</ion-row>
-      </ion-grid>
-      <ion-grid *ngIf="!healthProfileData || !healthProfileData.medical || !healthProfileData.medical.currentMedications || healthProfileData.medical.currentMedications.length === 0">
-        <ion-row>N/A</ion-row>
-      </ion-grid>
-    </ion-item>
-
-
-    <ion-item *ngIf="healthProfileData != undefined" class="list-content">
-      <ion-label position="stacked">Other Products:</ion-label>
-      <ion-grid *ngIf="healthProfileData && healthProfileData.medical && healthProfileData.medical.medicalConditions && healthProfileData.medical.medicalConditions.length > 0">
-        <ion-row *ngFor="let condition of healthProfileData.medical.medicalConditions">{{condition.name}}</ion-row>
-      </ion-grid>
-      <ion-grid *ngIf="!healthProfileData || !healthProfileData.medical || !healthProfileData.medical.medicalConditions || healthProfileData.medical.medicalConditions.length === 0">
-        <ion-row>N/A</ion-row>
+    <ion-item *ngIf="profile?.condition_ids?.length" class="list-content">
+      <ion-label position="stacked">Medical Conditions:</ion-label>
+      <ion-grid>
+        <ion-row *ngFor="let id of profile!.condition_ids">
+          <ion-col>{{id}}</ion-col>
+        </ion-row>
       </ion-grid>
     </ion-item>
 
-
-
-    <ion-item *ngIf="state" class="list-content points-section">
-      <ion-label position="stacked">Points:</ion-label>
-      <ul>
-        <li>
-          Points Balance:
-          <ion-badge color="primary" class="ion-float-right" style="margin-left: 20px;">
-            <span>{{state.points.pointsBalance}} </span>
-            <ion-icon name="star"></ion-icon>
-          </ion-badge>
-        </li>
-        <li>
-          Points Acquired (All Time):
-          <ion-badge class="ion-float-right" style="margin-left: 20px;">
-            <span>{{state.points.pointsAllTime}} </span>
-            <ion-icon name="star"></ion-icon>
-          </ion-badge>
-        </li>
-        <li>
-          Points Spent (All Time):
-          <ion-badge color="danger" style="margin-left: 20px;" class="ion-float-right">
-            <span>{{state.points.pointsUsedAllTime}} </span>
-            <ion-icon name="star"></ion-icon>
-          </ion-badge>
-        </li>
-      </ul>
-    </ion-item>
   </ion-list>
 </ion-content>

@@ -13,26 +13,26 @@
     <ion-grid>
       <ion-row>
         <ion-col class="ion-text-center">
-          <h2>{{supabaseProduct.name}}</h2>
-          <p *ngIf="supabaseProduct.brand" class="brand-text">{{supabaseProduct.brand}}</p>
-          <p *ngIf="supabaseProduct.quantity" class="quantity-text">{{supabaseProduct.quantity}}</p>
+          <h2>{{supabaseProduct!.name}}</h2>
+          <p *ngIf="supabaseProduct!.brand" class="brand-text">{{supabaseProduct!.brand}}</p>
+          <p *ngIf="supabaseProduct!.quantity" class="quantity-text">{{supabaseProduct!.quantity}}</p>
         </ion-col>
       </ion-row>
 
       <!-- Nutriscore + health rating badges -->
       <ion-row class="ion-justify-content-center">
-        <ion-col size="auto" *ngIf="supabaseProduct.nutriscore_grade">
-          <div class="nutriscore-badge grade-{{supabaseProduct.nutriscore_grade}}">
-            Nutri-Score {{supabaseProduct.nutriscore_grade | uppercase}}
+        <ion-col size="auto" *ngIf="supabaseProduct!.nutriscore_grade">
+          <div class="nutriscore-badge grade-{{supabaseProduct!.nutriscore_grade}}">
+            Nutri-Score {{supabaseProduct!.nutriscore_grade?.toUpperCase()}}
           </div>
         </ion-col>
-        <ion-col size="auto" *ngIf="supabaseProduct.health_rating">
+        <ion-col size="auto" *ngIf="supabaseProduct!.health_rating">
           <div class="health-rating-badge">
-            Health Rating: {{supabaseProduct.health_rating}}/10
+            Health Rating: {{supabaseProduct!.health_rating}}/10
           </div>
         </ion-col>
-        <ion-col size="auto" *ngIf="supabaseProduct.nova_group">
-          <div class="nova-badge">NOVA {{supabaseProduct.nova_group}}</div>
+        <ion-col size="auto" *ngIf="supabaseProduct!.nova_group">
+          <div class="nova-badge">NOVA {{supabaseProduct!.nova_group}}</div>
         </ion-col>
       </ion-row>
 
@@ -47,32 +47,32 @@
       </ion-row>
 
       <!-- Product image -->
-      <ion-row *ngIf="supabaseProduct.image_front_url">
+      <ion-row *ngIf="supabaseProduct!.image_front_url">
         <ion-col class="ion-text-center">
-          <img [src]="supabaseProduct.image_front_url"
+          <img [src]="supabaseProduct!.image_front_url"
             (error)="$any($event.target).src='assets/imgs/noProduct.png'"
             class="product-img" alt="Product">
         </ion-col>
       </ion-row>
 
       <!-- AI Insights -->
-      <ion-row *ngIf="supabaseProduct.ai_insights">
+      <ion-row *ngIf="supabaseProduct!.ai_insights">
         <ion-col>
           <ion-card class="insights-card">
             <ion-card-header>
               <ion-card-title>Health Insights</ion-card-title>
             </ion-card-header>
-            <ion-card-content>{{supabaseProduct.ai_insights}}</ion-card-content>
+            <ion-card-content>{{supabaseProduct!.ai_insights}}</ion-card-content>
           </ion-card>
         </ion-col>
       </ion-row>
 
       <!-- Allergen tags -->
-      <ion-row *ngIf="supabaseProduct.allergen_tags?.length">
+      <ion-row *ngIf="supabaseProduct!.allergen_tags?.length">
         <ion-col>
           <h4>Allergens</h4>
           <div class="tag-list">
-            <ion-badge *ngFor="let t of supabaseProduct.allergen_tags"
+            <ion-badge *ngFor="let t of supabaseProduct!.allergen_tags"
               [color]="warnings.includes(t) ? 'danger' : 'medium'" class="tag-badge">
               {{t}}
             </ion-badge>
@@ -81,11 +81,11 @@
       </ion-row>
 
       <!-- Diet flags -->
-      <ion-row *ngIf="supabaseProduct.diet_tags?.length">
+      <ion-row *ngIf="supabaseProduct!.diet_tags?.length">
         <ion-col>
           <h4>Diet & Lifestyle</h4>
           <div class="tag-list">
-            <ion-badge *ngFor="let t of supabaseProduct.diet_tags" color="success" class="tag-badge">
+            <ion-badge *ngFor="let t of supabaseProduct!.diet_tags" color="success" class="tag-badge">
               {{t}}
             </ion-badge>
           </div>
@@ -93,7 +93,7 @@
       </ion-row>
 
       <!-- Ingredients -->
-      <ion-row *ngIf="supabaseProduct.ingredients_text">
+      <ion-row *ngIf="supabaseProduct!.ingredients_text">
         <ion-col>
           <h4>Ingredients</h4>
           <div [innerHtml]="ingredientsTextHTML" class="ingredients-text"></div>
@@ -101,21 +101,21 @@
       </ion-row>
 
       <!-- Nutrition image -->
-      <ion-row *ngIf="supabaseProduct.image_nutrition_url">
+      <ion-row *ngIf="supabaseProduct!.image_nutrition_url">
         <ion-col class="ion-text-center">
           <h4>Nutrition Facts</h4>
-          <img [src]="supabaseProduct.image_nutrition_url"
+          <img [src]="supabaseProduct!.image_nutrition_url"
             (error)="$any($event.target).src='assets/imgs/noProduct.png'"
             class="product-img" alt="Nutrition">
         </ion-col>
       </ion-row>
 
       <!-- Custom tags -->
-      <ion-row *ngIf="supabaseProduct.custom_tags?.length">
+      <ion-row *ngIf="supabaseProduct!.custom_tags?.length">
         <ion-col>
           <h4>Tags</h4>
           <div class="tag-list">
-            <ion-badge *ngFor="let t of supabaseProduct.custom_tags" color="tertiary" class="tag-badge">
+            <ion-badge *ngFor="let t of supabaseProduct!.custom_tags" color="tertiary" class="tag-badge">
               {{t}}
             </ion-badge>
           </div>

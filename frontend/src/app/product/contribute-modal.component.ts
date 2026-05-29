@@ -78,13 +78,14 @@ export const CONTRIB_FIELDS: ContribFieldConfig[] = [
       </ion-button>
     </div>
 
-    <h4 class="step-label">{{ selectedField.label }}</h4>
-    <p class="step-desc">{{ selectedField.description }}</p>
+    <h4 class="step-label">{{ selectedField!.label }}</h4>
+    <p class="step-desc">{{ selectedField!.description }}</p>
 
     <!-- Text input for manual ingredient entry -->
-    <div *ngIf="selectedField.field === 'ingredients_text'" class="text-entry">
+    <div *ngIf="selectedField!.field === 'ingredients_text'" class="text-entry">
       <ion-textarea
-        [(ngModel)]="rawText"
+        [value]="rawText"
+        (ionInput)="rawText = $any($event.target).value"
         placeholder="Type the full ingredients list here…"
         rows="8"
         class="ingredients-textarea"
@@ -93,7 +94,7 @@ export const CONTRIB_FIELDS: ContribFieldConfig[] = [
     </div>
 
     <!-- Camera / image flow -->
-    <div *ngIf="selectedField.field !== 'ingredients_text'" class="image-entry">
+    <div *ngIf="selectedField!.field !== 'ingredients_text'" class="image-entry">
       <!-- Preview captured image -->
       <div *ngIf="capturedBase64" class="img-preview-wrap">
         <img [src]="'data:image/jpeg;base64,' + capturedBase64" class="img-preview" alt="Captured" />
@@ -116,7 +117,7 @@ export const CONTRIB_FIELDS: ContribFieldConfig[] = [
       </div>
 
       <!-- AI extraction result for ingredients image -->
-      <div *ngIf="selectedField.supportsAI && extractedText" class="ai-result">
+      <div *ngIf="selectedField!.supportsAI && extractedText" class="ai-result">
         <div class="ai-label">
           <ion-icon name="sparkles-outline"></ion-icon>
           AI extracted ingredients
@@ -124,7 +125,7 @@ export const CONTRIB_FIELDS: ContribFieldConfig[] = [
         <p class="ai-text">{{ extractedText }}</p>
         <p class="ai-note">Review the text above. The admin will also see your original photo.</p>
       </div>
-      <div *ngIf="selectedField.supportsAI && capturedBase64 && !extractedText && !extracting" class="ai-hint">
+      <div *ngIf="selectedField!.supportsAI && capturedBase64 && !extractedText && !extracting" class="ai-hint">
         <ion-icon name="information-circle-outline"></ion-icon>
         Ingredient text will be extracted automatically after you submit.
       </div>

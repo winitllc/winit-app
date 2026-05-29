@@ -339,3 +339,10 @@ export class GetKeywordValuesPipe implements PipeTransform {
         return ret;
     }
 }
+
+@Pipe({name: 'cleanTag'})
+export class CleanTagPipe implements PipeTransform {
+    transform(tag: string): string {
+        return tag.split(':').pop()?.replace(/-/g, ' ') ?? tag;
+    }
+}
