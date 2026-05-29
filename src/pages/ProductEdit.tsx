@@ -9,6 +9,51 @@ import styles from './ProductEdit.module.css'
 const KNOWN_ALLERGENS = ['gluten','wheat','milk','eggs','peanuts','tree-nuts','soy','fish','shellfish','sesame','mustard','celery','lupin','sulphites']
 const KNOWN_DIETS = ['vegan','vegetarian','gluten-free','dairy-free','keto','paleo','halal','kosher','low-sodium','low-sugar','organic','non-gmo']
 
+// keyword lists for each allergen checkbox — matched against ingredients text
+const ALLERGEN_INGREDIENT_KEYWORDS: Record<string, string[]> = {
+  'gluten':     ['wheat','gluten','barley','rye','oats','spelt','kamut','farro','durum','bulgur','semolina'],
+  'wheat':      ['wheat','whole grain wheat','whole wheat','durum','semolina','spelt','farro','bulgur'],
+  'milk':       ['milk','dairy','lactose','cream','butter','cheese','whey','casein','ghee'],
+  'eggs':       ['egg','eggs','albumin','mayonnaise','meringue','ovalbumin'],
+  'peanuts':    ['peanut','groundnut','arachis'],
+  'tree-nuts':  ['almond','cashew','walnut','pecan','pistachio','hazelnut','filbert','brazil nut','macadamia','pine nut'],
+  'soy':        ['soy','soya','tofu','tempeh','miso','edamame','soybean','soy lecithin'],
+  'fish':       ['fish','anchovy','bass','cod','salmon','tuna','trout','herring','sardine','halibut'],
+  'shellfish':  ['shellfish','shrimp','crab','lobster','crayfish','prawn','clam','oyster','scallop','mussel'],
+  'sesame':     ['sesame','tahini'],
+  'mustard':    ['mustard'],
+  'celery':     ['celery','celeriac'],
+  'lupin':      ['lupin','lupine'],
+  'sulphites':  ['sulphite','sulfite','sulphur dioxide','sulfur dioxide'],
+}
+
+// disqualifying keywords for diet inference — matched against ingredients text
+const DIET_DISQUALIFY_KEYWORDS: Record<string, RegExp[]> = {
+  'gluten-free':  [/wheat/,/gluten/,/barley/,/\brye\b/,/\boats\b/,/spelt/,/semolina/,/durum/,/bulgur/,/farro/,/kamut/],
+  'dairy-free':   [/\bmilk\b/,/\bdairy\b/,/lactose/,/\bcream\b/,/\bbutter\b/,/\bcheese\b/,/\bwhey\b/,/\bcasein\b/,/\bghee\b/],
+  'vegan':        [/\bmilk\b/,/\bdairy\b/,/lactose/,/\bcream\b/,/\bbutter\b/,/\bcheese\b/,/\bwhey\b/,/\bcasein\b/,/\begg\b/,/\beggs\b/,/albumin/,/\bhoney\b/,/gelatin/,/\bmeat\b/,/chicken/,/\bbeef\b/,/\bpork\b/,/\bfish\b/,/shellfish/],
+  'vegetarian':   [/\bmeat\b/,/chicken/,/\bbeef\b/,/\bpork\b/,/veal/,/\blamb\b/,/bacon/,/gelatin/,/\blard\b/,/tallow/,/\bfish\b/,/shellfish/,/anchovy/],
+  'keto':         [/\bsugar\b/,/wheat/,/\bflour\b/,/\brice\b/,/\bcorn\b/,/potato/,/\boats\b/,/\bhoney\b/,/syrup/],
+  'paleo':        [/wheat/,/\bflour\b/,/grain/,/\bdairy\b/,/\bmilk\b/,/\bcream\b/,/\bcheese\b/,/legume/,/\bpeanut\b/,/\bsoy\b/,/\bcorn\b/,/\bsugar\b/,/syrup/],
+}
+
+function deriveFromIngredients(ingredientsText: string): { allergens: Set<string>; diets: Set<string> } {
+  const text = ingredientsText.toLowerCase()
+  const allergens = new Set<string>()
+  const diets = new Set<string>()
+
+  for (const [allergen, keywords] of Object.entries(ALLERGEN_INGREDIENT_KEYWORDS)) {
+    if (keywords.some(kw => text.includes(kw))) allergens.add(allergen)
+  }
+
+  for (const diet of ['gluten-free','dairy-free','vegan','vegetarian','keto','paleo'] as const) {
+    const disqualifiers = DIET_DISQUALIFY_KEYWORDS[diet] ?? []
+    if (!disqualifiers.some(re => re.test(text))) diets.add(diet)
+  }
+
+  return { allergens, diets }
+}
+
 export default function ProductEdit() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -48,6 +93,14 @@ export default function ProductEdit() {
       for (const d of (p.diet_tags ?? [])) {
         if (KNOWN_DIETS.includes(d)) knownD.add(d); else customD.push(d)
       }
+
+      // Auto-derive from ingredients and merge — ingredients are the source of truth
+      if (p.ingredients_text) {
+        const { allergens: derivedA, diets: derivedD } = deriveFromIngredients(p.ingredients_text)
+        for (const a of derivedA) knownA.add(a)
+        for (const d of derivedD) knownD.add(d)
+      }
+
       setAllergenSet(knownA)
       setCustomAllergens(customA)
       setDietSet(knownD)
@@ -56,7 +109,17 @@ export default function ProductEdit() {
     }).finally(() => setLoading(false))
   }, [id])
 
-  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
+  const set = (k: string, v: string) => {
+    setForm(f => {
+      const next = { ...f, [k]: v }
+      if (k === 'ingredients_text' && v) {
+        const { allergens: derivedA, diets: derivedD } = deriveFromIngredients(v)
+        setAllergenSet(prev => { const s = new Set(prev); for (const a of derivedA) s.add(a); return s })
+        setDietSet(prev => { const s = new Set(prev); for (const d of derivedD) s.add(d); return s })
+      }
+      return next
+    })
+  }
 
   const toggleSet = (s: Set<string>, val: string, checked: boolean): Set<string> => {
     const next = new Set(s); checked ? next.add(val) : next.delete(val); return next
