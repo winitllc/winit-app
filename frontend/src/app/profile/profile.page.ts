@@ -72,6 +72,11 @@ export class ProfilePage {
     await alert.present();
   }
 
+  getInitials(): string {
+    const name = (this.profile as any)?.display_name || (this.profile as any)?.email || '';
+    return name.slice(0, 2).toUpperCase();
+  }
+
   private logout(): void {
     this.winitAuth.logout().then(async () => {
       await this.storage.remove('accessToken');

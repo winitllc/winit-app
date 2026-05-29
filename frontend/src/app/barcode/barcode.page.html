@@ -1,19 +1,39 @@
 <ion-header>
-  <ion-toolbar color="primary">
-    <ion-title class="ion-text-center">
-      Look up product
-    </ion-title>
+  <ion-toolbar class="barcode-toolbar">
+    <ion-title class="barcode-toolbar-title">Scan Barcode</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <h2 class="ion-text-center"><img class="header-icon" src="assets/icon/favicon.png"> Scan Barcode</h2>
-  <div class="scan-div">
-    <button class="submit start-scan" ion-button (click)="scan()" [disabled]="!isSupported">
-      <ion-icon color="primary" name="barcode"></ion-icon>
+<ion-content class="barcode-content">
+
+  <div class="scan-hero">
+    <div class="scan-icon-wrap" [class.unsupported]="!isSupported" (click)="scan()">
+      <ion-icon name="barcode-outline" class="scan-icon"></ion-icon>
+      <div class="scan-ring scan-ring--1"></div>
+      <div class="scan-ring scan-ring--2"></div>
+    </div>
+    <h2 class="scan-title">{{isSupported ? 'Scan a product' : 'Not available'}}</h2>
+    <p class="scan-sub" *ngIf="isSupported">Point your camera at a barcode to look up a product</p>
+    <p class="scan-sub scan-sub--warn" *ngIf="!isSupported">Barcode scanning requires the native mobile app</p>
+    <button class="scan-btn" *ngIf="isSupported" (click)="scan()">
+      <ion-icon name="camera-outline"></ion-icon>
+      Open Camera
     </button>
-    <p *ngIf="!isSupported" class="ion-text-center ion-padding">
-      Barcode scanning is only available on the native mobile app.
-    </p>
   </div>
+
+  <div class="scan-hints">
+    <div class="hint-row">
+      <span class="hint-icon"><ion-icon name="checkmark-circle-outline"></ion-icon></span>
+      <span class="hint-text">Works with any grocery barcode</span>
+    </div>
+    <div class="hint-row">
+      <span class="hint-icon"><ion-icon name="checkmark-circle-outline"></ion-icon></span>
+      <span class="hint-text">Check allergens &amp; compatibility instantly</span>
+    </div>
+    <div class="hint-row">
+      <span class="hint-icon"><ion-icon name="checkmark-circle-outline"></ion-icon></span>
+      <span class="hint-text">See ingredients &amp; health score</span>
+    </div>
+  </div>
+
 </ion-content>

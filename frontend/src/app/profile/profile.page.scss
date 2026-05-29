@@ -1,19 +1,155 @@
-ion-list {
-  padding-bottom: 20%;
-  padding-top: 5%;
+.profile-toolbar {
+  --background: #0f172a;
+  --color: #fff;
+  --border-width: 0;
 }
 
-img.header-icon {
-  height: 1em;
-  padding-left: 0.15em;
-  padding-right: 0.15em;
+.profile-toolbar-title {
+  font-size: 1.1rem;
+  font-weight: 700;
 }
 
-ion-button {
-  font-size: 0.7em;
-  padding-left: 0.5em;
+.logout-btn {
+  --color: rgba(255,255,255,0.7);
+  font-size: 1.2rem;
 }
 
-// ion-title {
-//   margin-left: -3.5em;
-// }
+.profile-content {
+  --background: #f8fafc;
+}
+
+/* ── Hero ─────────────────────────────────────── */
+.profile-hero {
+  background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 100%);
+  padding: 36px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: #fff;
+}
+
+.avatar-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(56,189,248,0.2);
+  border: 2.5px solid rgba(56,189,248,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.avatar-initials {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 1px;
+}
+
+.profile-display-name {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.profile-email {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.55);
+  margin: 0 0 14px;
+}
+
+.points-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fde68a;
+}
+
+.points-star {
+  color: #fbbf24;
+  font-size: 0.9rem;
+}
+
+/* ── Info sections ────────────────────────────── */
+.info-section {
+  background: #fff;
+  margin: 10px 0 0;
+  padding: 16px 20px;
+}
+
+.info-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0 0 12px;
+}
+
+.info-title-icon {
+  font-size: 1rem;
+  &.info-title-icon--danger { color: #ef4444; }
+  &.info-title-icon--warn   { color: #f59e0b; }
+  &.info-title-icon--green  { color: #22c55e; }
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ptag {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  text-transform: capitalize;
+
+  &.ptag--danger { background: #fee2e2; color: #b91c1c; }
+  &.ptag--warn   { background: #fef3c7; color: #92400e; }
+  &.ptag--green  { background: #dcfce7; color: #166534; }
+}
+
+/* ── Empty health prompt ──────────────────────── */
+.empty-health {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 32px;
+  text-align: center;
+  margin-top: 10px;
+  background: #fff;
+}
+
+.empty-health-icon {
+  font-size: 2.5rem;
+  color: #cbd5e1;
+  margin-bottom: 12px;
+}
+
+.empty-health-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #334155;
+  margin: 0 0 6px;
+}
+
+.empty-health-sub {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}

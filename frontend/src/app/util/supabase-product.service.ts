@@ -73,9 +73,9 @@ export class SupabaseProductService {
     const from = page * pageSize;
     const to = from + pageSize - 1;
 
-    // Fetch approved products in this category directly via the join, with correct pagination
+    // Fetch approved + pending products in this category via the join, with correct pagination
     const prodUrl = new URL(`${SUPABASE_URL}/rest/v1/products`);
-    prodUrl.searchParams.set('status', 'eq.approved');
+    prodUrl.searchParams.set('status', 'in.(approved,pending)');
     prodUrl.searchParams.set('select', '*,product_categories!inner(category_id)');
     prodUrl.searchParams.set('product_categories.category_id', `eq.${categoryId}`);
     prodUrl.searchParams.set('order', 'name.asc');
@@ -103,7 +103,7 @@ export class SupabaseProductService {
       // Search name, brand, barcode, ingredients, and tag arrays
       url.searchParams.set('or', `(name.ilike.*${q}*,brand.ilike.*${q}*,barcode.ilike.*${q}*,ingredients_text.ilike.*${q}*,generic_name.ilike.*${q}*,allergen_tags.cs.{${q}},diet_tags.cs.{${q}},custom_tags.cs.{${q}},label_tags.cs.{${q}},off_categories_tags.cs.{${q}})`);
     }
-    url.searchParams.set('status', 'eq.approved');
+    url.searchParams.set('status', 'in.(approved,pending)');
     url.searchParams.set('order', 'name.asc');
     url.searchParams.set('select', '*');
 

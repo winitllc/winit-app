@@ -7,6 +7,18 @@ import { SupabaseProduct, SupabaseProductPage, SupabaseProductService } from '..
 
 type FilterMode = 'all' | 'compatible' | 'avoid';
 
+// Diet tags that signal "free from X" for the safe label strip
+const SAFE_TAG_LABELS: Record<string, string> = {
+  'vegan': 'Vegan', 'vegetarian': 'Vegetarian',
+  'gluten-free': 'Gluten Free', 'gluten_free': 'Gluten Free',
+  'dairy-free': 'Dairy Free', 'dairy_free': 'Dairy Free',
+  'nut-free': 'Nut Free', 'nut_free': 'Nut Free',
+  'organic': 'Organic', 'non-gmo': 'Non-GMO',
+  'keto': 'Keto', 'paleo': 'Paleo',
+  'halal': 'Halal', 'kosher': 'Kosher',
+  'low-sugar': 'Low Sugar', 'high-protein': 'High Protein',
+};
+
 @Component({
   selector: 'app-results',
   templateUrl: './results.page.html',
@@ -26,6 +38,7 @@ export class ResultsPage implements OnInit {
   private page = 0;
   private resultsTotal = 0;
   private pageSize = 24;
+  private userAllergenIds: string[] = [];
 
   @ViewChild(IonContent) content: IonContent | undefined;
 
@@ -52,6 +65,7 @@ export class ResultsPage implements OnInit {
       const allergies: string[] = profile?.medical?.allergies?.map((a: any) => a.name as string) ?? [];
       const conditions: string[] = profile?.medical?.medicalConditions?.map((a: any) => a.name as string) ?? [];
       const diets: string[] = profile?.medical?.lifestyleDiet?.map((a: any) => a.name as string) ?? [];
+      this.userAllergenIds = [...allergies, ...conditions].map(s => s.toLowerCase());
       this.compatibility.setWarnings({ allergies, conditions, diets });
 
       let nav = this.router.getCurrentNavigation() ?? this.router.lastSuccessfulNavigation;
@@ -88,10 +102,43 @@ export class ResultsPage implements OnInit {
       return;
     }
     this.filteredProducts = this.products.filter(p => {
+      if (p.status === 'pending') return this.activeFilter === 'compatible';
       const result = this.compatibility.score(p);
       if (this.activeFilter === 'compatible') return result.status !== 'avoid';
       return result.status === 'avoid';
     });
+  }
+
+  /** Returns user-relevant allergen names found in the product */
+  getDangerFlags(product: SupabaseProduct): string[] {
+    if (!this.userAllergenIds.length) return [];
+    const result = this.compatibility.score(product);
+    return result.flags
+      .filter(f => f.severity === 'danger')
+      .map(f => f.reason)
+      .slice(0, 3);
+  }
+
+  /** Returns safe/free-from labels from diet_tags (max 2) */
+  getSafeLabels(product: SupabaseProduct): string[] {
+    const labels: string[] = [];
+    for (const tag of (product.diet_tags ?? [])) {
+      const key = tag.replace(/^en:/, '').toLowerCase();
+      for (const [k, label] of Object.entries(SAFE_TAG_LABELS)) {
+        if (key.includes(k) && !labels.includes(label)) {
+          labels.push(label);
+          break;
+        }
+      }
+      if (labels.length >= 2) break;
+    }
+    return labels;
+  }
+
+  getCompatStatus(product: SupabaseProduct): string {
+    if (product.status === 'pending') return 'pending';
+    if (!this.compatibility.hasProfile) return 'none';
+    return this.compatibility.score(product).status;
   }
 
   selectProduct(id: string): void {
@@ -99,17 +146,6 @@ export class ResultsPage implements OnInit {
     if (!product) return;
     const navExtras: NavigationExtras = { state: { supabaseProduct: product } };
     this.navCtrl.navigateForward('tabs/product', navExtras);
-  }
-
-  getCompatStatus(product: SupabaseProduct): string {
-    if (!this.compatibility.hasProfile) return 'none';
-    return this.compatibility.score(product).status;
-  }
-
-  getCompatLabel(product: SupabaseProduct): string {
-    if (!this.compatibility.hasProfile) return '';
-    const result = this.compatibility.score(product);
-    return result.statusLabel;
   }
 
   public async scrollEvent(infiniteScroll: InfiniteScrollCustomEvent): Promise<void> {

@@ -1,58 +1,67 @@
 <ion-header>
-  <ion-toolbar color="primary" class="ion-text-center">
-    <ion-button slot="start" (click)="confirmLogout()" color="secondary">Logout</ion-button>
-    <ion-title class="ion-text-center">Profile</ion-title>
+  <ion-toolbar class="profile-toolbar">
+    <ion-title class="profile-toolbar-title">Profile</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" class="logout-btn" (click)="confirmLogout()">
+        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
-<ion-content [fullscreen]="true">
-  <h2 class="ion-text-center"><img class="header-icon" src="assets/icon/favicon.png"> Profile</h2>
-  <ion-list>
-    <ion-list-header class="list-header">
-      <ion-label>{{profile?.first_name}} {{profile?.last_name}}</ion-label>
-    </ion-list-header>
-    <ion-item class="list-content">
-      <ion-label position="stacked">Username:</ion-label>
-      <span class="ion-padding-start">{{profile?.display_name}}</span>
-    </ion-item>
-    <ion-item class="list-content">
-      <ion-label position="stacked">Email:</ion-label>
-      <span class="ion-padding-start">{{profile?.email}}</span>
-    </ion-item>
 
-    <ion-item *ngIf="profile" class="list-content points-section">
-      <ion-label position="stacked">Points Balance:</ion-label>
-      <ion-badge color="primary" style="margin-left: 20px;">
-        <span>{{profile.points_balance}} </span>
-        <ion-icon name="star"></ion-icon>
-      </ion-badge>
-    </ion-item>
+<ion-content class="profile-content">
 
-    <ion-item *ngIf="profile?.allergy_ids?.length" class="list-content">
-      <ion-label position="stacked">Allergies:</ion-label>
-      <ion-grid>
-        <ion-row *ngFor="let id of profile!.allergy_ids">
-          <ion-col>{{id}}</ion-col>
-        </ion-row>
-      </ion-grid>
-    </ion-item>
+  <!-- Avatar + name -->
+  <div class="profile-hero">
+    <div class="avatar-wrap">
+      <span class="avatar-initials">{{getInitials()}}</span>
+    </div>
+    <h1 class="profile-display-name">{{profile?.display_name || profile?.email || 'Your Profile'}}</h1>
+    <p class="profile-email">{{profile?.email}}</p>
+    <div class="points-chip" *ngIf="profile?.points_balance != null">
+      <ion-icon name="star" class="points-star"></ion-icon>
+      {{profile?.points_balance}} points
+    </div>
+  </div>
 
-    <ion-item *ngIf="profile?.diet_ids?.length" class="list-content">
-      <ion-label position="stacked">Lifestyle Diet:</ion-label>
-      <ion-grid>
-        <ion-row *ngFor="let id of profile!.diet_ids">
-          <ion-col>{{id}}</ion-col>
-        </ion-row>
-      </ion-grid>
-    </ion-item>
+  <!-- Allergies -->
+  <div class="info-section" *ngIf="profile?.allergy_ids?.length">
+    <h2 class="info-title">
+      <ion-icon name="alert-circle-outline" class="info-title-icon info-title-icon--danger"></ion-icon>
+      Allergies
+    </h2>
+    <div class="tag-row">
+      <span class="ptag ptag--danger" *ngFor="let id of profile!.allergy_ids">{{id}}</span>
+    </div>
+  </div>
 
-    <ion-item *ngIf="profile?.condition_ids?.length" class="list-content">
-      <ion-label position="stacked">Medical Conditions:</ion-label>
-      <ion-grid>
-        <ion-row *ngFor="let id of profile!.condition_ids">
-          <ion-col>{{id}}</ion-col>
-        </ion-row>
-      </ion-grid>
-    </ion-item>
+  <!-- Medical conditions -->
+  <div class="info-section" *ngIf="profile?.condition_ids?.length">
+    <h2 class="info-title">
+      <ion-icon name="medkit-outline" class="info-title-icon info-title-icon--warn"></ion-icon>
+      Medical Conditions
+    </h2>
+    <div class="tag-row">
+      <span class="ptag ptag--warn" *ngFor="let id of profile!.condition_ids">{{id}}</span>
+    </div>
+  </div>
 
-  </ion-list>
+  <!-- Diet -->
+  <div class="info-section" *ngIf="profile?.diet_ids?.length">
+    <h2 class="info-title">
+      <ion-icon name="leaf-outline" class="info-title-icon info-title-icon--green"></ion-icon>
+      Lifestyle &amp; Diet
+    </h2>
+    <div class="tag-row">
+      <span class="ptag ptag--green" *ngFor="let id of profile!.diet_ids">{{id}}</span>
+    </div>
+  </div>
+
+  <!-- Empty health profile prompt -->
+  <div class="empty-health" *ngIf="!profile?.allergy_ids?.length && !profile?.condition_ids?.length && !profile?.diet_ids?.length && profile">
+    <ion-icon name="heart-outline" class="empty-health-icon"></ion-icon>
+    <p class="empty-health-title">No health profile set</p>
+    <p class="empty-health-sub">Add your allergies and diet preferences so we can flag products for you</p>
+  </div>
+
 </ion-content>

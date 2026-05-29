@@ -1,206 +1,154 @@
 <ion-header>
-  <ion-toolbar color="primary">
+  <ion-toolbar class="product-toolbar">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/tabs/browse"></ion-back-button>
+      <ion-back-button defaultHref="/tabs/browse" text=""></ion-back-button>
     </ion-buttons>
-    <ion-title class="ion-text-center">Product</ion-title>
+    <ion-title class="product-toolbar-title">Product</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <!-- ===== Supabase product view ===== -->
-  <div *ngIf="!noProduct && supabaseProduct">
-    <ion-grid>
-      <ion-row>
-        <ion-col class="ion-text-center">
-          <h2>{{supabaseProduct!.name}}</h2>
-          <p *ngIf="supabaseProduct!.brand" class="brand-text">{{supabaseProduct!.brand}}</p>
-          <p *ngIf="supabaseProduct!.quantity" class="quantity-text">{{supabaseProduct!.quantity}}</p>
-        </ion-col>
-      </ion-row>
+<ion-content class="product-content">
 
-      <!-- Nutriscore + health rating badges -->
-      <ion-row class="ion-justify-content-center">
-        <ion-col size="auto" *ngIf="supabaseProduct!.nutriscore_grade">
-          <div class="nutriscore-badge grade-{{supabaseProduct!.nutriscore_grade}}">
-            Nutri-Score {{supabaseProduct!.nutriscore_grade?.toUpperCase()}}
-          </div>
-        </ion-col>
-        <ion-col size="auto" *ngIf="supabaseProduct!.health_rating">
-          <div class="health-rating-badge">
-            Health Rating: {{supabaseProduct!.health_rating}}/10
-          </div>
-        </ion-col>
-        <ion-col size="auto" *ngIf="supabaseProduct!.nova_group">
-          <div class="nova-badge">NOVA {{supabaseProduct!.nova_group}}</div>
-        </ion-col>
-      </ion-row>
+  <!-- ===== Supabase product ===== -->
+  <ng-container *ngIf="!noProduct && supabaseProduct">
 
-      <!-- Warning banner -->
-      <ion-row *ngIf="dangerWarning || poisonWarning">
-        <ion-col>
-          <ion-item color="danger" lines="none" class="warning-banner">
-            <ion-icon slot="start" name="warning"></ion-icon>
-            <ion-label>Contains ingredients matching your health profile</ion-label>
-          </ion-item>
-        </ion-col>
-      </ion-row>
+    <!-- Hero image -->
+    <div class="hero-wrap">
+      <img
+        *ngIf="supabaseProduct!.image_front_url"
+        [src]="supabaseProduct!.image_front_url"
+        (error)="$any($event.target).src='assets/imgs/noProduct.png'"
+        class="hero-img" alt="Product">
+      <div *ngIf="!supabaseProduct!.image_front_url" class="hero-placeholder">
+        <ion-icon name="image-outline"></ion-icon>
+      </div>
+      <div class="hero-overlay"></div>
+      <span class="status-pill" [attr.data-status]="supabaseProduct!.status">
+        {{supabaseProduct!.status === 'approved' ? 'Approved' : supabaseProduct!.status === 'pending' ? 'Pending Review' : supabaseProduct!.status}}
+      </span>
+    </div>
 
-      <!-- Product image -->
-      <ion-row *ngIf="supabaseProduct!.image_front_url">
-        <ion-col class="ion-text-center">
-          <img [src]="supabaseProduct!.image_front_url"
-            (error)="$any($event.target).src='assets/imgs/noProduct.png'"
-            class="product-img" alt="Product">
-        </ion-col>
-      </ion-row>
+    <!-- Identity -->
+    <div class="product-id-section">
+      <p class="prod-brand" *ngIf="supabaseProduct!.brand">{{supabaseProduct!.brand}}</p>
+      <h1 class="prod-name">{{supabaseProduct!.name}}</h1>
+      <p class="prod-qty" *ngIf="supabaseProduct!.quantity">{{supabaseProduct!.quantity}}</p>
+      <div class="badge-row">
+        <span class="badge badge--health" *ngIf="supabaseProduct!.health_rating">
+          {{supabaseProduct!.health_rating}}/10 Health
+        </span>
+        <span class="badge badge--nova" *ngIf="supabaseProduct!.nova_group">
+          NOVA {{supabaseProduct!.nova_group}}
+        </span>
+      </div>
+    </div>
 
-      <!-- AI Insights -->
-      <ion-row *ngIf="supabaseProduct!.ai_insights">
-        <ion-col>
-          <ion-card class="insights-card">
-            <ion-card-header>
-              <ion-card-title>Health Insights</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>{{supabaseProduct!.ai_insights}}</ion-card-content>
-          </ion-card>
-        </ion-col>
-      </ion-row>
+    <!-- Compatibility banner -->
+    <div class="compat-banner" [attr.data-status]="compatResult?.status" *ngIf="compatResult && compatibility.hasProfile">
+      <span class="compat-banner-icon">
+        <ion-icon [name]="compatResult.status === 'avoid' ? 'close-circle' : compatResult.status === 'review' ? 'warning' : 'checkmark-circle'"></ion-icon>
+      </span>
+      <div class="compat-banner-text">
+        <p class="compat-label">{{compatResult.statusLabel}}</p>
+        <p class="compat-sub" *ngIf="compatResult.flags.length">
+          {{compatResult.flags[0].severity === 'danger' ? 'Contains' : 'May contain'}} {{compatResult.flags[0].reason}}<span *ngIf="compatResult.flags.length > 1"> +{{compatResult.flags.length - 1}} more</span>
+        </p>
+        <p class="compat-sub" *ngIf="!compatResult.flags.length">Looks good for your profile</p>
+      </div>
+    </div>
 
-      <!-- Allergen tags -->
-      <ion-row *ngIf="supabaseProduct!.allergen_tags?.length">
-        <ion-col>
-          <h4>Allergens</h4>
-          <div class="tag-list">
-            <ion-badge *ngFor="let t of supabaseProduct!.allergen_tags"
-              [color]="warnings.includes(t) ? 'danger' : 'medium'" class="tag-badge">
-              {{t}}
-            </ion-badge>
-          </div>
-        </ion-col>
-      </ion-row>
+    <!-- Dietary Info -->
+    <div class="section" *ngIf="supabaseProduct!.allergen_tags?.length || supabaseProduct!.diet_tags?.length">
+      <h2 class="section-title">Dietary Info</h2>
+      <div class="tag-group" *ngIf="supabaseProduct!.allergen_tags?.length">
+        <p class="tag-group-label">Contains allergens</p>
+        <div class="tag-row">
+          <span class="dtag"
+            *ngFor="let t of supabaseProduct!.allergen_tags"
+            [class.dtag--danger]="isUserAllergen(t)"
+            [class.dtag--neutral]="!isUserAllergen(t)">
+            {{t | cleanTag}}
+          </span>
+        </div>
+      </div>
+      <div class="tag-group" *ngIf="supabaseProduct!.diet_tags?.length">
+        <p class="tag-group-label">Lifestyle &amp; diet</p>
+        <div class="tag-row">
+          <span class="dtag dtag--green" *ngFor="let t of supabaseProduct!.diet_tags">{{t | cleanTag}}</span>
+        </div>
+      </div>
+    </div>
 
-      <!-- Diet flags -->
-      <ion-row *ngIf="supabaseProduct!.diet_tags?.length">
-        <ion-col>
-          <h4>Diet & Lifestyle</h4>
-          <div class="tag-list">
-            <ion-badge *ngFor="let t of supabaseProduct!.diet_tags" color="success" class="tag-badge">
-              {{t}}
-            </ion-badge>
-          </div>
-        </ion-col>
-      </ion-row>
+    <!-- AI Insights -->
+    <div class="section" *ngIf="supabaseProduct!.ai_insights">
+      <h2 class="section-title">Health Insights</h2>
+      <div class="insights-card">
+        <ion-icon name="sparkles-outline" class="insights-icon"></ion-icon>
+        <p class="insights-text">{{supabaseProduct!.ai_insights}}</p>
+      </div>
+    </div>
 
-      <!-- Ingredients -->
-      <ion-row *ngIf="supabaseProduct!.ingredients_text">
-        <ion-col>
-          <h4>Ingredients</h4>
-          <div [innerHtml]="ingredientsTextHTML" class="ingredients-text"></div>
-        </ion-col>
-      </ion-row>
+    <!-- Ingredients -->
+    <div class="section" *ngIf="supabaseProduct!.ingredients_text">
+      <h2 class="section-title">Ingredients</h2>
+      <div [innerHtml]="ingredientsTextHTML" class="ingredients-text"></div>
+    </div>
 
-      <!-- Nutrition image -->
-      <ion-row *ngIf="supabaseProduct!.image_nutrition_url">
-        <ion-col class="ion-text-center">
-          <h4>Nutrition Facts</h4>
-          <img [src]="supabaseProduct!.image_nutrition_url"
-            (error)="$any($event.target).src='assets/imgs/noProduct.png'"
-            class="product-img" alt="Nutrition">
-        </ion-col>
-      </ion-row>
+    <!-- Nutrition image -->
+    <div class="section" *ngIf="supabaseProduct!.image_nutrition_url">
+      <h2 class="section-title">Nutrition Facts</h2>
+      <img [src]="supabaseProduct!.image_nutrition_url"
+        (error)="$any($event.target).src='assets/imgs/noProduct.png'"
+        class="nutrition-img" alt="Nutrition">
+    </div>
 
-      <!-- Custom tags -->
-      <ion-row *ngIf="supabaseProduct!.custom_tags?.length">
-        <ion-col>
-          <h4>Tags</h4>
-          <div class="tag-list">
-            <ion-badge *ngFor="let t of supabaseProduct!.custom_tags" color="tertiary" class="tag-badge">
-              {{t}}
-            </ion-badge>
-          </div>
-        </ion-col>
-      </ion-row>
+    <!-- Custom tags -->
+    <div class="section" *ngIf="supabaseProduct!.custom_tags?.length">
+      <h2 class="section-title">Tags</h2>
+      <div class="tag-row">
+        <span class="dtag dtag--neutral" *ngFor="let t of supabaseProduct!.custom_tags">{{t}}</span>
+      </div>
+    </div>
 
-      <ion-row>
-        <ion-col>
-          <p class="attribution">Product data sourced from <a href="https://world.openfoodfacts.org" target="_blank">Open Food Facts</a> (ODbL)</p>
-        </ion-col>
-      </ion-row>
+    <!-- Footer -->
+    <div class="section section--footer">
+      <button class="contribute-btn" (click)="openContributeModal()">
+        <ion-icon name="people-outline"></ion-icon>
+        Help Improve This Product
+      </button>
+      <p class="attribution">Data from <a href="https://world.openfoodfacts.org" target="_blank">Open Food Facts</a> (ODbL)</p>
+    </div>
 
-      <!-- Help Improve button -->
-      <ion-row>
-        <ion-col>
-          <ion-button expand="block" fill="outline" color="primary" (click)="openContributeModal()" class="contribute-btn">
-            <ion-icon slot="start" name="people-outline"></ion-icon>
-            Help Improve This Product
-          </ion-button>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
+  </ng-container>
+
+  <!-- ===== Legacy OFF product ===== -->
+  <ng-container *ngIf="!noProduct && product && !supabaseProduct">
+    <div class="section">
+      <h1 class="prod-name">{{product?.product_name}}</h1>
+      <img [src]="product?.image_front_url || 'assets/imgs/noProduct.png'"
+        (error)="$any($event.target).src='assets/imgs/noProduct.png'"
+        class="nutrition-img" alt="Product">
+    </div>
+    <div class="section">
+      <h2 class="section-title">Ingredients</h2>
+      <div [innerHtml]="ingredientsTextHTML" class="ingredients-text"></div>
+    </div>
+    <div class="section">
+      <h2 class="section-title">Nutrition</h2>
+      <img [src]="product?.image_nutrition_url || 'assets/imgs/noProduct.png'"
+        (error)="$any($event.target).src='assets/imgs/noProduct.png'"
+        class="nutrition-img" alt="Nutrition">
+    </div>
+  </ng-container>
+
+  <!-- ===== No product ===== -->
+  <div class="no-product-state" *ngIf="noProduct">
+    <img src="assets/imgs/noProduct.png" class="no-product-img" alt="No product">
+    <h2 class="no-product-title">No product info yet</h2>
+    <p class="no-product-sub">Add details and earn points!</p>
+    <button class="contribute-btn contribute-btn--primary" (click)="addNewProductInfo()">
+      Add product info
+    </button>
   </div>
 
-  <!-- ===== Legacy OFF product view (barcode scan) ===== -->
-  <div *ngIf="!noProduct && product && !supabaseProduct">
-    <ion-grid>
-      <ion-row>
-        <ion-col class="ion-text-center">
-          <h2>{{product?.product_name}}</h2>
-        </ion-col>
-      </ion-row>
-      <ion-row>
-        <ion-col class="ion-text-center">
-          <img [src]="product?.image_front_url || 'assets/imgs/noProduct.png'"
-            (error)="$any($event.target).src='assets/imgs/noProduct.png'"
-            class="product-img" alt="Product">
-        </ion-col>
-      </ion-row>
-      <ion-row>
-        <ion-col class="ion-text-center">
-          <h4>Ingredients</h4>
-          <div [innerHtml]="ingredientsTextHTML"></div>
-        </ion-col>
-      </ion-row>
-      <ion-row>
-        <ion-col class="ion-text-center">
-          <h4>Nutrition</h4>
-          <img [src]="product?.image_nutrition_url || 'assets/imgs/noProduct.png'"
-            (error)="$any($event.target).src='assets/imgs/noProduct.png'"
-            class="product-img" alt="Nutrition">
-        </ion-col>
-      </ion-row>
-      <ion-row>
-        <ion-col>
-          <h4>Categories</h4>
-          <p>
-            <span *ngFor="let categoryKeyword of (product?.categories_tags || []) | getKeywordValues">
-              <span class="categoryLink" (click)="searchKeyword(categoryKeyword)">{{categoryKeyword}}</span>,
-            </span>
-          </p>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
-  </div>
-
-  <!-- ===== No product view ===== -->
-  <div *ngIf="noProduct">
-    <ion-grid>
-      <ion-row class="ion-justify-content-center">
-        <ion-col class="ion-text-center">
-          <img src="assets/imgs/noProduct.png" class="product-img" alt="No product">
-        </ion-col>
-      </ion-row>
-      <ion-row>
-        <ion-col class="ion-text-center">
-          <h3><ion-text color="secondary">No product info</ion-text></h3>
-          <h3>Add Product Info &amp; Earn Points!</h3>
-        </ion-col>
-      </ion-row>
-      <ion-row>
-        <ion-col class="ion-text-center">
-          <ion-button color="primary" expand="block" (click)="addNewProductInfo()">Add product info</ion-button>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
-  </div>
 </ion-content>

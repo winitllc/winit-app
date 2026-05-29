@@ -40,20 +40,28 @@
           loading="lazy"
           class="card-thumb"
           [alt]="product.name || ''">
+        <div class="pending-ribbon" *ngIf="product.status === 'pending'">Pending</div>
       </div>
       <div class="card-body">
         <p class="card-brand" *ngIf="product.brand">{{product.brand}}</p>
         <h3 class="card-name">{{product.name || 'Unknown product'}}</h3>
-        <div class="card-meta">
-          <span class="nutriscore-badge" *ngIf="product.nutriscore_grade" [attr.data-grade]="product.nutriscore_grade.toLowerCase()">
-            {{product.nutriscore_grade | uppercase}}
-          </span>
-          <span class="compat-badge" [attr.data-status]="getCompatStatus(product)">
-            {{getCompatLabel(product)}}
-          </span>
+        <div class="card-tags">
+          <!-- Danger: user allergens contained -->
+          <ng-container *ngFor="let flag of getDangerFlags(product)">
+            <span class="tag tag--danger">Contains {{flag}}</span>
+          </ng-container>
+          <!-- Safe: allergen-free signals -->
+          <ng-container *ngFor="let label of getSafeLabels(product)">
+            <span class="tag tag--safe">{{label}}</span>
+          </ng-container>
+          <!-- Pending review pill -->
+          <span class="tag tag--pending" *ngIf="product.status === 'pending'">Pending review</span>
         </div>
       </div>
-      <ion-icon name="chevron-forward-outline" class="card-chevron"></ion-icon>
+      <div class="card-right">
+        <span class="compat-dot" [attr.data-status]="getCompatStatus(product)"></span>
+        <ion-icon name="chevron-forward-outline" class="card-chevron"></ion-icon>
+      </div>
     </div>
   </div>
 

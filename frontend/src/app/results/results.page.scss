@@ -91,6 +91,7 @@
   border-radius: 10px;
   overflow: hidden;
   background: #f1f5f9;
+  position: relative;
 }
 
 .card-thumb {
@@ -99,13 +100,27 @@
   object-fit: cover;
 }
 
+.pending-ribbon {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(245,158,11,0.85);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 2px 0;
+  letter-spacing: 0.3px;
+}
+
 .card-body {
   flex: 1;
   min-width: 0;
 }
 
 .card-brand {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #94a3b8;
   font-weight: 600;
   text-transform: uppercase;
@@ -117,7 +132,7 @@
 }
 
 .card-name {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: #0f172a;
   margin: 0 0 6px;
@@ -126,43 +141,62 @@
   text-overflow: ellipsis;
 }
 
-.card-meta {
+/* ── Tag strip ────────────────────────────────── */
+.card-tags {
   display: flex;
-  align-items: center;
-  gap: 6px;
   flex-wrap: wrap;
+  gap: 5px;
 }
 
-.nutriscore-badge {
-  font-size: 0.68rem;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 6px;
-  letter-spacing: 0.5px;
-
-  &[data-grade='a'] { background: #dcfce7; color: #166534; }
-  &[data-grade='b'] { background: #d1fae5; color: #065f46; }
-  &[data-grade='c'] { background: #fef9c3; color: #854d0e; }
-  &[data-grade='d'] { background: #ffedd5; color: #9a3412; }
-  &[data-grade='e'] { background: #fee2e2; color: #991b1b; }
-}
-
-.compat-badge {
-  font-size: 0.68rem;
+.tag {
+  font-size: 0.65rem;
   font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 6px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 
-  &[data-status='approved'] { background: #dcfce7; color: #166534; }
-  &[data-status='review']   { background: #fef9c3; color: #854d0e; }
-  &[data-status='avoid']    { background: #fee2e2; color: #991b1b; }
-  &[data-status='none']     { display: none; }
+  &.tag--danger {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  &.tag--safe {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  &.tag--pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+}
+
+/* ── Right side (dot + chevron) ───────────────── */
+.card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.compat-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &[data-status='approved']  { background: #22c55e; }
+  &[data-status='review']    { background: #f59e0b; }
+  &[data-status='avoid']     { background: #ef4444; }
+  &[data-status='pending']   { background: #f59e0b; }
+  &[data-status='none']      { display: none; }
 }
 
 .card-chevron {
   color: #cbd5e1;
   font-size: 1rem;
-  flex-shrink: 0;
 }
 
 /* ── Empty state ──────────────────────────────── */
