@@ -6,7 +6,8 @@ import { IonicModule } from '@ionic/angular';
 
 import { ProductPageRoutingModule } from './product-routing.module';
 
-import { ProductPage, GetKeywordValuesPipe } from './product.page';
+import { ProductPage, GetKeywordValuesPipe, CleanTagPipe } from './product.page';
+import { ContributeModalComponent } from './contribute-modal.component';
 
 @NgModule({
   imports: [
@@ -15,6 +16,6 @@ import { ProductPage, GetKeywordValuesPipe } from './product.page';
     IonicModule,
     ProductPageRoutingModule
   ],
-  declarations: [ProductPage, GetKeywordValuesPipe]
+  declarations: [ProductPage, GetKeywordValuesPipe, CleanTagPipe, ContributeModalComponent]
 })
 export class ProductPageModule {}

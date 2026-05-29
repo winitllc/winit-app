@@ -1,11 +1,13 @@
 import { Component, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { ActivatedRoute, Router, NavigationExtras } from '@angular/router';
-import { NavController, ActionSheetController, Platform, LoadingController, LoadingOptions } from '@ionic/angular';
+import { NavController, ActionSheetController, Platform, LoadingController, LoadingOptions, ModalController } from '@ionic/angular';
 import { AppConfig } from '../app.config';
 import { ProfileState } from '../profile/profile.state';
 import { OpenFoodFactsProduct, ProductService } from './product.service';
 import { SupabaseProduct, SupabaseProductService } from '../util/supabase-product.service';
 import { DomSanitizer } from '@angular/platform-browser';
+import { ContributeModalComponent } from './contribute-modal.component';
+import { WinitAuthService } from '../util/winit-auth.service';
 
 @Component({
   selector: 'app-product',
@@ -44,6 +46,7 @@ export class ProductPage implements OnInit {
   constructor(
     private actionSheetController: ActionSheetController,
     private loadingController: LoadingController,
+    private modalController: ModalController,
     private navCtrl: NavController,
     private loadingCtrl: LoadingController,
     private platform: Platform,
@@ -52,7 +55,8 @@ export class ProductPage implements OnInit {
     private router: Router,
     private productService: ProductService,
     private supabaseProductService: SupabaseProductService,
-    private profileState: ProfileState
+    private profileState: ProfileState,
+    private winitAuth: WinitAuthService,
   ) { }
 
   async ngOnInit() {
@@ -112,6 +116,26 @@ export class ProductPage implements OnInit {
       }
     };
     this.navCtrl.navigateForward('tabs/product/scanName', navExtras);
+  }
+
+  async openContributeModal() {
+    const productId = this.supabaseProduct?.id;
+    if (!productId) return;
+
+    const session = await this.winitAuth.restoreSession();
+    if (!session) return;
+
+    const modal = await this.modalController.create({
+      component: ContributeModalComponent,
+      componentProps: {
+        productId,
+        userId: session.user.id,
+        accessToken: session.access_token,
+      },
+      breakpoints: [0, 0.5, 0.92],
+      initialBreakpoint: 0.92,
+    });
+    await modal.present();
   }
 
   // private reset(): void {
