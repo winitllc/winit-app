@@ -214,21 +214,6 @@ Deno.serve(async (req: Request) => {
 
         if (upsertErr) throw new Error(`Upsert error: ${upsertErr.message}`);
 
-        // Fetch the actual IDs by barcode to avoid relying on upsert returning updated rows
-        const barcodes = rows.map((r) => r.barcode as string);
-        const { data: inserted } = await supabase
-          .from("products")
-          .select("id")
-          .in("barcode", barcodes);
-
-        if (inserted?.length) {
-          await supabase.from("product_categories")
-            .upsert(
-              inserted.map((prod: { id: string }) => ({ product_id: prod.id, category_id: category.id })),
-              { onConflict: "product_id,category_id", ignoreDuplicates: true },
-            );
-        }
-
         totalUpserted += rows.length;
         pagesImported += 1;
         console.log(`import-products: page=${page} upserted=${rows.length} total=${totalUpserted}`);
