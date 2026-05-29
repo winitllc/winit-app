@@ -4,16 +4,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { TabsPageRoutingModule } from './tabs-routing.module';
-
 import { TabsPage } from './tabs.page';
+import { ProfileSetupModalComponent } from './profile-setup-modal.component';
 
 @NgModule({
   imports: [
     IonicModule,
     CommonModule,
     FormsModule,
-    TabsPageRoutingModule
+    TabsPageRoutingModule,
   ],
-  declarations: [TabsPage]
+  declarations: [TabsPage, ProfileSetupModalComponent],
 })
 export class TabsPageModule {}

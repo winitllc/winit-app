@@ -1,0 +1,65 @@
+<ion-content class="setup-content" scroll-y="false">
+
+  <!-- Loading state -->
+  <div class="setup-loading" *ngIf="loading">
+    <ion-spinner name="crescent" color="primary"></ion-spinner>
+  </div>
+
+  <div class="setup-shell" *ngIf="!loading">
+
+    <!-- Header row: step pills + skip -->
+    <div class="setup-header">
+      <div class="step-pills">
+        <div
+          class="step-pill"
+          *ngFor="let s of steps; let i = index"
+          [class.active]="i === currentIndex"
+          [class.done]="i < currentIndex"
+        ></div>
+      </div>
+      <button class="skip-btn" (click)="skip()">Skip</button>
+    </div>
+
+    <!-- Question -->
+    <div class="setup-question">
+      <h1 class="question-title">{{ stepTitle }}</h1>
+      <p class="question-sub" *ngIf="stepSubtitle">{{ stepSubtitle }}</p>
+    </div>
+
+    <!-- Chips grid -->
+    <div class="chips-scroll">
+      <div class="chips-grid">
+        <button
+          class="chip"
+          *ngFor="let item of currentItems"
+          [class.chip-selected]="isSelected(item.id)"
+          (click)="toggle(item.id)"
+        >
+          <span class="chip-check" *ngIf="isSelected(item.id)">✓</span>
+          <span class="chip-label">{{ item.commonName || item.name }}</span>
+        </button>
+
+        <div class="chip chip-none-hint" *ngIf="currentItems.length === 0">
+          No options available
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="setup-footer">
+      <button class="back-btn" (click)="back()" *ngIf="currentIndex > 0">Back</button>
+      <div class="spacer" *ngIf="currentIndex === 0"></div>
+
+      <div class="selection-count" *ngIf="currentSelection.size > 0">
+        {{ currentSelection.size }} selected
+      </div>
+
+      <button class="next-btn" (click)="next()">
+        {{ currentIndex < steps.length - 1 ? 'Next' : 'Done' }}
+        <span class="next-arrow">→</span>
+      </button>
+    </div>
+
+  </div>
+
+</ion-content>

@@ -1,0 +1,252 @@
+// Profile Setup Modal
+// Full-height sheet with smooth chip grid and step indicator
+
+:host {
+  --setup-bg: #ffffff;
+  --setup-text: #111111;
+  --setup-sub: #666666;
+  --setup-border: #e8e8e8;
+  --setup-primary: #1a73e8;
+  --setup-primary-light: #e8f0fe;
+  --setup-chip-bg: #f5f5f5;
+  --setup-chip-selected: #1a73e8;
+  --setup-chip-selected-text: #ffffff;
+  --setup-pill-bg: #e0e0e0;
+  --setup-pill-active: #1a73e8;
+  --setup-pill-done: #1a73e8;
+}
+
+.setup-content {
+  --background: var(--setup-bg);
+  --color: var(--setup-text);
+}
+
+.setup-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  ion-spinner {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.setup-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+// ── Header ─────────────────────────────────────────────
+.setup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 8px;
+  flex-shrink: 0;
+}
+
+.step-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.step-pill {
+  width: 28px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--setup-pill-bg);
+  transition: background 0.3s ease, width 0.3s ease;
+
+  &.active {
+    background: var(--setup-pill-active);
+    width: 40px;
+  }
+
+  &.done {
+    background: var(--setup-pill-done);
+    opacity: 0.5;
+  }
+}
+
+.skip-btn {
+  background: none;
+  border: none;
+  color: var(--setup-sub);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--setup-text);
+  }
+}
+
+// ── Question ───────────────────────────────────────────
+.setup-question {
+  padding: 24px 24px 16px;
+  flex-shrink: 0;
+}
+
+.question-title {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--setup-text);
+  margin: 0 0 8px;
+  letter-spacing: -0.3px;
+}
+
+.question-sub {
+  font-size: 15px;
+  color: var(--setup-sub);
+  line-height: 1.5;
+  margin: 0;
+}
+
+// ── Chips scroll area ──────────────────────────────────
+.chips-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 24px 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 100px;
+  background: var(--setup-chip-bg);
+  border: 1.5px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--setup-text);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &.chip-selected {
+    background: var(--setup-primary-light);
+    border-color: var(--setup-chip-selected);
+    color: var(--setup-chip-selected);
+  }
+
+  &.chip-none-hint {
+    background: none;
+    border: none;
+    color: var(--setup-sub);
+    cursor: default;
+    font-style: italic;
+  }
+}
+
+.chip-check {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chip-label {
+  text-transform: capitalize;
+}
+
+// ── Footer ─────────────────────────────────────────────
+.setup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--setup-border);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.selection-count {
+  font-size: 13px;
+  color: var(--setup-primary);
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
+}
+
+.back-btn {
+  background: none;
+  border: 1.5px solid var(--setup-border);
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--setup-sub);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+.next-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--setup-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+
+  &:active {
+    opacity: 0.85;
+    transform: scale(0.98);
+  }
+}
+
+.next-arrow {
+  font-size: 16px;
+  transition: transform 0.2s;
+}
+
+.next-btn:hover .next-arrow {
+  transform: translateX(3px);
+}
+
+// Dark mode
+@media (prefers-color-scheme: dark) {
+  :host {
+    --setup-bg: #1a1a1a;
+    --setup-text: #f0f0f0;
+    --setup-sub: #9a9a9a;
+    --setup-border: #2e2e2e;
+    --setup-chip-bg: #2a2a2a;
+    --setup-primary-light: #1a2f4e;
+    --setup-pill-bg: #333333;
+  }
+}
