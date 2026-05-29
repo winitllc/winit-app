@@ -128,9 +128,9 @@ function mapProduct(p: Record<string, unknown>): Record<string, unknown> {
     additives_tags:        parseTags(p.additives_tags),
     ingredients_from_palm_oil_tags:             parseTags(p.ingredients_from_palm_oil_tags),
     ingredients_that_may_be_from_palm_oil_tags: parseTags(p.ingredients_that_may_be_from_palm_oil_tags),
-    nutriscore_grade:      String(p.nutriscore_grade ?? p.nutrition_grade_fr ?? "").toLowerCase() || null,
+    nutriscore_grade:      String(p.nutriscore_grade ?? p.nutrition_grade_fr ?? "").toLowerCase() || "",
     nova_group:            p.nova_group != null ? Number(p.nova_group) : null,
-    ecoscore_grade:        String(p.ecoscore_grade ?? "").toLowerCase() || null,
+    ecoscore_grade:        String(p.ecoscore_grade ?? "").toLowerCase() || "",
     nutrition_score_fr:    num(p["nutrition-score-fr_100g"]),
     off_id:                barcode,
     off_created_t:         p.created_t != null ? Number(p.created_t) : null,
@@ -208,17 +208,23 @@ Deno.serve(async (req: Request) => {
         const rows = offProducts.map(mapProduct).filter(r => r.barcode);
         if (!rows.length) break;
 
-        const { data: upserted, error: upsertErr } = await supabase
+        const { error: upsertErr } = await supabase
           .from("products")
-          .upsert(rows, { onConflict: "barcode", ignoreDuplicates: false })
-          .select("id, barcode");
+          .upsert(rows, { onConflict: "barcode", ignoreDuplicates: false });
 
         if (upsertErr) throw new Error(`Upsert error: ${upsertErr.message}`);
 
-        if (upserted?.length) {
+        // Fetch the actual IDs by barcode to avoid relying on upsert returning updated rows
+        const barcodes = rows.map((r) => r.barcode as string);
+        const { data: inserted } = await supabase
+          .from("products")
+          .select("id")
+          .in("barcode", barcodes);
+
+        if (inserted?.length) {
           await supabase.from("product_categories")
             .upsert(
-              upserted.map((prod: { id: string }) => ({ product_id: prod.id, category_id: category.id })),
+              inserted.map((prod: { id: string }) => ({ product_id: prod.id, category_id: category.id })),
               { onConflict: "product_id,category_id", ignoreDuplicates: true },
             );
         }
