@@ -2,6 +2,7 @@ const SUPABASE_URL = 'https://twosrdqyaxhdfyqgefjm.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3b3NyZHF5YXhoZGZ5cWdlZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMDQzMDksImV4cCI6MjA5NTU4MDMwOX0.qJ8ZQaMobmuL29-A3swShTbF-D7SVf1oUK9LU7vO7RE'
 
 export type ProductStatus = 'pending' | 'approved' | 'rejected'
+export type CategorizationStatus = 'unclassified' | 'auto_mapped' | 'ai_classified' | 'needs_review' | 'reviewed'
 
 export interface Product {
   id: string
@@ -20,6 +21,7 @@ export interface Product {
   label_tags: string[]
   custom_tags: string[]
   off_categories_tags: string[]
+  off_labels_tags: string[]
   nutriscore_grade: string
   nova_group: number | null
   status: ProductStatus
@@ -31,6 +33,36 @@ export interface Product {
   approved_by: string
   created_at: string
   updated_at: string
+  // AI classification fields
+  ai_category_id: string | null
+  ai_subcategory_id: string | null
+  ai_confidence: number | null
+  ai_category_confidence: number | null
+  ai_subcategory_confidence: number | null
+  ai_tags: string[] | null
+  ai_tag_confidences: Record<string, number> | null
+  ai_classification_reason: string | null
+  ai_classified_at: string | null
+  ai_model: string | null
+  categorization_status: CategorizationStatus | null
+  review_priority: number | null
+}
+
+export interface AiCorrection {
+  id: string
+  product_id: string
+  product_name: string
+  brand: string
+  off_categories_tags: string[]
+  original_parent_id: string | null
+  original_subcategory_id: string | null
+  original_confidence: number | null
+  corrected_parent_id: string | null
+  corrected_subcategory_id: string | null
+  corrected_tags: string[]
+  correction_note: string
+  corrected_by: string
+  corrected_at: string
 }
 
 export interface AppCategory {
@@ -344,4 +376,96 @@ export async function getProductStats(): Promise<{ pending: number; approved: nu
   ])
   const p = countOf(r1.headers), a = countOf(r2.headers), r = countOf(r3.headers)
   return { pending: p, approved: a, rejected: r, total: p + a + r }
+}
+
+// ─── AI Review Queue ──────────────────────────────────────────────────────────
+
+export async function getReviewQueue(opts: {
+  page?: number
+  pageSize?: number
+  search?: string
+}): Promise<{ products: Product[]; total: number }> {
+  const { page = 0, pageSize = 25, search } = opts
+  const from = page * pageSize
+  const to = from + pageSize - 1
+
+  const url = new URL(`${SUPABASE_URL}/rest/v1/products`)
+  url.searchParams.set('categorization_status', 'eq.needs_review')
+  url.searchParams.set('order', 'review_priority.desc,created_at.desc')
+  url.searchParams.set('select', '*')
+  if (search?.trim()) {
+    url.searchParams.set('or', `(name.ilike.*${search}*,brand.ilike.*${search}*)`)
+  }
+
+  const res = await fetch(url.toString(), {
+    headers: { ...headers, Range: `${from}-${to}`, Prefer: 'count=exact' },
+  })
+  if (!res.ok) throw new Error(`getReviewQueue failed: ${res.status}`)
+  const total = parseInt((res.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0
+  const products: Product[] = await res.json()
+  return { products, total }
+}
+
+export async function approveClassification(product: Product, overrides?: {
+  parentId?: string
+  subcategoryId?: string
+  tags?: string[]
+  note?: string
+}): Promise<void> {
+  const parentId = overrides?.parentId ?? product.ai_category_id
+  const subcatId = overrides?.subcategoryId ?? product.ai_subcategory_id
+  const tags = overrides?.tags ?? product.ai_tags ?? []
+
+  // Save correction if overrides provided
+  if (overrides?.parentId || overrides?.subcategoryId || overrides?.tags) {
+    await post('ai_correction_log', {
+      product_id: product.id,
+      product_name: product.name,
+      brand: product.brand ?? '',
+      off_categories_tags: product.off_categories_tags ?? [],
+      original_parent_id: product.ai_category_id,
+      original_subcategory_id: product.ai_subcategory_id,
+      original_confidence: product.ai_confidence,
+      corrected_parent_id: parentId,
+      corrected_subcategory_id: subcatId,
+      corrected_tags: tags,
+      correction_note: overrides?.note ?? '',
+    })
+  }
+
+  await patch('products', {
+    categorization_status: 'reviewed',
+    review_priority: 0,
+    ai_category_id: parentId,
+    ai_subcategory_id: subcatId,
+    ai_tags: tags,
+  }, `id=eq.${product.id}`)
+
+  // Upsert product_taxonomy
+  if (parentId) {
+    await post('product_taxonomy', {
+      product_id: product.id,
+      parent_id: parentId,
+      subcategory_id: subcatId,
+      auto_assigned: false,
+    })
+  }
+}
+
+export async function rejectClassification(productId: string, note?: string): Promise<void> {
+  await patch('products', {
+    categorization_status: 'reviewed',
+    review_priority: 0,
+    admin_notes: note ?? 'Rejected via review queue',
+    status: 'rejected',
+  }, `id=eq.${productId}`)
+}
+
+export async function reclassifyProduct(productId: string): Promise<void> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/classify-product`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ product_id: productId }),
+  })
+  if (!res.ok) throw new Error(`Reclassify failed: ${res.status}`)
 }

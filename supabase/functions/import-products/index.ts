@@ -211,10 +211,20 @@ Deno.serve(async (req: Request) => {
 
         if (upsertErr) throw new Error(`Upsert error: ${upsertErr.message}`);
 
-        // Auto-assign taxonomy for every upserted product
+        // Auto-assign taxonomy + AI classification for every upserted product
         if (upserted && upserted.length > 0) {
+          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
           for (const { id } of upserted) {
             await supabase.rpc("fn_assign_product_taxonomy", { p_product_id: id });
+            // Fire-and-forget AI classification in background
+            EdgeRuntime.waitUntil(
+              fetch(`${supabaseUrl}/functions/v1/classify-product`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ product_id: id }),
+              }).catch(e => console.warn("classify-product failed for", id, e?.message)),
+            );
           }
         }
 

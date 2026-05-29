@@ -282,12 +282,27 @@ Deno.serve(async (req: Request) => {
           return json({ error: `Upsert failed: ${upsertErr.message} | details: ${upsertErr.details ?? ""} | hint: ${upsertErr.hint ?? ""}`, processed, skipped: skipped + rows.length }, 200);
         }
 
-        // Fetch categorization_status for the rows we just upserted
+        // Fetch id + categorization_status for the rows we just upserted
         const barcodes = rows.map(r => r.barcode as string);
         const { data: saved } = await supabase
           .from("products")
-          .select("categorization_status")
+          .select("id, categorization_status")
           .in("barcode", barcodes);
+
+        // Fire-and-forget AI classification for each product
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        for (const p of saved ?? []) {
+          if (p.id) {
+            EdgeRuntime.waitUntil(
+              fetch(`${supabaseUrl}/functions/v1/classify-product`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ product_id: p.id }),
+              }).catch(e => console.warn("classify-product failed for", p.id, e?.message)),
+            );
+          }
+        }
 
         processed += rows.length;
         for (const p of saved ?? []) {
