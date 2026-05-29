@@ -25,6 +25,7 @@ export default function ProductEdit() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [tagInputs, setTagInputs] = useState({ allergen: '', diet: '', custom: '' })
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function ProductEdit() {
   const save = async () => {
     if (!product) return
     setSaving(true)
+    setSaveError('')
     try {
       const updates: Partial<Product> = {
         ...form,
@@ -87,6 +89,8 @@ export default function ProductEdit() {
       await setProductCategories(product.id, [...selectedCats])
       setSaved(true)
       setTimeout(() => { setSaved(false); navigate('/products') }, 1200)
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Save failed')
     } finally {
       setSaving(false)
     }
@@ -119,6 +123,15 @@ export default function ProductEdit() {
             <polyline points="20 6 9 17 4 12"/>
           </svg>
           Changes saved
+        </div>
+      )}
+
+      {saveError && (
+        <div className={styles.errorToast}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          {saveError}
         </div>
       )}
 

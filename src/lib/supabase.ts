@@ -112,8 +112,12 @@ async function patch<T>(path: string, body: Partial<T>, filter: string): Promise
     headers,
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`PATCH ${path} failed: ${res.status}`)
-  return res.json()
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`PATCH ${path} failed: ${res.status} ${text}`)
+  }
+  const text = await res.text()
+  return text ? JSON.parse(text) : []
 }
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -163,10 +167,8 @@ export async function getProduct(id: string): Promise<Product> {
   return rows[0]
 }
 
-export async function updateProduct(id: string, data: Partial<Product>): Promise<Product> {
-  const rows = await patch<Product>('products', data, `id=eq.${id}`)
-  if (!rows?.length) throw new Error(`Product ${id} not found after update`)
-  return rows[0]
+export async function updateProduct(id: string, data: Partial<Product>): Promise<void> {
+  await patch<Product>('products', data, `id=eq.${id}`)
 }
 
 export async function approveProduct(id: string): Promise<void> {
