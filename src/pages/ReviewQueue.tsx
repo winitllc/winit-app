@@ -4,6 +4,7 @@ import {
   approveClassification,
   rejectClassification,
   reclassifyProduct,
+  bulkAiClassify,
   getTaxonomyParents,
   getTaxonomySubcategories,
   type Product,
@@ -239,6 +240,8 @@ export default function ReviewQueue() {
   const [parents, setParents] = useState<TaxonomyParent[]>([])
   const [subcats, setSubcats] = useState<TaxonomySubcategory[]>([])
   const [toast, setToast] = useState({ msg: '', type: 'success' })
+  const [classifying, setClassifying] = useState(false)
+  const [classifyProgress, setClassifyProgress] = useState({ done: 0, total: 0 })
   const timer = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
@@ -263,6 +266,21 @@ export default function ReviewQueue() {
   const flash = (msg: string, type = 'success') => {
     setToast({ msg, type })
     setTimeout(() => setToast({ msg: '', type: 'success' }), 3500)
+  }
+
+  const handleBulkClassify = async () => {
+    setClassifying(true)
+    setClassifyProgress({ done: 0, total: 0 })
+    try {
+      const result = await bulkAiClassify((done, total) => setClassifyProgress({ done, total }))
+      flash(`AI classified ${result.classified} products · ${result.needs_review} sent to review queue`)
+      load(0, '')
+    } catch (e) {
+      flash(`Classification failed: ${e instanceof Error ? e.message : e}`, 'error')
+    } finally {
+      setClassifying(false)
+      setClassifyProgress({ done: 0, total: 0 })
+    }
   }
 
   const onSearch = (q: string) => {
@@ -310,7 +328,21 @@ export default function ReviewQueue() {
           <h1 className={styles.title}>AI Review Queue</h1>
           <p className={styles.pageDesc}>Products where AI confidence is below threshold — approve, correct, or reject.</p>
         </div>
-        <span className={styles.queueBadge}>{total.toLocaleString()} needs review</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {classifying && classifyProgress.total > 0 && (
+            <span style={{ fontSize: '0.82rem', color: 'var(--neutral-500)' }}>
+              {classifyProgress.done} / {classifyProgress.total}
+            </span>
+          )}
+          <button
+            className={styles.classifyBtn}
+            onClick={handleBulkClassify}
+            disabled={classifying}
+          >
+            {classifying ? 'Classifying…' : 'Run AI Classification'}
+          </button>
+          <span className={styles.queueBadge}>{total.toLocaleString()} needs review</span>
+        </div>
       </div>
 
       <div className={styles.toolbar}>

@@ -467,8 +467,9 @@ Deno.serve(async (req: Request) => {
 
     const body = await req.json() as {
       product?: ProductInput;
-      product_id?: string;  // classify an existing product by ID
-      batch?: ProductInput[]; // classify up to 20 products
+      product_id?: string;
+      product_ids?: string[];  // batch by DB ids, classifies + writes back
+      batch?: ProductInput[];
     };
 
     // Load taxonomy + recent corrections in parallel
@@ -529,7 +530,48 @@ Deno.serve(async (req: Request) => {
       return json(result);
     }
 
-    // ── Batch ─────────────────────────────────────────────────────────────────
+    // ── Batch by IDs (classifies + writes back to DB) ─────────────────────────
+    if (body.product_ids && Array.isArray(body.product_ids)) {
+      const ids = (body.product_ids as string[]).slice(0, 50);
+      const { data: ps } = await supabase.from("products").select("*").in("id", ids);
+      if (!ps?.length) return json({ classified: 0, needs_review: 0 });
+
+      let classified = 0, needsReview = 0;
+      for (const p of ps) {
+        const result = await classify(p, parents, subcats, mappings, corrections, anthropic);
+        const catStatus = result.confidence >= 0.82 ? "ai_classified" : "needs_review";
+
+        await supabase.from("products").update({
+          ai_category_id: result.parent_id,
+          ai_subcategory_id: result.subcategory_id,
+          ai_confidence: result.confidence,
+          ai_category_confidence: result.category_confidence,
+          ai_subcategory_confidence: result.subcategory_confidence,
+          ai_tags: result.tags,
+          ai_tag_confidences: result.tag_confidences,
+          ai_classification_reason: result.reason,
+          ai_classified_at: new Date().toISOString(),
+          ai_model: result.model,
+          categorization_status: catStatus,
+          review_priority: catStatus === "needs_review" ? Math.round((1 - result.confidence) * 100) : 0,
+        }).eq("id", p.id);
+
+        if (result.parent_id) {
+          await supabase.from("product_taxonomy").upsert({
+            product_id: p.id,
+            parent_id: result.parent_id,
+            subcategory_id: result.subcategory_id,
+            auto_assigned: true,
+            assigned_at: new Date().toISOString(),
+          }, { onConflict: "product_id,parent_id" });
+        }
+
+        if (catStatus === "ai_classified") classified++; else needsReview++;
+      }
+      return json({ classified, needs_review: needsReview, total: ps.length });
+    }
+
+    // ── Inline batch (no DB write) ────────────────────────────────────────────
     if (body.batch && Array.isArray(body.batch)) {
       const results = [];
       for (const product of body.batch.slice(0, 20)) {
@@ -539,7 +581,7 @@ Deno.serve(async (req: Request) => {
       return json({ results });
     }
 
-    return json({ error: "Provide product, product_id, or batch" }, 400);
+    return json({ error: "Provide product, product_id, product_ids, or batch" }, 400);
 
   } catch (err) {
     console.error("classify-product error:", err);

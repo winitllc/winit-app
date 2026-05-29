@@ -215,17 +215,19 @@ Deno.serve(async (req: Request) => {
         if (upserted && upserted.length > 0) {
           const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
           const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-          for (const { id } of upserted) {
+          const ids = upserted.map((r: { id: string }) => r.id);
+
+          // Taxonomy (deterministic, synchronous per product)
+          for (const id of ids) {
             await supabase.rpc("fn_assign_product_taxonomy", { p_product_id: id });
-            // Fire-and-forget AI classification in background
-            EdgeRuntime.waitUntil(
-              fetch(`${supabaseUrl}/functions/v1/classify-product`, {
-                method: "POST",
-                headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ product_id: id }),
-              }).catch(e => console.warn("classify-product failed for", id, e?.message)),
-            );
           }
+
+          // AI classification — batch call, awaited so results are written before next page
+          await fetch(`${supabaseUrl}/functions/v1/classify-product`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ product_ids: ids }),
+          }).catch(e => console.warn("classify-product batch failed:", e?.message));
         }
 
         totalUpserted += rows.length;

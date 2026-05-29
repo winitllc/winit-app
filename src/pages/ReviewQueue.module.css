@@ -30,6 +30,22 @@
   margin-top: 6px;
 }
 
+.classifyBtn {
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.classifyBtn:hover:not(:disabled) { opacity: 0.85; }
+.classifyBtn:disabled { opacity: 0.55; cursor: default; }
+
 /* ── Toolbar ─────────────────────────────────────────────────────────────────── */
 .toolbar {
   display: flex;

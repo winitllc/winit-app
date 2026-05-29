@@ -367,6 +367,44 @@ export async function bulkReclassifyProducts(): Promise<number> {
   return res.json()
 }
 
+/** Run AI classification on all products that haven't been AI-classified yet.
+ *  Fetches IDs in pages of 50 and calls classify-product for each batch. */
+export async function bulkAiClassify(
+  onProgress?: (done: number, total: number) => void,
+): Promise<{ classified: number; needs_review: number }> {
+  // Fetch all unclassified/auto_mapped product IDs
+  const url = new URL(`${SUPABASE_URL}/rest/v1/products`)
+  url.searchParams.set('select', 'id')
+  url.searchParams.set('or', '(categorization_status.eq.unclassified,categorization_status.eq.auto_mapped)')
+  url.searchParams.set('order', 'created_at.asc')
+
+  const res = await fetch(url.toString(), {
+    headers: { ...headers, Prefer: 'count=exact', Range: '0-9999' },
+  })
+  if (!res.ok) throw new Error(`Failed to fetch product IDs: ${res.status}`)
+  const rows: { id: string }[] = await res.json()
+  const total = rows.length
+  let classified = 0, needsReview = 0, done = 0
+
+  const BATCH = 50
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const ids = rows.slice(i, i + BATCH).map(r => r.id)
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/classify-product`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ product_ids: ids }),
+    })
+    if (r.ok) {
+      const data = await r.json() as { classified: number; needs_review: number }
+      classified += data.classified ?? 0
+      needsReview += data.needs_review ?? 0
+    }
+    done += ids.length
+    onProgress?.(done, total)
+  }
+  return { classified, needs_review: needsReview }
+}
+
 export async function getProductStats(): Promise<{ pending: number; approved: number; rejected: number; total: number }> {
   const countOf = (h: Headers) => parseInt((h.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0
   const [r1, r2, r3] = await Promise.all([
