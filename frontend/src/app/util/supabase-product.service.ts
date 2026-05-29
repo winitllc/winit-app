@@ -62,7 +62,6 @@ export class SupabaseProductService {
   }
 
   async getProductsByCategory(categorySlug: string, page = 0, pageSize = 24): Promise<SupabaseProductPage> {
-    // First look up the category id
     const catUrl = new URL(`${SUPABASE_URL}/rest/v1/app_categories`);
     catUrl.searchParams.set('slug', `eq.${categorySlug}`);
     catUrl.searchParams.set('select', 'id');
@@ -74,27 +73,22 @@ export class SupabaseProductService {
     const from = page * pageSize;
     const to = from + pageSize - 1;
 
-    // Get product IDs in this category
-    const joinUrl = new URL(`${SUPABASE_URL}/rest/v1/product_categories`);
-    joinUrl.searchParams.set('category_id', `eq.${categoryId}`);
-    joinUrl.searchParams.set('select', 'product_id');
-    const joinRes = await fetch(joinUrl.toString(), {
+    // Fetch approved products in this category directly via the join, with correct pagination
+    const prodUrl = new URL(`${SUPABASE_URL}/rest/v1/products`);
+    prodUrl.searchParams.set('status', 'eq.approved');
+    prodUrl.searchParams.set('select', '*,product_categories!inner(category_id)');
+    prodUrl.searchParams.set('product_categories.category_id', `eq.${categoryId}`);
+    prodUrl.searchParams.set('order', 'name.asc');
+
+    const prodRes = await fetch(prodUrl.toString(), {
       headers: { ...this.headers, 'Prefer': 'count=exact', 'Range': `${from}-${to}` },
     });
-    const total = parseInt((joinRes.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0;
-    const joins = await joinRes.json() as { product_id: string }[];
-    if (!joins.length) return { products: [], total, page, pageSize };
-
-    const productIds = joins.map(j => j.product_id);
-    const idFilter = `(${productIds.map(id => `id.eq.${id}`).join(',')})`;
-
-    const prodUrl = new URL(`${SUPABASE_URL}/rest/v1/products`);
-    prodUrl.searchParams.set('or', idFilter);
-    prodUrl.searchParams.set('status', 'eq.approved');
-    prodUrl.searchParams.set('select', '*');
-    const prodRes = await fetch(prodUrl.toString(), { headers: this.headers });
     if (!prodRes.ok) throw new Error(`getProductsByCategory failed: ${prodRes.status}`);
-    const products: SupabaseProduct[] = await prodRes.json();
+
+    const total = parseInt((prodRes.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0;
+    const raw = await prodRes.json() as (SupabaseProduct & { product_categories: unknown[] })[];
+    // Strip the joined relation field before returning
+    const products: SupabaseProduct[] = raw.map(({ product_categories: _pc, ...p }) => p as SupabaseProduct);
 
     return { products, total, page, pageSize };
   }
