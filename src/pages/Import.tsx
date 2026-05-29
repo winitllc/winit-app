@@ -91,16 +91,30 @@ function CsvUploadPanel({ onDone }: { onDone: () => void }) {
 
   const reset = () => { setState(initialUpload); abortRef.current = false }
 
-  const handleFile = async (file: File) => {
+  const handleFile = (file: File) => {
     if (!file) return
     abortRef.current = false
-    setState({ ...initialUpload, phase: 'reading', filename: file.name })
+    // Capture filename before any async work / state updates
+    const filename = file.name
+    setState({ ...initialUpload, phase: 'reading', filename })
 
-    let text: string
-    try {
-      text = await file.text()
-    } catch (e) {
-      setState(s => ({ ...s, phase: 'error', error: 'Failed to read file: ' + String(e) }))
+    // Use FileReader instead of file.text() — more reliable across browsers
+    // and avoids stale-handle errors that occur when the File reference is
+    // accessed after a React re-render triggered by setState above.
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const text = e.target?.result as string
+      processText(text, filename)
+    }
+    reader.onerror = () => {
+      setState(s => ({ ...s, phase: 'error', error: 'Failed to read file. Please try again.' }))
+    }
+    reader.readAsText(file, 'UTF-8')
+  }
+
+  const processText = async (text: string, filename: string) => {
+    if (!text) {
+      setState(s => ({ ...s, phase: 'error', error: 'File appears empty.' }))
       return
     }
 
@@ -125,7 +139,7 @@ function CsvUploadPanel({ onDone }: { onDone: () => void }) {
 
     let jobId = ''
     try {
-      jobId = await createCsvImportJob(file.name)
+      jobId = await createCsvImportJob(filename)
     } catch (e) {
       setState(s => ({ ...s, phase: 'error', error: 'Failed to create import job: ' + String(e) }))
       return
