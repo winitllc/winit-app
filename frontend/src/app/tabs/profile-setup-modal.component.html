@@ -23,25 +23,43 @@
     <!-- Question -->
     <div class="setup-question">
       <h1 class="question-title">{{ stepTitle }}</h1>
-      <p class="question-sub" *ngIf="stepSubtitle">{{ stepSubtitle }}</p>
+      <p class="question-sub">{{ stepSubtitle }}</p>
     </div>
 
-    <!-- Chips grid -->
+    <!-- Categorized list -->
     <div class="chips-scroll">
-      <div class="chips-grid">
-        <button
-          class="chip"
-          *ngFor="let item of currentItems"
-          [class.chip-selected]="isSelected(item.id)"
-          (click)="toggle(item.id)"
-        >
-          <span class="chip-check" *ngIf="isSelected(item.id)">✓</span>
-          <span class="chip-label">{{ item.commonName || item.name }}</span>
-        </button>
+      <div *ngFor="let cat of currentCategories" class="category-group">
 
-        <div class="chip chip-none-hint" *ngIf="currentItems.length === 0">
-          No options available
+        <!-- Category header (tap to select all in category) -->
+        <div class="category-header" (click)="toggleCategory(cat)">
+          <span class="category-icon">{{ cat.icon }}</span>
+          <span class="category-label">{{ cat.label }}</span>
+          <span class="category-count" *ngIf="cat.items.length > 1">
+            {{ cat.items.length }} options
+          </span>
+          <span class="category-select-all"
+            [class.selected-all]="isCategoryFullySelected(cat)">
+            {{ isCategoryFullySelected(cat) ? '✓ All' : 'Select all' }}
+          </span>
         </div>
+
+        <!-- Items chips -->
+        <div class="chips-grid">
+          <button
+            class="chip"
+            *ngFor="let item of cat.items"
+            [class.chip-selected]="isSelected(item.id)"
+            (click)="toggle(item.id)"
+          >
+            <span class="chip-check" *ngIf="isSelected(item.id)">✓</span>
+            <span class="chip-label">{{ item.label }}</span>
+          </button>
+        </div>
+
+      </div>
+
+      <div class="chips-empty" *ngIf="currentCategories.length === 0">
+        No options available
       </div>
     </div>
 

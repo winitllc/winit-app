@@ -1,12 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
-import { model } from 'wuzinit-common';
-import { AllergiesService } from '../util/allergies.service';
-import { DietsService } from '../util/diets.service';
-import { MedicalConditionsService } from '../util/medicalConditions.service';
 import { ProfileSetupService } from '../util/profile-setup.service';
+import { WinitCatalogService, CatalogCategory } from '../util/winit-catalog.service';
 
-type Step = 'allergies' | 'diets' | 'conditions' | 'done';
+type Step = 'allergies' | 'diets' | 'conditions';
 
 @Component({
   selector: 'app-profile-setup-modal',
@@ -16,9 +13,9 @@ type Step = 'allergies' | 'diets' | 'conditions' | 'done';
 export class ProfileSetupModalComponent implements OnInit {
   step: Step = 'allergies';
 
-  allergies: model.Allergy[] = [];
-  diets: model.Lifestyle[] = [];
-  conditions: model.Medical[] = [];
+  allergyCategories: CatalogCategory[] = [];
+  dietCategories: CatalogCategory[] = [];
+  conditionCategories: CatalogCategory[] = [];
 
   selectedAllergies: Set<string> = new Set();
   selectedDiets: Set<string> = new Set();
@@ -27,67 +24,55 @@ export class ProfileSetupModalComponent implements OnInit {
   loading = true;
 
   readonly steps: Step[] = ['allergies', 'diets', 'conditions'];
-  readonly stepLabels: Record<Step, string> = {
-    allergies: 'Allergies',
-    diets: 'Diets',
-    conditions: 'Medical',
-    done: 'Done',
-  };
 
   constructor(
     private modalCtrl: ModalController,
-    private allergiesService: AllergiesService,
-    private dietsService: DietsService,
-    private conditionsService: MedicalConditionsService,
+    private catalog: WinitCatalogService,
     private setupService: ProfileSetupService,
   ) {}
 
   async ngOnInit(): Promise<void> {
     const [allergies, diets, conditions] = await Promise.all([
-      this.allergiesService.getAllAllergies(),
-      this.dietsService.getAllLifestyleDiets(),
-      this.conditionsService.getAllMedicalConditions(),
+      this.catalog.getAllergies(),
+      this.catalog.getDiets(),
+      this.catalog.getConditions(),
     ]);
-    this.allergies = allergies;
-    this.diets = diets;
-    this.conditions = conditions;
+    this.allergyCategories = allergies;
+    this.dietCategories = diets;
+    this.conditionCategories = conditions;
     this.loading = false;
   }
 
   get currentIndex(): number {
-    return this.steps.indexOf(this.step as Step);
+    return this.steps.indexOf(this.step);
   }
 
   get stepTitle(): string {
-    const titles: Record<Step, string> = {
-      allergies: 'Do you have any allergies?',
-      diets: 'Do you follow any diets?',
+    return {
+      allergies:  'Do you have any allergies?',
+      diets:      'Do you follow any diets?',
       conditions: 'Any medical conditions?',
-      done: 'You\'re all set!',
-    };
-    return titles[this.step];
+    }[this.step];
   }
 
   get stepSubtitle(): string {
-    const subs: Record<Step, string> = {
-      allergies: 'Select everything that applies. This helps us flag ingredients that could harm you.',
-      diets: 'We\'ll filter products to match what you eat.',
+    return {
+      allergies:  'Select everything that applies. We\'ll flag ingredients that could harm you.',
+      diets:      'We\'ll filter products to match what you eat.',
       conditions: 'We\'ll highlight ingredients to watch out for.',
-      done: '',
-    };
-    return subs[this.step];
+    }[this.step];
   }
 
-  get currentItems(): { id: string; name: string; commonName?: string }[] {
-    if (this.step === 'allergies') return this.allergies.map(a => ({ id: a.id, name: a.name, commonName: a.commonName }));
-    if (this.step === 'diets') return this.diets.map(d => ({ id: d.id, name: d.name, commonName: d.commonName }));
-    if (this.step === 'conditions') return this.conditions.map(c => ({ id: c.id, name: c.name, commonName: c.commonName }));
+  get currentCategories(): CatalogCategory[] {
+    if (this.step === 'allergies')  return this.allergyCategories;
+    if (this.step === 'diets')      return this.dietCategories;
+    if (this.step === 'conditions') return this.conditionCategories;
     return [];
   }
 
   get currentSelection(): Set<string> {
-    if (this.step === 'allergies') return this.selectedAllergies;
-    if (this.step === 'diets') return this.selectedDiets;
+    if (this.step === 'allergies')  return this.selectedAllergies;
+    if (this.step === 'diets')      return this.selectedDiets;
     if (this.step === 'conditions') return this.selectedConditions;
     return new Set();
   }
@@ -101,8 +86,25 @@ export class ProfileSetupModalComponent implements OnInit {
     return this.currentSelection.has(id);
   }
 
+  isCategoryFullySelected(cat: CatalogCategory): boolean {
+    return cat.items.length > 0 && cat.items.every(i => this.currentSelection.has(i.id));
+  }
+
+  toggleCategory(cat: CatalogCategory): void {
+    const set = this.currentSelection;
+    if (this.isCategoryFullySelected(cat)) {
+      cat.items.forEach(i => set.delete(i.id));
+    } else {
+      cat.items.forEach(i => set.add(i.id));
+    }
+  }
+
+  get totalSelected(): number {
+    return this.selectedAllergies.size + this.selectedDiets.size + this.selectedConditions.size;
+  }
+
   next(): void {
-    const idx = this.steps.indexOf(this.step as Step);
+    const idx = this.steps.indexOf(this.step);
     if (idx < this.steps.length - 1) {
       this.step = this.steps[idx + 1];
     } else {
@@ -111,7 +113,7 @@ export class ProfileSetupModalComponent implements OnInit {
   }
 
   back(): void {
-    const idx = this.steps.indexOf(this.step as Step);
+    const idx = this.steps.indexOf(this.step);
     if (idx > 0) this.step = this.steps[idx - 1];
   }
 
@@ -124,8 +126,8 @@ export class ProfileSetupModalComponent implements OnInit {
     await this.setupService.markDismissed();
     this.modalCtrl.dismiss({
       skipped: false,
-      allergies: Array.from(this.selectedAllergies),
-      diets: Array.from(this.selectedDiets),
+      allergies:  Array.from(this.selectedAllergies),
+      diets:      Array.from(this.selectedDiets),
       conditions: Array.from(this.selectedConditions),
     });
   }

@@ -18,15 +18,39 @@ interface WinitUser {
   onboarding_completed: boolean
   is_active: boolean
   created_at: string
+  allergy_ids: string[]
+  diet_ids: string[]
+  condition_ids: string[]
 }
 
-const headers: HeadersInit = {
+interface CatalogItem { id: string; label: string; icon?: string }
+
+const apiHeaders: HeadersInit = {
   apikey: SUPABASE_ANON_KEY,
   Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
   'Content-Type': 'application/json',
   Prefer: 'return=representation',
 }
 
+// ── Catalog loader ────────────────────────────────────────────────────────────
+let catalogCache: Record<string, string> | null = null
+
+async function loadCatalogLabels(): Promise<Record<string, string>> {
+  if (catalogCache) return catalogCache
+  const base = `${SUPABASE_URL}/rest/v1`
+  const h = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
+  const [a, d, c] = await Promise.all([
+    fetch(`${base}/winit_allergies?select=id,label`, { headers: h }).then(r => r.json()),
+    fetch(`${base}/winit_diets?select=id,label`, { headers: h }).then(r => r.json()),
+    fetch(`${base}/winit_conditions?select=id,label`, { headers: h }).then(r => r.json()),
+  ])
+  const map: Record<string, string> = {}
+  ;[...a, ...d, ...c].forEach((item: CatalogItem) => { map[item.id] = item.label })
+  catalogCache = map
+  return map
+}
+
+// ── Data fetching ─────────────────────────────────────────────────────────────
 async function fetchUsers(search: string, page: number): Promise<{ users: WinitUser[]; total: number }> {
   const from = page * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
@@ -37,7 +61,7 @@ async function fetchUsers(search: string, page: number): Promise<{ users: WinitU
   url.searchParams.set('order', 'created_at.desc')
   url.searchParams.set('select', '*')
   const res = await fetch(url.toString(), {
-    headers: { ...headers, Range: `${from}-${to}`, Prefer: 'count=exact' },
+    headers: { ...apiHeaders, Range: `${from}-${to}`, Prefer: 'count=exact' },
   })
   if (!res.ok) throw new Error(`Failed: ${res.status}`)
   const total = parseInt((res.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0
@@ -48,11 +72,130 @@ async function fetchUsers(search: string, page: number): Promise<{ users: WinitU
 async function setActive(id: string, active: boolean) {
   await fetch(`${SUPABASE_URL}/rest/v1/winit_profiles?id=eq.${id}`, {
     method: 'PATCH',
-    headers,
+    headers: apiHeaders,
     body: JSON.stringify({ is_active: active }),
   })
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function idsToLabels(ids: string[] | null | undefined, map: Record<string, string>): string[] {
+  return (ids ?? []).map(id => map[id] ?? id)
+}
+
+function ProfileChips({ ids, map, color }: { ids: string[]; map: Record<string, string>; color: string }) {
+  const labels = idsToLabels(ids, map)
+  if (!labels.length) return <span className={styles.noProfile}>—</span>
+  return (
+    <div className={styles.chipRow}>
+      {labels.map(l => (
+        <span key={l} className={`${styles.profileChip} ${styles[`chip${color}`]}`}>{l}</span>
+      ))}
+    </div>
+  )
+}
+
+// ── User detail drawer ────────────────────────────────────────────────────────
+function UserDrawer({ user, map, onClose, onToggle }: {
+  user: WinitUser
+  map: Record<string, string>
+  onClose: () => void
+  onToggle: () => void
+}) {
+  const name = user.display_name || `${user.first_name} ${user.last_name}`.trim() || user.email
+  const allergyLabels = idsToLabels(user.allergy_ids, map)
+  const dietLabels = idsToLabels(user.diet_ids, map)
+  const conditionLabels = idsToLabels(user.condition_ids, map)
+
+  return (
+    <div className={styles.drawerOverlay} onClick={onClose}>
+      <div className={styles.drawer} onClick={e => e.stopPropagation()}>
+        <div className={styles.drawerHeader}>
+          <div className={styles.drawerAvatar}>
+            {(user.first_name?.[0] ?? user.email[0]).toUpperCase()}
+          </div>
+          <div>
+            <div className={styles.drawerName}>{name}</div>
+            <div className={styles.drawerEmail}>{user.email}</div>
+          </div>
+          <button className={styles.drawerClose} onClick={onClose}>✕</button>
+        </div>
+
+        <div className={styles.drawerStats}>
+          <div className={styles.statBox}>
+            <span className={styles.statValue}>{user.points_balance.toLocaleString()}</span>
+            <span className={styles.statLabel}>Points</span>
+          </div>
+          <div className={styles.statBox}>
+            <span className={styles.statValue}>{user.points_all_time.toLocaleString()}</span>
+            <span className={styles.statLabel}>All-time pts</span>
+          </div>
+          <div className={styles.statBox}>
+            <span className={styles.statValue}>{user.scans_all_time.toLocaleString()}</span>
+            <span className={styles.statLabel}>Scans</span>
+          </div>
+        </div>
+
+        <div className={styles.drawerSection}>
+          <div className={styles.drawerSectionTitle}>🥛 Allergies & Intolerances</div>
+          {allergyLabels.length > 0 ? (
+            <div className={styles.chipRow}>
+              {allergyLabels.map(l => <span key={l} className={`${styles.profileChip} ${styles.chipRed}`}>{l}</span>)}
+            </div>
+          ) : <span className={styles.noProfile}>None selected</span>}
+        </div>
+
+        <div className={styles.drawerSection}>
+          <div className={styles.drawerSectionTitle}>🥗 Diets & Preferences</div>
+          {dietLabels.length > 0 ? (
+            <div className={styles.chipRow}>
+              {dietLabels.map(l => <span key={l} className={`${styles.profileChip} ${styles.chipGreen}`}>{l}</span>)}
+            </div>
+          ) : <span className={styles.noProfile}>None selected</span>}
+        </div>
+
+        <div className={styles.drawerSection}>
+          <div className={styles.drawerSectionTitle}>💊 Medical Conditions</div>
+          {conditionLabels.length > 0 ? (
+            <div className={styles.chipRow}>
+              {conditionLabels.map(l => <span key={l} className={`${styles.profileChip} ${styles.chipAmber}`}>{l}</span>)}
+            </div>
+          ) : <span className={styles.noProfile}>None selected</span>}
+        </div>
+
+        <div className={styles.drawerSection}>
+          <div className={styles.drawerSectionTitle}>Account</div>
+          <div className={styles.drawerMeta}>
+            <span>Status</span>
+            <span className={`${styles.badge} ${user.is_active ? styles.badgeActive : styles.badgeInactive}`}>
+              {user.is_active ? 'Active' : 'Inactive'}
+            </span>
+          </div>
+          <div className={styles.drawerMeta}>
+            <span>Onboarded</span>
+            <span className={`${styles.badge} ${user.onboarding_completed ? styles.badgeDone : styles.badgePending}`}>
+              {user.onboarding_completed ? 'Complete' : 'Pending'}
+            </span>
+          </div>
+          <div className={styles.drawerMeta}>
+            <span>Joined</span>
+            <span>{new Date(user.created_at).toLocaleDateString()}</span>
+          </div>
+        </div>
+
+        <div className={styles.drawerFooter}>
+          <button
+            className={`${styles.toggleBtn} ${user.is_active ? styles.toggleDeactivate : styles.toggleActivate}`}
+            onClick={onToggle}
+          >
+            {user.is_active ? 'Deactivate User' : 'Activate User'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export default function Users() {
   const [users, setUsers] = useState<WinitUser[]>([])
   const [total, setTotal] = useState(0)
@@ -60,6 +203,8 @@ export default function Users() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [toast, setToast] = useState('')
+  const [catalogMap, setCatalogMap] = useState<Record<string, string>>({})
+  const [selectedUser, setSelectedUser] = useState<WinitUser | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout>>()
 
   const load = async (pg = page, q = search) => {
@@ -73,7 +218,10 @@ export default function Users() {
     }
   }
 
-  useEffect(() => { load(0, '') }, []) // eslint-disable-line
+  useEffect(() => {
+    load(0, '')
+    loadCatalogLabels().then(setCatalogMap)
+  }, []) // eslint-disable-line
 
   const onSearch = (q: string) => {
     setSearch(q)
@@ -86,6 +234,7 @@ export default function Users() {
   const toggleActive = async (u: WinitUser) => {
     await setActive(u.id, !u.is_active)
     setUsers(prev => prev.map(x => x.id === u.id ? { ...x, is_active: !u.is_active } : x))
+    if (selectedUser?.id === u.id) setSelectedUser(prev => prev ? { ...prev, is_active: !u.is_active } : null)
     flash(`${u.display_name || u.email} ${!u.is_active ? 'activated' : 'deactivated'}`)
   }
 
@@ -122,7 +271,8 @@ export default function Users() {
                 <tr>
                   <th>User</th>
                   <th>Status</th>
-                  <th>Onboarded</th>
+                  <th>Allergies</th>
+                  <th>Diets</th>
                   <th>Points</th>
                   <th>Scans</th>
                   <th>Joined</th>
@@ -131,7 +281,7 @@ export default function Users() {
               </thead>
               <tbody>
                 {users.map(u => (
-                  <tr key={u.id} className={styles.row}>
+                  <tr key={u.id} className={styles.row} onClick={() => setSelectedUser(u)} style={{ cursor: 'pointer' }}>
                     <td>
                       <div className={styles.avatar}>
                         {(u.first_name?.[0] ?? u.email[0]).toUpperCase()}
@@ -143,20 +293,21 @@ export default function Users() {
                         <div className={styles.userEmail}>{u.email}</div>
                       </div>
                     </td>
-                    <td>
+                    <td onClick={e => e.stopPropagation()}>
                       <span className={`${styles.badge} ${u.is_active ? styles.badgeActive : styles.badgeInactive}`}>
                         {u.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td>
-                      <span className={`${styles.badge} ${u.onboarding_completed ? styles.badgeDone : styles.badgePending}`}>
-                        {u.onboarding_completed ? 'Complete' : 'Pending'}
-                      </span>
+                      <ProfileChips ids={u.allergy_ids} map={catalogMap} color="Red" />
+                    </td>
+                    <td>
+                      <ProfileChips ids={u.diet_ids} map={catalogMap} color="Green" />
                     </td>
                     <td className={styles.points}>{u.points_balance.toLocaleString()}</td>
                     <td>{u.scans_all_time.toLocaleString()}</td>
                     <td className={styles.date}>{new Date(u.created_at).toLocaleDateString()}</td>
-                    <td>
+                    <td onClick={e => e.stopPropagation()}>
                       <button
                         className={`${styles.toggleBtn} ${u.is_active ? styles.toggleDeactivate : styles.toggleActivate}`}
                         onClick={() => toggleActive(u)}
@@ -181,6 +332,15 @@ export default function Users() {
             </div>
           </div>
         </>
+      )}
+
+      {selectedUser && (
+        <UserDrawer
+          user={selectedUser}
+          map={catalogMap}
+          onClose={() => setSelectedUser(null)}
+          onToggle={() => toggleActive(selectedUser)}
+        />
       )}
     </div>
   )
