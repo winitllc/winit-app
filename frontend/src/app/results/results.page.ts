@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router, NavigationExtras } from '@angular/router';
 import { NavController, InfiniteScrollCustomEvent, IonContent } from '@ionic/angular';
-import { ProfileState } from '../profile/profile.state';
 import { CompatibilityService } from '../util/compatibility.service';
 import { SupabaseProduct, SupabaseProductPage, SupabaseProductService } from '../util/supabase-product.service';
+import { WinitAuthService } from '../util/winit-auth.service';
 
 type FilterMode = 'all' | 'compatible' | 'avoid';
 
@@ -45,7 +45,7 @@ export class ResultsPage implements OnInit {
   constructor(
     private navCtrl: NavController,
     private router: Router,
-    private profileState: ProfileState,
+    private winitAuth: WinitAuthService,
     private supabaseProducts: SupabaseProductService,
     private compatibility: CompatibilityService,
   ) {}
@@ -61,10 +61,10 @@ export class ResultsPage implements OnInit {
       this.activeFilter = 'all';
       this.loading = true;
 
-      const profile = this.profileState.getHealthProfile();
-      const allergies: string[] = profile?.medical?.allergies?.map((a: any) => a.name as string) ?? [];
-      const conditions: string[] = profile?.medical?.medicalConditions?.map((a: any) => a.name as string) ?? [];
-      const diets: string[] = profile?.medical?.lifestyleDiet?.map((a: any) => a.name as string) ?? [];
+      const winitUser = await this.winitAuth.getProfile();
+      const allergies: string[] = winitUser?.allergy_ids ?? [];
+      const conditions: string[] = winitUser?.condition_ids ?? [];
+      const diets: string[] = winitUser?.diet_ids ?? [];
       this.userAllergenIds = [...allergies, ...conditions].map(s => s.toLowerCase());
       this.compatibility.setWarnings({ allergies, conditions, diets });
 

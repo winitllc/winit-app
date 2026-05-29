@@ -2,7 +2,6 @@ import { Component, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { ActivatedRoute, Router, NavigationExtras } from '@angular/router';
 import { NavController, ActionSheetController, Platform, LoadingController, LoadingOptions, ModalController } from '@ionic/angular';
 import { AppConfig } from '../app.config';
-import { ProfileState } from '../profile/profile.state';
 import { OpenFoodFactsProduct, ProductService } from './product.service';
 import { SupabaseProduct, SupabaseProductService } from '../util/supabase-product.service';
 import { CompatibilityService, CompatibilityResult } from '../util/compatibility.service';
@@ -53,7 +52,6 @@ export class ProductPage implements OnInit {
     private router: Router,
     private productService: ProductService,
     private supabaseProductService: SupabaseProductService,
-    private profileState: ProfileState,
     private winitAuth: WinitAuthService,
     public compatibility: CompatibilityService,
   ) {}
@@ -62,10 +60,10 @@ export class ProductPage implements OnInit {
 
   async ionViewWillEnter(): Promise<void> {
     try {
-      const profile = this.profileState.getHealthProfile();
-      const allergies: string[] = profile?.medical?.allergies?.map((a: any) => a.name as string) ?? [];
-      const conditions: string[] = profile?.medical?.medicalConditions?.map((a: any) => a.name as string) ?? [];
-      const diets: string[] = profile?.medical?.lifestyleDiet?.map((a: any) => a.name as string) ?? [];
+      const winitUser = await this.winitAuth.getProfile();
+      const allergies: string[] = winitUser?.allergy_ids ?? [];
+      const conditions: string[] = winitUser?.condition_ids ?? [];
+      const diets: string[] = winitUser?.diet_ids ?? [];
       this.warnings = [...allergies, ...conditions];
       this.userAllergenIds = this.warnings.map(s => s.toLowerCase());
       this.compatibility.setWarnings({ allergies, conditions, diets });

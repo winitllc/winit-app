@@ -1,122 +1,144 @@
-ion-content {
-  width: 100%;
-  height: 100%;
-  --background: #ffffff 0 0/100% 100% no-repeat;
+.auth-content {
+  --background: #0f172a;
 }
 
-ion-grid {
-  padding: 2rem;
-  width: 100%;
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 40px;
 }
 
-.default-padding {
-  padding: 0;
-  margin: auto;
+/* ── Hero ─────────────────────────────────────── */
+.auth-hero {
+  background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 100%);
+  padding: 64px 32px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-img {
-  width: 100% !important;
+.auth-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  object-fit: contain;
 }
 
-.custom-item {
-  --background: transparent;
-  --padding-start: 0;
-  --padding-end: 0;
-  --inner-padding-end: 0;
-  --inner-padding-start: 0;
+.auth-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
 
-  ion-icon {
-    color: #8167ef;
+.auth-sub {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.55);
+  margin: 0;
+}
+
+/* ── Form card ────────────────────────────────── */
+.auth-form {
+  flex: 1;
+  background: #f8fafc;
+  border-radius: 24px 24px 0 0;
+  margin-top: -16px;
+  padding: 32px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Side-by-side row ─────────────────────────── */
+.field-row {
+  display: flex;
+  gap: 12px;
+
+  .field-group { flex: 1; }
+}
+
+/* ── Fields ───────────────────────────────────── */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.field-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0 14px;
+  min-height: 50px;
+  transition: border-color 0.15s;
+
+  &:focus-within {
+    border-color: #38bdf8;
   }
 }
 
-.input-name {
-  ion-label {
-    color: #8167ef;
-    font-size: 1rem;
-    font-weight: 500;
-    padding: 0%;
-    margin: auto;
-  }
+.field-icon {
+  font-size: 1rem;
+  color: #94a3b8;
+  flex-shrink: 0;
 }
 
-.input-field {
-  padding-top: 1rem;
-  ion-label {
-    color: #8167ef;
-    font-size: 1rem;
-    font-weight: 500;
-    padding: 0%;
-    margin: auto;
-  }
-}
-
-ion-input {
-  --padding-start: 0;
-  --padding-end: 0;
+.field-input {
+  flex: 1;
+  border: none;
   background: transparent;
-  --placeholder-color: #000;
+  font-size: 0.95rem;
+  color: #0f172a;
+  outline: none;
+  padding: 0;
+  min-width: 0;
+
+  &::placeholder { color: #94a3b8; }
 }
 
-.forgot-password {
-  text-align: center;
-  padding-block: 1.5rem;
-  ion-label {
-    color: #8167ef;
-    font-size: 1rem;
-    font-weight: 500;
-    padding: 0%;
-    margin: auto;
-  }
-}
-
-.signIn-btn {
-  padding: 0%;
+/* ── Buttons ──────────────────────────────────── */
+.primary-btn {
   width: 100%;
-  margin: auto;
-  padding-top: 1rem;
-
-  ion-col {
-    padding: 0%;
-    text-align: center;
-    margin: auto;
-
-    ion-button {
-      text-transform: none;
-      width: 100%;
-      height: 3rem;
-      padding: 0%;
-      margin: auto;
-      --border-radius: 2rem;
-      --background-activated: transparent;
-      --box-shadow: none;
-      --background: #8167ef;
-
-      ion-label {
-        margin: auto;
-        padding: 0%;
-        font-size: 1rem;
-        font-weight: 500;
-        color: #ffffff;
-      }
-    }
-  }
-}
-
-.create-account {
-  text-align: center;
-  padding-block: 1rem;
-}
-
-.create-account-label {
+  height: 52px;
+  background: #0f172a;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
-  color: #000;
+  letter-spacing: 0.1px;
+  transition: background 0.15s;
+  margin-top: 4px;
+
+  &:active { background: #1e293b; }
 }
 
-.create-account-label span {
-  color: #8167ef;
-}
+/* ── Switch link ──────────────────────────────── */
+.switch-link {
+  font-size: 0.88rem;
+  color: #64748b;
+  text-align: center;
+  margin: 0;
 
-.health-pro-label {
-  color: #8167ef;
+  span {
+    color: #0369a1;
+    font-weight: 700;
+    cursor: pointer;
+  }
 }

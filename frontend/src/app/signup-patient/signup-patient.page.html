@@ -1,111 +1,57 @@
-<ion-content [fullscreen]="true">
-  <ion-row>
-    <ion-col class="default-padding">
-      <img src="../../assets/winit-bg.png" />
-    </ion-col>
-  </ion-row>
-  <ion-grid>
-    <ion-row class="input-name">
-      <ion-col size="12">
-        <ion-label> First Name </ion-label>
-      </ion-col>
-    </ion-row>
-    <ion-row>
-      <ion-col size="12">
-        <ion-item class="custom-item">
-          <ion-input placeholder="First Name" [(ngModel)]="userData.firstName">
-            <ion-icon slot="start" name="person-outline"></ion-icon>
-          </ion-input>
-        </ion-item>
-      </ion-col>
-    </ion-row>
-    <ion-row class="input-field">
-      <ion-col size="12">
-        <ion-label> Last Name </ion-label>
-      </ion-col>
-    </ion-row>
-    <ion-row>
-      <ion-col size="12">
-        <ion-item class="custom-item">
-          <ion-input placeholder="Last Name" [(ngModel)]="userData.lastName">
-            <ion-icon slot="start" name="person-outline"></ion-icon>
-          </ion-input>
-        </ion-item>
-      </ion-col>
-    </ion-row>
+<ion-content [fullscreen]="true" class="auth-content">
+  <div class="auth-screen">
+    <div class="auth-hero">
+      <img src="../../assets/icon-only.png" class="auth-logo" alt="WINIT" />
+      <h1 class="auth-title">Create account</h1>
+      <p class="auth-sub">Join WINIT to scan and check products</p>
+    </div>
 
-    <ion-row class="input-field">
-      <ion-col size="12">
-        <ion-label> Email </ion-label>
-      </ion-col>
-    </ion-row>
-    <ion-row>
-      <ion-col size="12">
-        <ion-item class="custom-item">
-          <ion-input
-            type="email"
-            placeholder="Email"
-            [(ngModel)]="userData.email"
-          >
-            <ion-icon slot="start" name="mail-outline"></ion-icon>
-          </ion-input>
-        </ion-item>
-      </ion-col>
-    </ion-row>
+    <div class="auth-form">
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">First Name</label>
+          <div class="field-wrap">
+            <ion-icon name="person-outline" class="field-icon"></ion-icon>
+            <input class="field-input" placeholder="First" [(ngModel)]="userData.firstName" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Last Name</label>
+          <div class="field-wrap">
+            <input class="field-input" placeholder="Last" [(ngModel)]="userData.lastName" />
+          </div>
+        </div>
+      </div>
 
-    <ion-row class="input-field">
-      <ion-col size="12">
-        <ion-label> Confirm Email </ion-label>
-      </ion-col>
-    </ion-row>
-    <ion-row>
-      <ion-col size="12">
-        <ion-item class="custom-item">
-          <ion-input
-            type="email"
-            placeholder="Confirm Email"
-            [(ngModel)]="userData.confirmEmail"
-          >
-            <ion-icon slot="start" name="mail-outline"></ion-icon>
-          </ion-input>
-        </ion-item>
-      </ion-col>
-    </ion-row>
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <div class="field-wrap">
+          <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+          <input type="email" class="field-input" placeholder="you@example.com" [(ngModel)]="userData.email" />
+        </div>
+      </div>
 
-    <ion-row class="input-field">
-      <ion-col size="12">
-        <ion-label>Password</ion-label>
-      </ion-col>
-    </ion-row>
-    <ion-row>
-      <ion-col size="12">
-        <ion-item class="custom-item">
-          <ion-input
-            type="Password"
-            placeholder="Password"
-            [(ngModel)]="userData.newPassword"
-          >
-            <ion-icon slot="start" name="lock-closed-outline"></ion-icon>
-          </ion-input>
-        </ion-item>
-      </ion-col>
-    </ion-row>
+      <div class="field-group">
+        <label class="field-label">Confirm Email</label>
+        <div class="field-wrap">
+          <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+          <input type="email" class="field-input" placeholder="Confirm email" [(ngModel)]="userData.confirmEmail" />
+        </div>
+      </div>
 
-    <ion-row class="signIn-btn">
-      <ion-col size="12">
-        <ion-button (click)="registerPatientAction()">
-          <ion-label>Sign up</ion-label>
-        </ion-button>
-      </ion-col>
-    </ion-row>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <div class="field-wrap">
+          <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+          <input type="password" class="field-input" placeholder="Create a password" [(ngModel)]="userData.newPassword" />
+        </div>
+      </div>
 
-    <ion-row>
-      <ion-col class="create-account">
-        <ion-label class="create-account-label">
-          Already have an account?
-          <span (click)="goBack()">Login</span>
-        </ion-label>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
+      <button class="primary-btn" (click)="registerPatientAction()">Create account</button>
+
+      <p class="switch-link">
+        Already have an account? <span (click)="goBack()">Sign in</span>
+      </p>
+    </div>
+  </div>
 </ion-content>

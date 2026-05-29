@@ -1,106 +1,67 @@
-<ion-content [fullscreen]="true">
-  <ion-row>
-    <ion-col class="default-padding">
-      <img src="../../assets/winit-bg.png" />
-    </ion-col>
-  </ion-row>
+<ion-content [fullscreen]="true" class="auth-content">
 
-  <ion-grid *ngIf="!showForgotPassword">
-    <ion-row class="input-email">
-      <ion-col size="12">
-        <ion-label>Email</ion-label>
-      </ion-col>
-    </ion-row>
-    <ion-row>
-      <ion-col size="12">
-        <ion-item class="custom-item">
-          <ion-input type="email" placeholder="Email" [(ngModel)]="userData.email">
-            <ion-icon slot="start" name="mail-outline"></ion-icon>
-          </ion-input>
-        </ion-item>
-      </ion-col>
-    </ion-row>
+  <!-- Sign In form -->
+  <div class="auth-screen" *ngIf="!showForgotPassword">
+    <div class="auth-hero">
+      <img src="../../assets/icon-only.png" class="auth-logo" alt="WINIT" />
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-sub">Sign in to your WINIT account</p>
+    </div>
 
-    <ion-row class="input-password">
-      <ion-col size="12">
-        <ion-label>Password</ion-label>
-      </ion-col>
-    </ion-row>
-    <ion-row>
-      <ion-col size="12">
-        <ion-item class="custom-item">
-          <ion-input type="password" placeholder="Password" [(ngModel)]="userData.password">
-            <ion-icon slot="start" name="lock-closed-outline"></ion-icon>
-          </ion-input>
-        </ion-item>
-      </ion-col>
-    </ion-row>
+    <div class="auth-form">
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <div class="field-wrap">
+          <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+          <input type="email" class="field-input" placeholder="you@example.com" [(ngModel)]="userData.email" />
+        </div>
+      </div>
 
-    <ion-row>
-      <ion-col class="forgot-password">
-        <ion-label (click)="showForgotPassword = true; forgotEmail = userData.email">Forgot password?</ion-label>
-      </ion-col>
-    </ion-row>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <div class="field-wrap">
+          <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+          <input type="password" class="field-input" placeholder="Your password" [(ngModel)]="userData.password" />
+        </div>
+      </div>
 
-    <ion-row class="signIn-btn">
-      <ion-col size="12">
-        <ion-button (click)="loginAction()">
-          <ion-label>Sign in</ion-label>
-        </ion-button>
-      </ion-col>
-    </ion-row>
+      <button class="link-btn" (click)="showForgotPassword = true; forgotEmail = userData.email">
+        Forgot password?
+      </button>
 
-    <ion-row>
-      <ion-col class="create-account">
-        <ion-label class="create-account-label">
-          New to WINIT?
-          <span (click)="registerAction()">Create an account</span>
-        </ion-label>
-      </ion-col>
-    </ion-row>
+      <button class="primary-btn" (click)="loginAction()">Sign in</button>
 
-    <ion-row>
-      <ion-col class="create-account">
-        <ion-label (click)="registerActionHealthPro()" class="health-pro-label">
-          Sign up as health pro
-        </ion-label>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
+      <p class="switch-link">
+        New to WINIT? <span (click)="registerAction()">Create an account</span>
+      </p>
+    </div>
+  </div>
 
   <!-- Forgot Password panel -->
-  <ion-grid *ngIf="showForgotPassword">
-    <ion-row>
-      <ion-col size="12">
-        <ion-label class="section-title">Reset Password</ion-label>
-        <p class="section-sub">Enter your email and we'll send you a reset link.</p>
-      </ion-col>
-    </ion-row>
+  <div class="auth-screen" *ngIf="showForgotPassword">
+    <div class="auth-hero">
+      <div class="back-icon-wrap">
+        <ion-icon name="arrow-back-outline" class="back-icon" (click)="showForgotPassword = false"></ion-icon>
+      </div>
+      <h1 class="auth-title">Reset password</h1>
+      <p class="auth-sub">We'll send a reset link to your email</p>
+    </div>
 
-    <ion-row>
-      <ion-col size="12">
-        <ion-item class="custom-item">
-          <ion-input type="email" placeholder="Your email" [(ngModel)]="forgotEmail">
-            <ion-icon slot="start" name="mail-outline"></ion-icon>
-          </ion-input>
-        </ion-item>
-      </ion-col>
-    </ion-row>
+    <div class="auth-form">
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <div class="field-wrap">
+          <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+          <input type="email" class="field-input" placeholder="you@example.com" [(ngModel)]="forgotEmail" />
+        </div>
+      </div>
 
-    <ion-row class="signIn-btn">
-      <ion-col size="12">
-        <ion-button (click)="forgotPasswordAction()">
-          <ion-label>Send Reset Link</ion-label>
-        </ion-button>
-      </ion-col>
-    </ion-row>
+      <button class="primary-btn" (click)="forgotPasswordAction()">Send Reset Link</button>
 
-    <ion-row>
-      <ion-col class="create-account">
-        <ion-label class="create-account-label">
-          <span (click)="showForgotPassword = false">Back to Sign in</span>
-        </ion-label>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
+      <p class="switch-link">
+        <span (click)="showForgotPassword = false">Back to Sign in</span>
+      </p>
+    </div>
+  </div>
+
 </ion-content>
