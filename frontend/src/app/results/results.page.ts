@@ -104,7 +104,7 @@ export class ResultsPage implements OnInit {
     this.filteredProducts = this.products.filter(p => {
       if (p.status === 'pending') return this.activeFilter === 'compatible';
       const result = this.compatibility.score(p);
-      if (this.activeFilter === 'compatible') return result.status !== 'avoid';
+      if (this.activeFilter === 'compatible') return result.status === 'approved';
       return result.status === 'avoid';
     });
   }
