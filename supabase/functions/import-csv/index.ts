@@ -270,19 +270,24 @@ Deno.serve(async (req: Request) => {
         }
         if (!rows.length) continue;
 
-        const { data: upserted, error: upsertErr } = await supabase
+        const { error: upsertErr } = await supabase
           .from("products")
-          .upsert(rows, { onConflict: "barcode", ignoreDuplicates: false })
-          .select("id, categorization_status");
+          .upsert(rows, { onConflict: "barcode", ignoreDuplicates: false });
 
         if (upsertErr) {
           console.error("Upsert error:", upsertErr.message, upsertErr.details, upsertErr.hint);
-          // Return the error immediately so the frontend can surface it
           return json({ error: `Upsert failed: ${upsertErr.message} | details: ${upsertErr.details ?? ""} | hint: ${upsertErr.hint ?? ""}`, processed, skipped: skipped + rows.length }, 200);
         }
 
-        processed += upserted?.length ?? 0;
-        for (const p of upserted ?? []) {
+        // Fetch categorization_status for the rows we just upserted
+        const barcodes = rows.map(r => r.barcode as string);
+        const { data: saved } = await supabase
+          .from("products")
+          .select("categorization_status")
+          .in("barcode", barcodes);
+
+        processed += rows.length;
+        for (const p of saved ?? []) {
           if (p.categorization_status === "auto_mapped") autoMapped++; else needsReview++;
         }
       }
