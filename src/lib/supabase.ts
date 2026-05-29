@@ -72,6 +72,7 @@ export interface AppCategory {
   image_url: string
   sort_order: number
   off_tag: string
+  last_modified_since: number | null
 }
 
 export interface ImportJob {
@@ -181,6 +182,10 @@ export async function rejectProduct(id: string): Promise<void> {
 
 export async function getCategories(): Promise<AppCategory[]> {
   return get<AppCategory[]>('app_categories', { order: 'sort_order.asc', select: '*' })
+}
+
+export async function resetCategoryWatermark(slug: string): Promise<void> {
+  await patch('app_categories', { last_modified_since: null }, `slug=eq.${slug}`)
 }
 
 export async function getProductCategoryIds(productId: string): Promise<string[]> {

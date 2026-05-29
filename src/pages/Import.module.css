@@ -92,6 +92,29 @@
 .importBtn:hover:not(:disabled) { background: var(--primary-hover); }
 .importBtn:disabled { opacity: 0.5; cursor: default; }
 
+.watermarkRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 0.8rem;
+}
+.watermarkLabel { color: var(--neutral-500); }
+.watermarkLabel strong { color: var(--neutral-700); }
+.watermarkNever { color: var(--neutral-400); font-style: italic; }
+.resetLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: auto;
+}
+.resetLink:hover { color: var(--primary-hover); }
+.resetLink:disabled { opacity: 0.5; cursor: default; }
+
 .btnSpinner {
   width: 16px; height: 16px;
   border: 2px solid rgba(255,255,255,0.4);

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  getImportJobs, triggerImport, getCategories,
+  getImportJobs, triggerImport, getCategories, resetCategoryWatermark,
   createCsvImportJob, processCsvChunk, finishCsvImportJob, failCsvImportJob,
   splitIntoChunks,
   type AppCategory, type ImportJob, type CsvImportResult,
@@ -282,11 +282,19 @@ function ApiPullPanel({ onDone }: { onDone: () => void }) {
   const [selected, setSelected] = useState<AppCategory | null>(null)
   const [maxPages, setMaxPages] = useState(10)
   const [importing, setImporting] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const [result, setResult] = useState<{ products_upserted: number; pages_imported: number; error: string | null } | null>(null)
 
-  useEffect(() => {
-    getCategories().then(cats => { setCategories(cats); if (cats.length) setSelected(cats[0]) })
-  }, [])
+  const loadCategories = () =>
+    getCategories().then(cats => {
+      setCategories(cats)
+      setSelected(prev => {
+        if (prev) return cats.find(c => c.slug === prev.slug) ?? cats[0] ?? null
+        return cats[0] ?? null
+      })
+    })
+
+  useEffect(() => { loadCategories() }, [])
 
   const runImport = async () => {
     if (!selected) return
@@ -296,6 +304,7 @@ function ApiPullPanel({ onDone }: { onDone: () => void }) {
       const res = await triggerImport(selected.slug, selected.off_tag, maxPages)
       setResult(res)
       onDone()
+      loadCategories()
     } catch (err) {
       setResult({ products_upserted: 0, pages_imported: 0, error: String(err) })
     } finally {
@@ -303,13 +312,28 @@ function ApiPullPanel({ onDone }: { onDone: () => void }) {
     }
   }
 
+  const handleReset = async () => {
+    if (!selected) return
+    if (!confirm(`Reset the high-water mark for "${selected.display_name}"? The next pull will re-fetch from the beginning of the catalogue.`)) return
+    setResetting(true)
+    try {
+      await resetCategoryWatermark(selected.slug)
+      loadCategories()
+    } finally {
+      setResetting(false)
+    }
+  }
+
+  const watermark = selected?.last_modified_since
+    ? new Date(selected.last_modified_since * 1000).toLocaleString()
+    : null
+
   return (
     <>
       <h2 className={styles.cardTitle}>Pull from OFF API</h2>
       <p className={styles.cardDesc}>
-        Fetch products live from the OpenFoodFacts API by category.
-        50 products per page. Re-running updates existing products.
-        Auto-categorization applies on import.
+        Fetches products from OpenFoodFacts modified <strong>after the last pull</strong> for
+        each category — so every run brings genuinely new products. 50 per page.
       </p>
 
       <div className={styles.field}>
@@ -323,6 +347,18 @@ function ApiPullPanel({ onDone }: { onDone: () => void }) {
             </option>
           ))}
         </select>
+        {selected && (
+          <div className={styles.watermarkRow}>
+            {watermark
+              ? <span className={styles.watermarkLabel}>Last pulled up to: <strong>{watermark}</strong></span>
+              : <span className={styles.watermarkNever}>Never pulled — will fetch from the full catalogue</span>}
+            {watermark && (
+              <button className={styles.resetLink} onClick={handleReset} disabled={resetting} type="button">
+                {resetting ? 'Resetting…' : 'Reset'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className={styles.field}>

@@ -153,11 +153,10 @@ Deno.serve(async (req: Request) => {
     const body = await req.json() as {
       category_slug: string;
       off_tag: string;
-      start_page?: number;
       max_pages?: number;
     };
 
-    const { category_slug, off_tag, start_page = 1, max_pages = MAX_PAGES } = body;
+    const { category_slug, off_tag, max_pages = MAX_PAGES } = body;
 
     if (!category_slug || !off_tag) {
       return new Response(
@@ -166,6 +165,15 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Read high-water mark for this category
+    const { data: catRow } = await supabase
+      .from("app_categories")
+      .select("last_modified_since")
+      .eq("slug", category_slug)
+      .maybeSingle();
+
+    const lastModifiedSince: number | null = catRow?.last_modified_since ?? null;
+
     const { data: job } = await supabase
       .from("import_jobs")
       .insert({ source: "api", category_slug, off_tag, status: "running" })
@@ -173,14 +181,22 @@ Deno.serve(async (req: Request) => {
 
     const jobId: string = job?.id;
     let totalUpserted = 0, pagesImported = 0, errorMessage = "";
+    let maxModifiedT: number = lastModifiedSince ?? 0;
 
     try {
-      for (let page = start_page; page < start_page + max_pages; page++) {
+      for (let page = 1; page <= max_pages; page++) {
         const url = new URL(`${OFF_BASE}/api/v2/search`);
         url.searchParams.set("categories_tags", off_tag);
         url.searchParams.set("fields", OFF_FIELDS);
         url.searchParams.set("page_size", String(PAGE_SIZE));
         url.searchParams.set("page", String(page));
+        // Sort by last_modified descending so newest come first; combined with
+        // the high-water mark filter this ensures each pull only fetches products
+        // that were updated after the previous run.
+        url.searchParams.set("sort_by", "last_modified_t");
+        if (lastModifiedSince) {
+          url.searchParams.set("last_modified_t", `>${lastModifiedSince}`);
+        }
 
         // Retry up to 3 times on 5xx errors with exponential backoff
         let res: Response | null = null;
@@ -203,6 +219,12 @@ Deno.serve(async (req: Request) => {
 
         const rows = offProducts.map(mapProduct).filter(r => r.barcode);
         if (!rows.length) break;
+
+        // Track the highest last_modified_t seen across all pages
+        for (const p of offProducts) {
+          const t = p.last_modified_t != null ? Number(p.last_modified_t) : 0;
+          if (t > maxModifiedT) maxModifiedT = t;
+        }
 
         const { data: upserted, error: upsertErr } = await supabase
           .from("products")
@@ -234,6 +256,14 @@ Deno.serve(async (req: Request) => {
         pagesImported += 1;
         console.log(`import-products: page=${page} upserted=${rows.length} total=${totalUpserted}`);
         if (page >= (data.page_count ?? 1)) break;
+      }
+
+      // Persist the high-water mark so next pull starts from here
+      if (maxModifiedT > 0) {
+        await supabase
+          .from("app_categories")
+          .update({ last_modified_since: maxModifiedT })
+          .eq("slug", category_slug);
       }
 
       await supabase.from("import_jobs")
