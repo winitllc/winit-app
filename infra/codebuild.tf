@@ -37,7 +37,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 10
+      nodejs: 22
     commands:
       - echo Install phase started on `date`
       - cd profile
@@ -135,7 +135,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 10
+      nodejs: 22
     commands:
       - echo Install phase started on `date`
       - cd products
@@ -233,7 +233,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 10
+      nodejs: 22
     commands:
       - echo Install phase started on `date`
       - cd allergies
@@ -331,7 +331,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 10
+      nodejs: 22
     commands:
       - echo Install phase started on `date`
       - cd medicalConditions
@@ -429,7 +429,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 10
+      nodejs: 22
     commands:
       - echo Install phase started on `date`
       - cd util

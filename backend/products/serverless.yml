@@ -9,7 +9,7 @@ plugins:
 
 provider:
   name: aws
-  runtime: nodejs18.x
+  runtime: nodejs22.x
   region: us-west-2
   role: arn:aws:iam::238754394093:role/WuzinitLambdaRole
   timeout: 25

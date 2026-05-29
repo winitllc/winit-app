@@ -8,7 +8,7 @@
     "prod": "npm run deploy -- --stage prod",
     "dev": "npm run deploy -- --stage dev",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "sed -i \"s/runtime: 'nodejs12.x'/runtime: 'nodejs18.x'/g\" node_modules/serverless-plugin-warmup/src/index.js"
+    "postinstall": "sed -i \"s/runtime: 'nodejs18.x'/runtime: 'nodejs22.x'/g\" node_modules/serverless-plugin-warmup/src/index.js"
   },
   "dependencies": {
     "@types/uuid": "^3.4.5",
