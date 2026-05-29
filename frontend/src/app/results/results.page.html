@@ -1,49 +1,73 @@
 <ion-header>
-  <ion-toolbar color="primary">
+  <ion-toolbar class="results-toolbar">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/tabs/browse"></ion-back-button>
+      <ion-back-button defaultHref="/tabs/browse" text=""></ion-back-button>
     </ion-buttons>
-    <ion-title class="ion-text-center">{{category || 'Results'}}</ion-title>
+    <ion-title class="results-title">{{category || 'Results'}}</ion-title>
   </ion-toolbar>
+
+  <!-- Filter chips -->
+  <div class="filter-bar">
+    <div class="filter-chips">
+      <button
+        class="filter-chip"
+        [class.active]="activeFilter === 'all'"
+        (click)="setFilter('all')">All Products</button>
+      <button
+        class="filter-chip filter-chip--compatible"
+        [class.active]="activeFilter === 'compatible'"
+        (click)="setFilter('compatible')">Compatible</button>
+      <button
+        class="filter-chip filter-chip--avoid"
+        [class.active]="activeFilter === 'avoid'"
+        (click)="setFilter('avoid')">Not Compatible</button>
+    </div>
+  </div>
 </ion-header>
 
-<ion-content>
-  <div *ngIf="!noResults && products.length > 0">
-    <ion-list lines="full">
-      <ion-item *ngFor="let product of products" (click)="selectProduct(product.id)" button detail="true" class="product-item">
-        <div slot="start" class="thumb-wrap">
-          <img
-            [src]="getThumbUrl(product) || 'assets/imgs/noProduct.png'"
-            (error)="$any($event.target).src='assets/imgs/noProduct.png'"
-            loading="lazy"
-            class="product-thumb"
-            [alt]="product.name || ''">
-          <ion-badge *ngIf="hasWarning(product)" color="danger" class="warning-badge">!</ion-badge>
+<ion-content class="results-content">
+
+  <!-- Product cards -->
+  <div class="product-list" *ngIf="filteredProducts.length > 0">
+    <div
+      class="product-card"
+      *ngFor="let product of filteredProducts"
+      (click)="selectProduct(product.id)">
+      <div class="card-thumb-wrap">
+        <img
+          [src]="getThumbUrl(product) || 'assets/imgs/noProduct.png'"
+          (error)="$any($event.target).src='assets/imgs/noProduct.png'"
+          loading="lazy"
+          class="card-thumb"
+          [alt]="product.name || ''">
+      </div>
+      <div class="card-body">
+        <p class="card-brand" *ngIf="product.brand">{{product.brand}}</p>
+        <h3 class="card-name">{{product.name || 'Unknown product'}}</h3>
+        <div class="card-meta">
+          <span class="nutriscore-badge" *ngIf="product.nutriscore_grade" [attr.data-grade]="product.nutriscore_grade.toLowerCase()">
+            {{product.nutriscore_grade | uppercase}}
+          </span>
+          <span class="compat-badge" [attr.data-status]="getCompatStatus(product)">
+            {{getCompatLabel(product)}}
+          </span>
         </div>
-        <ion-label>
-          <h2 class="product-name">{{product.name || 'Unknown product'}}</h2>
-          <p class="product-brand" *ngIf="product.brand">{{product.brand}}</p>
-          <p class="nutriscore" *ngIf="product.nutriscore_grade">
-            Nutri-Score: <strong>{{product.nutriscore_grade | uppercase}}</strong>
-          </p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
+      </div>
+      <ion-icon name="chevron-forward-outline" class="card-chevron"></ion-icon>
+    </div>
   </div>
 
-  <div *ngIf="noResults || products.length === 0" class="no-results">
-    <ion-grid>
-      <ion-row class="ion-justify-content-center ion-padding">
-        <ion-col class="ion-text-center">
-          <img src="assets/imgs/noProduct.png" class="no-results-img" alt="No results">
-          <p>No products found.</p>
-          <p *ngIf="!noResults" class="no-results-hint">Products for this category haven't been imported yet. Check back soon.</p>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="filteredProducts.length === 0">
+    <img src="assets/imgs/noProduct.png" class="empty-img" alt="No results">
+    <p class="empty-title" *ngIf="activeFilter !== 'all'">No {{activeFilter === 'compatible' ? 'compatible' : 'incompatible'}} products</p>
+    <p class="empty-title" *ngIf="activeFilter === 'all'">No products found</p>
+    <p class="empty-hint" *ngIf="activeFilter === 'all'">Products for this category haven't been imported yet.</p>
+    <button class="empty-action" *ngIf="activeFilter !== 'all'" (click)="setFilter('all')">Show all products</button>
   </div>
 
   <ion-infinite-scroll (ionInfinite)="scrollEvent($event)" threshold="25%">
     <ion-infinite-scroll-content loadingText="Loading more…"></ion-infinite-scroll-content>
   </ion-infinite-scroll>
+
 </ion-content>

@@ -98,8 +98,10 @@ export class SupabaseProductService {
     const to = from + pageSize - 1;
 
     const url = new URL(`${SUPABASE_URL}/rest/v1/products`);
-    if (query.trim()) {
-      url.searchParams.set('or', `(name.ilike.*${query}*,brand.ilike.*${query}*,barcode.ilike.*${query}*,ingredients_text.ilike.*${query}*)`);
+    const q = query.trim();
+    if (q) {
+      // Search name, brand, barcode, ingredients, and tag arrays
+      url.searchParams.set('or', `(name.ilike.*${q}*,brand.ilike.*${q}*,barcode.ilike.*${q}*,ingredients_text.ilike.*${q}*,generic_name.ilike.*${q}*,allergen_tags.cs.{${q}},diet_tags.cs.{${q}},custom_tags.cs.{${q}},label_tags.cs.{${q}},off_categories_tags.cs.{${q}})`);
     }
     url.searchParams.set('status', 'eq.approved');
     url.searchParams.set('order', 'name.asc');

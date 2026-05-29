@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { AppConfig } from '../app.config';
-
 import { NavController, LoadingController, LoadingOptions, ModalController } from '@ionic/angular';
 import { NavigationExtras } from '@angular/router';
 import { SearchProductModalComponent } from './search-productModal.page';
@@ -31,13 +30,10 @@ export class BrowsePage implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    // Load categories from Supabase so image_url and display_name are always up-to-date
     try {
       const cats = await this.supabaseProducts.getCategories();
       if (cats.length) this.categories = cats;
-    } catch {
-      // Falls back to AppConfig categories already set above
-    }
+    } catch { /* fallback to AppConfig */ }
   }
 
   async browseProducts(slug: string, displayName: string) {
@@ -52,16 +48,31 @@ export class BrowsePage implements OnInit {
     }
   }
 
-  async searchProductModal() {
+  async openSearch() {
     const modal: HTMLIonModalElement = await this.modalCtrl.create({
       component: SearchProductModalComponent,
-      showBackdrop: false
+      breakpoints: [0, 1],
+      initialBreakpoint: 1,
+      cssClass: 'search-modal-sheet',
     });
     modal.present();
 
     const { data, role } = await modal.onWillDismiss();
     if (role !== 'confirm' || !data) return;
-    this.browseProducts(data.tag, data.displayName);
+
+    if (data.type === 'category') {
+      this.browseProducts(data.tag, data.displayName);
+    } else if (data.type === 'search') {
+      try {
+        await this.presentLoading('Searching…');
+        const result = await this.supabaseProducts.searchProducts(data.query);
+        await this.dismissLoading();
+        this.pushToResultsPage(result, `"${data.query}"`, '');
+      } catch (error) {
+        await this.dismissLoading();
+        console.error(`BrowsePage.openSearch Error: ${JSON.stringify(error)}`);
+      }
+    }
   }
 
   private pushToResultsPage(result: SupabaseProductPage, category: string, slug: string): void {
@@ -73,12 +84,7 @@ export class BrowsePage implements OnInit {
 
   private async presentLoading(message: string) {
     await this.dismissLoading();
-    const loadingOpts: LoadingOptions = {
-      message,
-      showBackdrop: true,
-      spinner: 'circular',
-      cssClass: 'loading-modal'
-    };
+    const loadingOpts: LoadingOptions = { message, showBackdrop: true, spinner: 'circular', cssClass: 'loading-modal' };
     this.loading = await this.loadingCtrl.create(loadingOpts);
     this.loading.present();
   }

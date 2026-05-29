@@ -44,16 +44,22 @@ export const AppConfig = {
     // tag: verified OpenFoodFacts category slug (without "en:" prefix — service adds it)
     // image: local asset path or Pexels URL
     mainCategories: [
-      { tag: 'snacks',            displayName: 'Snacks',           image: 'https://images.pexels.com/photos/1583884/pexels-photo-1583884.jpeg?auto=compress&cs=tinysrgb&w=400' },
-      { tag: 'beverages',         displayName: 'Beverages',        image: 'https://images.pexels.com/photos/1292294/pexels-photo-1292294.jpeg?auto=compress&cs=tinysrgb&w=400' },
-      { tag: 'breakfast-cereals', displayName: 'Breakfast Cereals', image: 'assets/browse/cereal.png' },
-      { tag: 'bread',             displayName: 'Bread',            image: 'assets/browse/bread.png' },
-      { tag: 'yogurts',           displayName: 'Yogurts',          image: 'assets/browse/yogurt.png' },
-      { tag: 'cheese',            displayName: 'Cheese',           image: 'assets/browse/cheeses.png' },
-      { tag: 'plant-based-foods', displayName: 'Plant-Based Foods', image: 'assets/browse/plant.png' },
-      { tag: 'sauces',            displayName: 'Sauces',           image: 'https://images.pexels.com/photos/1435706/pexels-photo-1435706.jpeg?auto=compress&cs=tinysrgb&w=400' },
-      { tag: 'frozen-foods',      displayName: 'Frozen Foods',     image: 'https://images.pexels.com/photos/3872373/pexels-photo-3872373.jpeg?auto=compress&cs=tinysrgb&w=400' },
-      { tag: 'desserts',          displayName: 'Desserts',         image: 'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'snacks',            displayName: 'Snacks',            image: 'https://images.pexels.com/photos/1583884/pexels-photo-1583884.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'beverages',         displayName: 'Beverages',         image: 'https://images.pexels.com/photos/1292294/pexels-photo-1292294.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'breakfast-cereals', displayName: 'Breakfast Cereals', image: 'https://images.pexels.com/photos/2802527/pexels-photo-2802527.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'bread',             displayName: 'Bread',             image: 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'yogurts',           displayName: 'Yogurts',           image: 'https://images.pexels.com/photos/1435706/pexels-photo-1435706.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'cheese',            displayName: 'Cheese',            image: 'https://images.pexels.com/photos/821365/pexels-photo-821365.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'plant-based-foods', displayName: 'Plant-Based',       image: 'https://images.pexels.com/photos/1580466/pexels-photo-1580466.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'sauces',            displayName: 'Sauces',            image: 'https://images.pexels.com/photos/4518843/pexels-photo-4518843.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'frozen-foods',      displayName: 'Frozen Foods',      image: 'https://images.pexels.com/photos/3872373/pexels-photo-3872373.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'desserts',          displayName: 'Desserts',          image: 'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'dairy',             displayName: 'Dairy & Eggs',      image: 'https://images.pexels.com/photos/248412/pexels-photo-248412.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'pasta-rice',        displayName: 'Pasta & Rice',      image: 'https://images.pexels.com/photos/1438672/pexels-photo-1438672.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'chocolate-candy',   displayName: 'Chocolate & Candy', image: 'https://images.pexels.com/photos/918327/pexels-photo-918327.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'bakery',            displayName: 'Bakery',            image: 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'fruits-vegetables', displayName: 'Fruits & Veg',      image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400' },
+      { tag: 'meat-seafood',      displayName: 'Meat & Seafood',    image: 'https://images.pexels.com/photos/65175/pexels-photo-65175.jpeg?auto=compress&cs=tinysrgb&w=400' },
     ]
   },
   emptySpoonacularProduct: {

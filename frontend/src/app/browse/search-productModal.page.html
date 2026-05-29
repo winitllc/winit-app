@@ -1,29 +1,62 @@
 <ion-header>
-  <ion-toolbar color="primary">
-    <ion-title>Search Products</ion-title>
+  <ion-toolbar class="search-toolbar">
+    <div class="search-input-wrap">
+      <ion-icon name="search-outline" class="input-search-icon"></ion-icon>
+      <input
+        class="search-input"
+        type="text"
+        [(ngModel)]="searchInput"
+        (ngModelChange)="onQueryChange()"
+        (keyup.enter)="submitSearch()"
+        placeholder="Search products, chips, cookies…"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false">
+      <button *ngIf="searchInput" class="clear-btn" (click)="clearSearch()">
+        <ion-icon name="close-circle"></ion-icon>
+      </button>
+    </div>
     <ion-buttons slot="end">
-      <ion-button color="light" (click)="cancel()">Cancel</ion-button>
+      <ion-button fill="clear" class="cancel-btn" (click)="cancel()">Cancel</ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <ion-searchbar
-    [(ngModel)]="searchInput"
-    (ionInput)="filterList()"
-    placeholder="Filter categories…"
-    debounce="150"
-    class="category-search">
-  </ion-searchbar>
+<ion-content class="search-modal-content">
 
-  <ion-list lines="full">
-    <ion-item *ngFor="let entry of visibleCategories" button detail="false" (click)="search(entry)">
-      <ion-label>{{entry.displayName}}</ion-label>
-      <ion-icon slot="end" name="chevron-forward-outline" color="medium"></ion-icon>
-    </ion-item>
-  </ion-list>
+  <!-- Search mode -->
+  <ng-container *ngIf="searchInput.trim().length > 0; else categoryMode">
+    <div class="search-action-row">
+      <div class="search-action-chip" (click)="submitSearch()">
+        <ion-icon name="search-outline"></ion-icon>
+        Search for <strong>"{{searchInput.trim()}}"</strong>
+      </div>
+    </div>
 
-  <div *ngIf="visibleCategories.length === 0" class="ion-text-center ion-padding">
-    <p>No categories match "{{searchInput}}"</p>
-  </div>
+    <div class="tag-section" *ngIf="filteredTags.length">
+      <p class="tag-section-label">Matching tags</p>
+      <div class="tag-chips">
+        <div class="tag-chip" *ngFor="let t of filteredTags" (click)="submitSearch(t)">{{t}}</div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Category browse mode -->
+  <ng-template #categoryMode>
+    <div class="tag-section">
+      <p class="tag-section-label">Popular searches</p>
+      <div class="tag-chips">
+        <div class="tag-chip" *ngFor="let t of POPULAR_TAGS" (click)="submitSearch(t)">{{t}}</div>
+      </div>
+    </div>
+
+    <p class="list-label">Browse by category</p>
+    <div class="cat-list">
+      <div class="cat-row" *ngFor="let entry of visibleCategories" (click)="selectCategory(entry)">
+        <span class="cat-name">{{entry.displayName}}</span>
+        <ion-icon name="chevron-forward-outline" class="cat-chevron"></ion-icon>
+      </div>
+    </div>
+  </ng-template>
+
 </ion-content>

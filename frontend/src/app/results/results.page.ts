@@ -1,8 +1,11 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router, NavigationExtras } from '@angular/router';
-import { NavController, LoadingController, InfiniteScrollCustomEvent, IonContent } from '@ionic/angular';
+import { NavController, InfiniteScrollCustomEvent, IonContent } from '@ionic/angular';
 import { ProfileState } from '../profile/profile.state';
+import { CompatibilityService } from '../util/compatibility.service';
 import { SupabaseProduct, SupabaseProductPage, SupabaseProductService } from '../util/supabase-product.service';
+
+type FilterMode = 'all' | 'compatible' | 'avoid';
 
 @Component({
   selector: 'app-results',
@@ -11,9 +14,11 @@ import { SupabaseProduct, SupabaseProductPage, SupabaseProductService } from '..
 })
 export class ResultsPage implements OnInit {
 
-  public noResults = false;
   public products: SupabaseProduct[] = [];
+  public filteredProducts: SupabaseProduct[] = [];
   public category = '';
+  public activeFilter: FilterMode = 'all';
+  public loading = false;
 
   private slug = '';
   private nextPageRequested = false;
@@ -21,7 +26,6 @@ export class ResultsPage implements OnInit {
   private page = 0;
   private resultsTotal = 0;
   private pageSize = 24;
-  private warnings: string[] = [];
 
   @ViewChild(IonContent) content: IonContent | undefined;
 
@@ -30,6 +34,7 @@ export class ResultsPage implements OnInit {
     private router: Router,
     private profileState: ProfileState,
     private supabaseProducts: SupabaseProductService,
+    private compatibility: CompatibilityService,
   ) {}
 
   ngOnInit() {}
@@ -39,21 +44,22 @@ export class ResultsPage implements OnInit {
       this.content?.scrollToTop(1);
       this.nextPageRequested = false;
       this.products = [];
-      this.noResults = false;
+      this.filteredProducts = [];
+      this.activeFilter = 'all';
+      this.loading = true;
 
       const profile = this.profileState.getHealthProfile();
-      // Collect all user health flags for warning matching
       const allergies: string[] = profile?.medical?.allergies?.map((a: any) => a.name as string) ?? [];
-      const intolerances: string[] = profile?.medical?.foodIntolerances?.map((a: any) => a.name as string) ?? [];
+      const conditions: string[] = profile?.medical?.medicalConditions?.map((a: any) => a.name as string) ?? [];
       const diets: string[] = profile?.medical?.lifestyleDiet?.map((a: any) => a.name as string) ?? [];
-      this.warnings = [...allergies, ...intolerances];
+      this.compatibility.setWarnings({ allergies, conditions, diets });
 
       let nav = this.router.getCurrentNavigation() ?? this.router.lastSuccessfulNavigation;
-      if (!nav?.extras?.state) { this.noResults = true; return; }
+      if (!nav?.extras?.state) { this.loading = false; return; }
 
       const state = JSON.parse(JSON.stringify(nav.extras.state));
       this.category = state['category'] || '';
-      this.slug = state['slug'] || this.category;
+      this.slug = state['slug'] || '';
 
       const supabaseResults: SupabaseProductPage = state['supabaseResults'];
       if (supabaseResults?.products?.length) {
@@ -62,14 +68,30 @@ export class ResultsPage implements OnInit {
         this.resultsSoFar = supabaseResults.products.length;
         this.page = supabaseResults.page || 0;
         this.pageSize = supabaseResults.pageSize || 24;
-        this.noResults = false;
-      } else {
-        this.noResults = true;
       }
     } catch (error) {
       console.error(`ResultsPage.ionViewWillEnter Error: ${JSON.stringify(error)}`);
-      this.noResults = true;
+    } finally {
+      this.loading = false;
+      this.applyFilter();
     }
+  }
+
+  setFilter(mode: FilterMode) {
+    this.activeFilter = mode;
+    this.applyFilter();
+  }
+
+  private applyFilter() {
+    if (this.activeFilter === 'all') {
+      this.filteredProducts = this.products;
+      return;
+    }
+    this.filteredProducts = this.products.filter(p => {
+      const result = this.compatibility.score(p);
+      if (this.activeFilter === 'compatible') return result.status !== 'avoid';
+      return result.status === 'avoid';
+    });
   }
 
   selectProduct(id: string): void {
@@ -77,6 +99,17 @@ export class ResultsPage implements OnInit {
     if (!product) return;
     const navExtras: NavigationExtras = { state: { supabaseProduct: product } };
     this.navCtrl.navigateForward('tabs/product', navExtras);
+  }
+
+  getCompatStatus(product: SupabaseProduct): string {
+    if (!this.compatibility.hasProfile) return 'none';
+    return this.compatibility.score(product).status;
+  }
+
+  getCompatLabel(product: SupabaseProduct): string {
+    if (!this.compatibility.hasProfile) return '';
+    const result = this.compatibility.score(product);
+    return result.statusLabel;
   }
 
   public async scrollEvent(infiniteScroll: InfiniteScrollCustomEvent): Promise<void> {
@@ -98,12 +131,15 @@ export class ResultsPage implements OnInit {
   private async requestNextPage(): Promise<void> {
     try {
       const nextPage = this.page + 1;
-      const newResults = await this.supabaseProducts.getProductsByCategory(this.slug, nextPage, this.pageSize);
+      const newResults = this.slug
+        ? await this.supabaseProducts.getProductsByCategory(this.slug, nextPage, this.pageSize)
+        : await this.supabaseProducts.searchProducts(this.category, nextPage, this.pageSize);
       for (const product of newResults.products) {
         this.products.push(product);
       }
       this.resultsSoFar += newResults.products.length;
       this.page = nextPage;
+      this.applyFilter();
     } catch (error) {
       console.error(`ResultsPage.requestNextPage: ${JSON.stringify(error)}`);
     }
@@ -114,21 +150,6 @@ export class ResultsPage implements OnInit {
   }
 
   hasWarning(product: SupabaseProduct): boolean {
-    if (!this.warnings.length) return false;
-    // Check normalized allergen_tags first (reliable)
-    if (product.allergen_tags?.length) {
-      const allergens = product.allergen_tags.map(t => t.toLowerCase());
-      if (this.warnings.some(w => allergens.includes(w.toLowerCase()))) return true;
-    }
-    // Fall back to ingredient text scan
-    if (product.ingredients_text) {
-      const text = product.ingredients_text.toLowerCase();
-      if (this.warnings.some(w => text.includes(w.toLowerCase()))) return true;
-    }
-    return false;
-  }
-
-  matchesDiet(product: SupabaseProduct, diet: string): boolean {
-    return product.diet_tags?.some(t => t.toLowerCase() === diet.toLowerCase()) ?? false;
+    return this.compatibility.score(product).status === 'avoid';
   }
 }

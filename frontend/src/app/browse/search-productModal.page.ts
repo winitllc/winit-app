@@ -9,6 +9,12 @@ interface CategoryEntry {
   displayName: string;
 }
 
+export const POPULAR_TAGS_LIST = [
+  'chips', 'cookies', 'crackers', 'chocolate', 'granola', 'protein bar',
+  'gluten free', 'vegan', 'organic', 'low sugar', 'keto', 'dairy free',
+  'nuts', 'pretzels', 'popcorn', 'yogurt', 'oat', 'rice cake',
+];
+
 @Component({
   templateUrl: 'search-productModal.page.html',
   standalone: true,
@@ -20,6 +26,8 @@ export class SearchProductModalComponent implements OnInit, OnDestroy {
 
   public searchInput = '';
   public visibleCategories: CategoryEntry[] = CURATED_CATEGORIES;
+  public filteredTags: string[] = [];
+  public readonly POPULAR_TAGS = POPULAR_TAGS_LIST;
 
   constructor(private modalCtrl: ModalController) {}
 
@@ -30,16 +38,35 @@ export class SearchProductModalComponent implements OnInit, OnDestroy {
     return this.modalCtrl.dismiss(null, 'cancel');
   }
 
-  filterList() {
+  onQueryChange() {
     const q = this.searchInput.trim().toLowerCase();
-    this.visibleCategories = q
-      ? CURATED_CATEGORIES.filter(c => c.displayName.toLowerCase().includes(q))
-      : CURATED_CATEGORIES;
+    if (!q) {
+      this.visibleCategories = CURATED_CATEGORIES;
+      this.filteredTags = [];
+      return;
+    }
+    this.visibleCategories = CURATED_CATEGORIES.filter(c => c.displayName.toLowerCase().includes(q));
+    this.filteredTags = POPULAR_TAGS_LIST.filter(t => t.toLowerCase().includes(q));
   }
 
-  search(entry: CategoryEntry) {
-    return this.modalCtrl.dismiss(entry, 'confirm');
+  clearSearch() {
+    this.searchInput = '';
+    this.onQueryChange();
   }
+
+  submitSearch(query?: string) {
+    const q = (query ?? this.searchInput).trim();
+    if (!q) return;
+    return this.modalCtrl.dismiss({ type: 'search', query: q }, 'confirm');
+  }
+
+  selectCategory(entry: CategoryEntry) {
+    return this.modalCtrl.dismiss({ type: 'category', tag: entry.tag, displayName: entry.displayName }, 'confirm');
+  }
+
+  /** @deprecated kept for backwards compat */
+  search(entry: CategoryEntry) { this.selectCategory(entry); }
+  filterList() { this.onQueryChange(); }
 }
 
 const CURATED_CATEGORIES: CategoryEntry[] = [
@@ -85,7 +112,6 @@ const CURATED_CATEGORIES: CategoryEntry[] = [
   { tag: 'biscuits',            displayName: 'Biscuits & Crackers' },
   { tag: 'canned-foods',        displayName: 'Canned Foods' },
   { tag: 'energy-drinks',       displayName: 'Energy Drinks' },
-  { tag: 'alcoholic-beverages', displayName: 'Alcoholic Beverages' },
   { tag: 'baby-foods',          displayName: 'Baby Foods' },
   { tag: 'dietary-supplements', displayName: 'Dietary Supplements' },
 ];

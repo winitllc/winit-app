@@ -1,27 +1,47 @@
-<ion-header>
-  <ion-toolbar color="primary">
-    <ion-title class="ion-text-center">Browse</ion-title>
+<ion-header class="browse-header-bar">
+  <ion-toolbar>
+    <ion-title class="browse-title">Products</ion-title>
     <ion-buttons slot="end">
-      <ion-button fill="clear" (click)="searchProductModal()">
-        <ion-icon slot="icon-only" name="search" color="light"></ion-icon>
+      <ion-button fill="clear" (click)="openSearch()">
+        <ion-icon slot="icon-only" name="search-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <div class="browse-header">
-    <h2><img class="header-icon" src="assets/icon/favicon.png"> Explore Products</h2>
+<ion-content [fullscreen]="true" class="browse-content">
+
+  <!-- Hero -->
+  <div class="hero-section">
+    <h1 class="hero-heading">Find safe foods <span class="hero-accent">for you</span></h1>
+    <p class="hero-sub">Browse by category or search by name, brand, ingredient or tag</p>
+    <div class="hero-search-bar" (click)="openSearch()">
+      <ion-icon name="search-outline" class="search-icon"></ion-icon>
+      <span class="search-placeholder">Search products, chips, cookies…</span>
+    </div>
   </div>
 
-  <ion-grid class="category-grid">
-    <ion-row>
-      <ion-col size="6" *ngFor="let cat of categories">
-        <div class="category-tile" (click)="browseProducts(cat.slug, cat.display_name)">
-          <img [src]="cat.image_url" [alt]="cat.display_name" loading="lazy" (error)="$any($event.target).src='assets/imgs/noProduct.png'">
-          <div class="category-label">{{cat.display_name}}</div>
-        </div>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
+  <!-- Explore Products -->
+  <div class="section-header">
+    <h2 class="section-title">Explore Products</h2>
+    <p class="section-sub">Tap a category to browse</p>
+  </div>
+
+  <div class="category-grid">
+    <div
+      class="category-card"
+      *ngFor="let cat of categories"
+      (click)="browseProducts(cat.slug, cat.display_name)">
+      <div class="card-img-wrap">
+        <img
+          [src]="cat.image_url"
+          [alt]="cat.display_name"
+          loading="lazy"
+          (error)="$any($event.target).src='assets/imgs/noProduct.png'">
+        <div class="card-overlay"></div>
+        <div class="card-label">{{cat.display_name}}</div>
+      </div>
+    </div>
+  </div>
+
 </ion-content>
