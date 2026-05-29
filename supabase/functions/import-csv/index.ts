@@ -53,9 +53,12 @@ function str(s: string): string { return (s ?? "").trim(); }
 // ─── Column index builder ─────────────────────────────────────────────────────
 
 function buildColMap(headers: string[]) {
-  const i = (n: string) => headers.indexOf(n);
+  const i = (...names: string[]) => {
+    for (const n of names) { const idx = headers.indexOf(n); if (idx >= 0) return idx; }
+    return -1;
+  };
   return {
-    code: i("code"), product_name: i("product_name"), product_name_en: i("product_name_en"),
+    code: i("code", "barcode", "ean", "ean13", "upc"), product_name: i("product_name"), product_name_en: i("product_name_en"),
     generic_name: i("generic_name"), quantity: i("quantity"), serving_size: i("serving_size"),
     packaging: i("packaging"), packaging_tags: i("packaging_tags"),
     brands: i("brands"), brands_tags: i("brands_tags"),
@@ -251,7 +254,7 @@ Deno.serve(async (req: Request) => {
       let dataLines = lines;
       if (!headerLine) {
         const first = lines[0]?.toLowerCase() ?? "";
-        if (first.startsWith("code") || first.startsWith("product_name")) {
+        if (first.startsWith("code") || first.startsWith("barcode") || first.startsWith("product_name")) {
           headerLine = lines[0]; dataLines = lines.slice(1);
         } else {
           return json({ error: "No header found and none provided" }, 400);

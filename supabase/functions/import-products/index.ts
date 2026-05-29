@@ -192,10 +192,16 @@ Deno.serve(async (req: Request) => {
         url.searchParams.set("page_size", String(PAGE_SIZE));
         url.searchParams.set("page", String(page));
 
-        const res = await fetch(url.toString(), {
-          headers: { "User-Agent": "What's In It/1.0 - (info@winitclinic.com)" },
-        });
-        if (!res.ok) throw new Error(`OFF responded ${res.status} on page ${page}`);
+        // Retry up to 3 times on 5xx errors with exponential backoff
+        let res: Response | null = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          if (attempt > 0) await new Promise(r => setTimeout(r, attempt * 2000));
+          res = await fetch(url.toString(), {
+            headers: { "User-Agent": "What's In It/1.0 - (info@winitclinic.com)" },
+          });
+          if (res.ok || res.status < 500) break;
+        }
+        if (!res!.ok) throw new Error(`OFF responded ${res!.status} on page ${page}`);
 
         const data = await res.json() as {
           count: number; page_count: number;
