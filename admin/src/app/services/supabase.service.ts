@@ -59,6 +59,28 @@ export interface ProductListResult {
   total: number;
 }
 
+export interface WinitUserRow {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  display_name: string;
+  avatar_url: string;
+  points_balance: number;
+  points_all_time: number;
+  scans_all_time: number;
+  onboarding_completed: boolean;
+  is_active: boolean;
+  winitclinic_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WinitUsersResult {
+  users: WinitUserRow[];
+  total: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
   private readonly url = environment.supabaseUrl;
@@ -209,5 +231,30 @@ export class SupabaseService {
     const a = parse(approved.headers);
     const r = parse(rejected.headers);
     return { pending: p, approved: a, rejected: r, total: p + a + r };
+  }
+
+  async getWinitUsers(opts: { search?: string; page?: number; pageSize?: number } = {}): Promise<WinitUsersResult> {
+    const { search, page = 0, pageSize = 25 } = opts;
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    const url = new URL(`${this.url}/rest/v1/winit_profiles`);
+    if (search?.trim()) {
+      url.searchParams.set('or', `(email.ilike.*${search}*,first_name.ilike.*${search}*,last_name.ilike.*${search}*,display_name.ilike.*${search}*)`);
+    }
+    url.searchParams.set('order', 'created_at.desc');
+    url.searchParams.set('select', '*');
+
+    const res = await fetch(url.toString(), {
+      headers: { ...this.headers, Range: `${from}-${to}`, Prefer: 'count=exact' },
+    });
+    if (!res.ok) throw new Error(`getWinitUsers failed: ${res.status}`);
+    const total = parseInt((res.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0;
+    const users: WinitUserRow[] = await res.json();
+    return { users, total };
+  }
+
+  async setUserActive(userId: string, active: boolean): Promise<void> {
+    await this.patch('winit_profiles', { is_active: active }, `id=eq.${userId}`);
   }
 }

@@ -33,6 +33,10 @@ import { CommonModule } from '@angular/common';
             <mat-icon matListItemIcon>inventory_2</mat-icon>
             <span matListItemTitle>Products</span>
           </a>
+          <a mat-list-item routerLink="/users" routerLinkActive="active-link">
+            <mat-icon matListItemIcon>people</mat-icon>
+            <span matListItemTitle>Users</span>
+          </a>
           <a mat-list-item routerLink="/import" routerLinkActive="active-link">
             <mat-icon matListItemIcon>download</mat-icon>
             <span matListItemTitle>Import</span>

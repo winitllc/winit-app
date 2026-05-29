@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
-import { AuthService } from '../util/auth.service';
+import { WinitAuthService } from '../util/winit-auth.service';
 import { ProfileSetupService } from '../util/profile-setup.service';
 import { ProfileSetupModalComponent } from './profile-setup-modal.component';
 
@@ -12,12 +12,10 @@ import { ProfileSetupModalComponent } from './profile-setup-modal.component';
 export class TabsPage implements OnInit {
 
   constructor(
-    private authService: AuthService,
+    private winitAuth: WinitAuthService,
     private modalCtrl: ModalController,
     private setupService: ProfileSetupService,
-  ) {
-    this.authService.setup();
-  }
+  ) {}
 
   async ngOnInit(): Promise<void> {
     const should = await this.setupService.shouldShow();
@@ -36,6 +34,21 @@ export class TabsPage implements OnInit {
       handle: false,
     });
     await modal.present();
-    await modal.onDidDismiss();
+
+    const { data } = await modal.onDidDismiss();
+
+    // Persist selections to WINIT Supabase user profile
+    if (data && !data.skipped && (data.allergies?.length || data.diets?.length || data.conditions?.length)) {
+      try {
+        await this.winitAuth.updateProfile({
+          allergy_ids: data.allergies ?? [],
+          diet_ids: data.diets ?? [],
+          condition_ids: data.conditions ?? [],
+          onboarding_completed: true,
+        } as any);
+      } catch (e) {
+        console.error('TabsPage: failed to save profile setup', e);
+      }
+    }
   }
 }

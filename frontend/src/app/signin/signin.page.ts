@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AlertController, LoadingController, NavController } from '@ionic/angular';
-import { AuthService } from '../util/auth.service';
-import { Storage } from '@ionic/storage-angular';
+import { WinitAuthService } from '../util/winit-auth.service';
+import { ProfileSetupService } from '../util/profile-setup.service';
 
 @Component({
   selector: 'app-signin',
@@ -9,98 +9,71 @@ import { Storage } from '@ionic/storage-angular';
   styleUrls: ['./signin.page.scss'],
 })
 export class SigninPage implements OnInit {
-  userData = {
-    "email": "",
-    "password": ""
-  };
+  userData = { email: '', password: '' };
   loading: any;
+  showForgotPassword = false;
+  forgotEmail = '';
 
   constructor(
     private navCtrl: NavController,
-    private authService: AuthService,
+    private winitAuth: WinitAuthService,
     private alertController: AlertController,
     private loadingController: LoadingController,
-    private storage: Storage
-  ) { }
+    private setupService: ProfileSetupService,
+  ) {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
-  loginAction() {
-    console.log('this is login button');
-    console.log(this.userData);
-
-    if (this.userData.email == '' || this.userData.password == '') {
-      this.present();
-    } else {
-      this.presentLoading();
-      this.authService.loginAPI(this.userData).subscribe(async (response) => {
-        console.log(response);
-        if (response['statusCode'] != 200) {
-          this.loading.dismiss();
-          this.presentAlertMultipleButtons(response['data']);
-        } else if (response['statusCode'] == 200) {
-          this.loading.dismiss();
-          const userData = response['data'];
-          console.log(userData);
-          AuthService.AccessToken = response['data']['accessToken'];
-
-          this.storage.set('accessToken', response['data']['accessToken']).then(() => {
-            this.navCtrl.navigateRoot('/tabs');
-          });
-        }
-      },
-        (error) => {
-          console.log('this is error');
-          this.loading.dismiss();
-          this.presentAlertMultipleButtons(error['error']['data'][0]['message']);
-          console.log(error);
-        });
+  async loginAction() {
+    if (!this.userData.email || !this.userData.password) {
+      await this.alert('Please enter your email and password.');
+      return;
+    }
+    await this.presentLoading('Signing in…');
+    try {
+      await this.winitAuth.login(this.userData.email, this.userData.password);
+      this.loading.dismiss();
+      await this.setupService.reset();
+      this.navCtrl.navigateRoot('/tabs');
+    } catch (e: any) {
+      this.loading.dismiss();
+      await this.alert(e.message ?? 'Login failed. Please try again.');
     }
   }
 
-  async presentAlertMultipleButtons(msg: string) {
-    const alert = await this.alertController.create({
-      cssClass: 'my-custom-class',
-      header: msg,
-
-      buttons: ['Okay'],
-    });
-    await alert.present();
-  }
-
-  async presentLoading() {
-    this.loading = await this.loadingController.create({
-      message: 'Please Wait',
-    });
-    this.loading.backdropDismiss = false;
-    await this.loading.present();
-
-    const { role, data } = await this.loading.onDidDismiss();
-  }
-
-  async present() {
-    const alert = await this.alertController.create({
-      cssClass: 'my-custom-class',
-      header: 'Alert',
-      message: 'Please Enter Email & Password',
-      buttons: ['Okay'],
-    });
-    await alert.present();
+  async forgotPasswordAction() {
+    if (!this.forgotEmail) {
+      await this.alert('Please enter your email address.');
+      return;
+    }
+    await this.presentLoading('Sending reset link…');
+    try {
+      await this.winitAuth.resetPassword(this.forgotEmail);
+      this.loading.dismiss();
+      this.showForgotPassword = false;
+      await this.alert('Check your inbox — a reset link is on its way.');
+    } catch (e: any) {
+      this.loading.dismiss();
+      await this.alert(e.message ?? 'Something went wrong. Please try again.');
+    }
   }
 
   registerAction() {
-    console.log('this is register action');
     this.navCtrl.navigateForward('signup-patient');
   }
 
   registerActionHealthPro() {
-    console.log('this is register action');
     this.navCtrl.navigateForward('signup');
   }
 
-  onForgotPassword() {
-    console.log('this is forgot password button');
+  private async presentLoading(msg = 'Please wait…') {
+    this.loading = await this.loadingController.create({ message: msg });
+    this.loading.backdropDismiss = false;
+    await this.loading.present();
   }
 
+  private async alert(msg: string) {
+    const a = await this.alertController.create({ header: msg, buttons: ['OK'] });
+    await a.present();
+  }
 }

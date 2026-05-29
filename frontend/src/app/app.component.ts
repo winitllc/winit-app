@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthService } from './util/auth.service';
 import { Router } from '@angular/router';
 import { Storage } from '@ionic/storage-angular';
+import { WinitAuthService } from './util/winit-auth.service';
 
 @Component({
   selector: 'app-root',
@@ -10,28 +10,16 @@ import { Storage } from '@ionic/storage-angular';
 })
 export class AppComponent implements OnInit {
   constructor(
-    private authService: AuthService,
+    private winitAuth: WinitAuthService,
     private router: Router,
-    private storage: Storage
-  ) {
-    this.initializeApp();
-  }
+    private storage: Storage,
+  ) {}
 
   async ngOnInit(): Promise<void> {
     await this.storage.create();
+    const session = await this.winitAuth.restoreSession();
+    if (session) {
+      this.router.navigate(['tabs']);
+    }
   }
-
-  initializeApp() {
-    this.storage.create();
-    this.storage.get('accessToken').then((token) => {
-      if (token) {
-        //navigate to tabs
-        console.log('token found');
-        console.log(token);
-        AuthService.AccessToken = token;
-        this.router.navigate(['tabs']);
-      }
-    });
-  }
-
 }

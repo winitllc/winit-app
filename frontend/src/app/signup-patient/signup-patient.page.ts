@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AlertController, LoadingController, NavController } from '@ionic/angular';
-import { AuthService } from '../util/auth.service';
+import { WinitAuthService } from '../util/winit-auth.service';
+import { ProfileSetupService } from '../util/profile-setup.service';
 
 @Component({
   selector: 'app-signup-patient',
@@ -9,94 +10,65 @@ import { AuthService } from '../util/auth.service';
 })
 export class SignupPatientPage implements OnInit {
   userData = {
-    "firstName": "",
-    "lastName": "",
-    "email": "",
-    "confirmEmail": "",
-    "newPassword": ""
+    firstName: '',
+    lastName: '',
+    email: '',
+    confirmEmail: '',
+    newPassword: '',
   };
   loading: any;
 
   constructor(
     private navCtrl: NavController,
-    private authService: AuthService,
+    private winitAuth: WinitAuthService,
     private alertController: AlertController,
-    private loadingController: LoadingController
-  ) { }
+    private loadingController: LoadingController,
+    private setupService: ProfileSetupService,
+  ) {}
+
+  ngOnInit() {}
 
   goBack() {
-    console.log('this is login button');
-    console.log(this.userData);
     this.navCtrl.navigateRoot('/signin');
   }
 
-  ngOnInit() {
-  }
+  async registerPatientAction() {
+    const { firstName, lastName, email, confirmEmail, newPassword } = this.userData;
 
-  registerPatientAction() {
-    console.log('this is register action');
-    console.log(this.userData);
+    if (!firstName || !lastName || !email || !confirmEmail || !newPassword) {
+      await this.alert('Please fill in all fields.');
+      return;
+    }
+    if (email !== confirmEmail) {
+      await this.alert('Email addresses do not match.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      await this.alert('Password must be at least 6 characters.');
+      return;
+    }
 
-    if (this.userData.firstName == '' || this.userData.lastName == '' || this.userData.email == '' || this.userData.confirmEmail == '' || this.userData.newPassword == '') {
-      this.presentAlert();
-    } else {
-      if (this.userData.email != this.userData.confirmEmail) {
-        this.presentAlertMultipleButtons('Email & Confirm Email Do Not Match');
-      }
-      else {
-        this.presentLoading();
-        this.authService.patientregisterAPI(this.userData).subscribe(async (response) => {
-          console.log(response);
-          if (response['statusCode'] != 200) {
-            this.loading.dismiss();
-            this.presentAlertMultipleButtons(response['data']);
-          } else if (response['statusCode'] == 200) {
-            this.loading.dismiss();
-            const userData = response['data'];
-            console.log(userData);
-            this.presentAlertMultipleButtons('Sign up success. Please verify your email.');
-            this.navCtrl.navigateRoot('/signin');
-          }
-        },
-          (error) => {
-            console.log('this is error');
-            this.loading.dismiss();
-            this.presentAlertMultipleButtons(error['error']['data'][0]['message']);
-            console.log(error);
-          });
-      }
+    await this.presentLoading('Creating your account…');
+    try {
+      await this.winitAuth.signup(firstName, lastName, email, newPassword);
+      this.loading.dismiss();
+      // Reset so the onboarding modal shows for the new user
+      await this.setupService.reset();
+      this.navCtrl.navigateRoot('/tabs');
+    } catch (e: any) {
+      this.loading.dismiss();
+      await this.alert(e.message ?? 'Sign up failed. Please try again.');
     }
   }
 
-  async presentAlertMultipleButtons(msg: string) {
-    const alert = await this.alertController.create({
-      cssClass: 'my-custom-class',
-      header: msg,
-
-      buttons: ['Okay'],
-    });
-    await alert.present();
-  }
-
-  async presentLoading() {
-    this.loading = await this.loadingController.create({
-      message: 'Please Wait',
-    });
+  private async presentLoading(msg = 'Please wait…') {
+    this.loading = await this.loadingController.create({ message: msg });
     this.loading.backdropDismiss = false;
     await this.loading.present();
-
-    const { role, data } = await this.loading.onDidDismiss();
   }
 
-  async presentAlert() {
-    const alert = await this.alertController.create({
-      cssClass: 'my-custom-class',
-      header: 'Alert',
-      message: 'Please Enter All Fields To Continue',
-      buttons: ['Okay'],
-    });
-    await alert.present();
+  private async alert(msg: string) {
+    const a = await this.alertController.create({ header: msg, buttons: ['OK'] });
+    await a.present();
   }
-
-
 }
