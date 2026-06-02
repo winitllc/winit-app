@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   getImportJobs, triggerImport, getCategories, resetCategoryWatermark,
-  createCsvImportJob, processCsvChunk, finishCsvImportJob, failCsvImportJob,
+  createCsvImportJob, resumeCsvImportJob, processCsvChunk, finishCsvImportJob, failCsvImportJob,
   createImagePatchJob, processImagePatchChunk, finishImagePatchJob,
   splitIntoChunks,
   type AppCategory, type ImportJob, type CsvImportResult, type ImagePatchResult,
@@ -41,7 +41,7 @@ export default function Import() {
       <div className={styles.layout}>
         <div className={styles.formCard}>
           {tab === 'csv'
-            ? <CsvUploadPanel onDone={loadJobs} />
+            ? <CsvUploadPanel onDone={loadJobs} jobs={jobs} />
             : tab === 'images'
             ? <ImagePatchPanel onDone={loadJobs} />
             : <ApiPullPanel onDone={loadJobs} />}
@@ -81,15 +81,17 @@ interface UploadState {
   needsReview: number
   error: string
   result: CsvImportResult | null
+  resuming: boolean
+  resumeFrom: number
 }
 
 const initialUpload: UploadState = {
   phase: 'idle', filename: '', totalLines: 0, totalChunks: 0,
   currentChunk: 0, processed: 0, skipped: 0, autoMapped: 0, needsReview: 0,
-  error: '', result: null,
+  error: '', result: null, resuming: false, resumeFrom: 0,
 }
 
-function CsvUploadPanel({ onDone }: { onDone: () => void }) {
+function CsvUploadPanel({ onDone, jobs }: { onDone: () => void; jobs: ImportJob[] }) {
   const [state, setState] = useState<UploadState>(initialUpload)
   const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -101,24 +103,43 @@ function CsvUploadPanel({ onDone }: { onDone: () => void }) {
     if (!file) return
     abortRef.current = false
     const filename = file.name
+
+    // Check if there's an interrupted job for this filename
+    const interrupted = jobs.find(
+      j => j.source === 'csv' && j.filename === filename &&
+        (j.status === 'running' || j.status === 'failed') &&
+        j.last_row !== null && j.last_row > 0
+    )
+
     setState({ ...initialUpload, phase: 'reading', filename })
 
-    // Stream the file line-by-line so we never load the whole thing into RAM.
-    // This handles multi-GB OFF CSV files that would otherwise hit browser
-    // memory limits and produce NotReadableError.
     const CHUNK_LINES = 2000
 
     let jobId = ''
     let headerLine = ''
-    let pending: string[] = []   // lines buffered for current chunk
-    let lineBuffer = ''          // partial line carried across decoder chunks
+    let pending: string[] = []
+    let lineBuffer = ''
     let processed = 0, skipped = 0, autoMapped = 0, needsReview = 0
     let totalLines = 0, chunksSent = 0
+    // dataRow tracks the 0-based index of data rows seen so far (excluding header)
+    let dataRow = 0
+    // skipUntilRow: skip all rows with index <= this value (already processed)
+    let skipUntilRow = -1
 
-    const flushChunk = async (lines: string[]) => {
+    if (interrupted) {
+      jobId = interrupted.id
+      skipUntilRow = interrupted.last_row!
+      // Pre-load counts from the existing job
+      processed  = interrupted.products_upserted
+      skipped    = interrupted.products_skipped
+      autoMapped = interrupted.auto_mapped
+      needsReview = interrupted.needs_review
+    }
+
+    const flushChunk = async (lines: string[], chunkStartRow: number) => {
       if (!lines.length) return
       if (abortRef.current) throw new Error('Cancelled by user')
-      const res = await processCsvChunk(jobId, headerLine, lines.join('\n'))
+      const res = await processCsvChunk(jobId, headerLine, lines.join('\n'), chunkStartRow)
       processed  += res.processed
       skipped    += res.skipped
       autoMapped += res.auto_mapped
@@ -128,11 +149,20 @@ function CsvUploadPanel({ onDone }: { onDone: () => void }) {
     }
 
     try {
+      // If resuming, fetch the job's current state and reopen it
+      if (interrupted) {
+        await resumeCsvImportJob(jobId)
+        setState(s => ({
+          ...s, phase: 'uploading', resuming: true, resumeFrom: skipUntilRow + 1,
+          processed, skipped, autoMapped, needsReview,
+        }))
+      }
+
       const stream = file.stream().pipeThrough(new TextDecoderStream('utf-8'))
       const reader = stream.getReader()
 
-      // Read first decoder chunk to extract the header line
       let firstChunk = true
+      let pendingStartRow = 0
       // eslint-disable-next-line no-constant-condition
       outer: while (true) {
         const { done, value } = await reader.read()
@@ -146,25 +176,42 @@ function CsvUploadPanel({ onDone }: { onDone: () => void }) {
             headerLine = line
             firstChunk = false
 
-            // Create the job now that we have the header
-            jobId = await createCsvImportJob(filename)
-            setState(s => ({ ...s, phase: 'uploading', totalLines: 0, totalChunks: 0 }))
+            if (!interrupted) {
+              jobId = await createCsvImportJob(filename)
+              setState(s => ({ ...s, phase: 'uploading', totalLines: 0, totalChunks: 0 }))
+            }
             continue
           }
           if (!line.trim()) continue
+
           totalLines++
+
+          // Skip rows already processed in a previous run
+          if (dataRow <= skipUntilRow) {
+            dataRow++
+            continue
+          }
+
+          if (pending.length === 0) pendingStartRow = dataRow
           pending.push(line)
+          dataRow++
+
           if (pending.length >= CHUNK_LINES) {
             if (abortRef.current) break outer
-            await flushChunk(pending)
+            await flushChunk(pending, pendingStartRow)
             pending = []
           }
         }
       }
 
       // Flush remainder of lineBuffer
-      if (lineBuffer.trim()) { totalLines++; pending.push(lineBuffer) }
-      if (pending.length) await flushChunk(pending)
+      if (lineBuffer.trim() && dataRow > skipUntilRow) {
+        totalLines++
+        if (pending.length === 0) pendingStartRow = dataRow
+        pending.push(lineBuffer)
+        dataRow++
+      }
+      if (pending.length) await flushChunk(pending, pendingStartRow)
 
       if (!headerLine) throw new Error('File appears empty or has no header row.')
 
@@ -199,7 +246,8 @@ function CsvUploadPanel({ onDone }: { onDone: () => void }) {
       <p className={styles.cardDesc}>
         Upload the Open Food Facts CSV export directly. Products are auto-categorized
         using the OFF categories_tags column — no category selection needed.
-        The full dataset (~3 million products) is supported.
+        The full dataset (~3 million products) is supported. If an upload was interrupted,
+        drop the same file again to resume from where it stopped.
       </p>
 
       {state.phase === 'idle' && (
@@ -214,6 +262,7 @@ function CsvUploadPanel({ onDone }: { onDone: () => void }) {
           <div className={styles.dropzoneText}>Drop OFF CSV file here, or click to browse</div>
           <div className={styles.dropzoneHint}>
             Tab-separated (.csv / .tsv) · Any size · Header row required
+            · Drop the same file to resume an interrupted upload
           </div>
           <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" className={styles.hiddenInput}
             onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
@@ -230,7 +279,10 @@ function CsvUploadPanel({ onDone }: { onDone: () => void }) {
       {state.phase === 'uploading' && (
         <div className={styles.progressBox}>
           <div className={styles.progressHeader}>
-            <span className={styles.progressFilename}>{state.filename}</span>
+            <span className={styles.progressFilename}>
+              {state.filename}
+              {state.resuming && <span className={styles.resumeBadge}>Resuming from row {state.resumeFrom.toLocaleString()}</span>}
+            </span>
             <span className={styles.progressPct}>{pct !== null ? `${pct}%` : 'Streaming…'}</span>
           </div>
           <div className={styles.progressBar}>

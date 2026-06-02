@@ -90,6 +90,7 @@ export interface ImportJob {
   error_message: string
   started_at: string
   completed_at: string | null
+  last_row: number | null
 }
 
 const headers = {
@@ -256,12 +257,24 @@ export async function createCsvImportJob(filename: string): Promise<string> {
   return data.job_id as string
 }
 
+export async function resumeCsvImportJob(jobId: string): Promise<{
+  last_row: number | null
+  products_upserted: number
+  products_skipped: number
+  auto_mapped: number
+  needs_review: number
+}> {
+  const data = await callImportCsv({ action: 'resume_job', job_id: jobId })
+  return data as never
+}
+
 export async function processCsvChunk(
   jobId: string,
   header: string,
   chunk: string,
+  startRow: number,
 ): Promise<CsvChunkResult> {
-  const data = await callImportCsv({ action: 'process_chunk', job_id: jobId, header, chunk })
+  const data = await callImportCsv({ action: 'process_chunk', job_id: jobId, header, chunk, start_row: startRow })
   return data as unknown as CsvChunkResult
 }
 

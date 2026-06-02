@@ -222,11 +222,14 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json() as {
-      action: "create_job" | "process_chunk" | "finish_job";
+      action: "create_job" | "resume_job" | "process_chunk" | "finish_job";
       filename?: string;
       job_id?: string;
       chunk?: string;
       header?: string;
+      // start_row: 0-based index of the first data row in this chunk (excluding header).
+      // The edge function persists last_row after each chunk so a re-upload can skip ahead.
+      start_row?: number;
     };
 
     // ── create_job ──────────────────────────────────────────────────────────
@@ -237,10 +240,32 @@ Deno.serve(async (req: Request) => {
           source: "csv", filename: body.filename ?? "upload.csv",
           status: "running", category_slug: "csv-upload", off_tag: "csv",
           products_upserted: 0, products_skipped: 0, auto_mapped: 0, needs_review: 0,
+          last_row: null,
         })
         .select("id").single();
       if (error) throw error;
-      return json({ job_id: job.id });
+      return json({ job_id: job.id, last_row: null });
+    }
+
+    // ── resume_job ──────────────────────────────────────────────────────────
+    // Returns the existing job's last_row so the client knows where to skip to.
+    // Also resets status to "running" if it was stuck.
+    if (body.action === "resume_job") {
+      if (!body.job_id) return json({ error: "job_id required" }, 400);
+      const { data: job, error } = await supabase
+        .from("import_jobs")
+        .update({ status: "running", completed_at: null })
+        .eq("id", body.job_id)
+        .select("last_row, products_upserted, products_skipped, auto_mapped, needs_review")
+        .single();
+      if (error) throw error;
+      return json({
+        last_row: job.last_row,
+        products_upserted: job.products_upserted,
+        products_skipped: job.products_skipped,
+        auto_mapped: job.auto_mapped,
+        needs_review: job.needs_review,
+      });
     }
 
     // ── process_chunk ────────────────────────────────────────────────────────
@@ -263,6 +288,8 @@ Deno.serve(async (req: Request) => {
 
       const C = buildColMap(splitLine(headerLine, sep));
       let processed = 0, skipped = 0, autoMapped = 0, needsReview = 0;
+      // start_row is the 0-based index of dataLines[0] within the full file's data rows
+      const chunkStartRow = body.start_row ?? 0;
 
       for (let b = 0; b < dataLines.length; b += BATCH_SIZE) {
         const rows: Record<string, unknown>[] = [];
@@ -309,12 +336,21 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      await supabase.rpc("increment_import_job_counts", {
-        p_job_id: body.job_id, p_upserted: processed,
-        p_skipped: skipped, p_auto_mapped: autoMapped, p_needs_review: needsReview,
-      });
+      // Persist the last row index so a resume can skip past this chunk
+      const lastRow = chunkStartRow + dataLines.filter(l => l.trim()).length - 1;
 
-      return json({ processed, skipped, auto_mapped: autoMapped, needs_review: needsReview });
+      await Promise.all([
+        supabase.rpc("increment_import_job_counts", {
+          p_job_id: body.job_id, p_upserted: processed,
+          p_skipped: skipped, p_auto_mapped: autoMapped, p_needs_review: needsReview,
+        }),
+        supabase
+          .from("import_jobs")
+          .update({ last_row: lastRow })
+          .eq("id", body.job_id),
+      ]);
+
+      return json({ processed, skipped, auto_mapped: autoMapped, needs_review: needsReview, last_row: lastRow });
     }
 
     // ── finish_job ───────────────────────────────────────────────────────────
