@@ -284,6 +284,49 @@ export function splitIntoChunks(text: string, linesPerChunk = CSV_CHUNK_LINES): 
   return chunks
 }
 
+// ─── Image patch ─────────────────────────────────────────────────────────────
+
+export interface ImagePatchChunkResult {
+  processed: number
+  skipped: number
+}
+
+export interface ImagePatchResult {
+  job_id: string
+  products_upserted: number
+  products_skipped: number
+}
+
+async function callPatchImages(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/patch-images`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = await res.json()
+  if (!res.ok || data.error) throw new Error(data.error ?? `HTTP ${res.status}`)
+  return data
+}
+
+export async function createImagePatchJob(filename: string): Promise<string> {
+  const data = await callPatchImages({ action: 'create_job', filename })
+  return data.job_id as string
+}
+
+export async function processImagePatchChunk(
+  jobId: string,
+  header: string,
+  chunk: string,
+): Promise<ImagePatchChunkResult> {
+  const data = await callPatchImages({ action: 'process_chunk', job_id: jobId, header, chunk })
+  return data as unknown as ImagePatchChunkResult
+}
+
+export async function finishImagePatchJob(jobId: string): Promise<ImagePatchResult> {
+  const data = await callPatchImages({ action: 'finish_job', job_id: jobId })
+  return data as unknown as ImagePatchResult
+}
+
 // ─── Taxonomy ─────────────────────────────────────────────────────────────────
 
 export interface TaxonomyParent {

@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import {
   getImportJobs, triggerImport, getCategories, resetCategoryWatermark,
   createCsvImportJob, processCsvChunk, finishCsvImportJob, failCsvImportJob,
+  createImagePatchJob, processImagePatchChunk, finishImagePatchJob,
   splitIntoChunks,
-  type AppCategory, type ImportJob, type CsvImportResult,
+  type AppCategory, type ImportJob, type CsvImportResult, type ImagePatchResult,
 } from '../lib/supabase'
 import styles from './Import.module.css'
 
-type Tab = 'csv' | 'api'
+type Tab = 'csv' | 'images' | 'api'
 
 export default function Import() {
   const [tab, setTab] = useState<Tab>('csv')
@@ -29,6 +30,9 @@ export default function Import() {
         <button className={`${styles.tab} ${tab === 'csv' ? styles.tabActive : ''}`} onClick={() => setTab('csv')}>
           Upload CSV
         </button>
+        <button className={`${styles.tab} ${tab === 'images' ? styles.tabActive : ''}`} onClick={() => setTab('images')}>
+          Patch Images
+        </button>
         <button className={`${styles.tab} ${tab === 'api' ? styles.tabActive : ''}`} onClick={() => setTab('api')}>
           API Pull
         </button>
@@ -38,6 +42,8 @@ export default function Import() {
         <div className={styles.formCard}>
           {tab === 'csv'
             ? <CsvUploadPanel onDone={loadJobs} />
+            : tab === 'images'
+            ? <ImagePatchPanel onDone={loadJobs} />
             : <ApiPullPanel onDone={loadJobs} />}
         </div>
 
@@ -272,6 +278,189 @@ function Stat({ label, value, color, large }: { label: string; value: string; co
       <div className={styles.statValue}>{value}</div>
       <div className={styles.statLabel}>{label}</div>
     </div>
+  )
+}
+
+// ─── Image Patch Panel ────────────────────────────────────────────────────────
+
+type PatchPhase = 'idle' | 'reading' | 'uploading' | 'done' | 'error'
+
+interface PatchState {
+  phase: PatchPhase
+  filename: string
+  currentChunk: number
+  processed: number
+  skipped: number
+  error: string
+  result: ImagePatchResult | null
+}
+
+const initialPatch: PatchState = {
+  phase: 'idle', filename: '', currentChunk: 0,
+  processed: 0, skipped: 0, error: '', result: null,
+}
+
+function ImagePatchPanel({ onDone }: { onDone: () => void }) {
+  const [state, setState] = useState<PatchState>(initialPatch)
+  const [dragOver, setDragOver] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const abortRef = useRef(false)
+
+  const reset = () => { setState(initialPatch); abortRef.current = false }
+
+  const handleFile = async (file: File) => {
+    if (!file) return
+    abortRef.current = false
+    const filename = file.name
+    setState({ ...initialPatch, phase: 'reading', filename })
+
+    const CHUNK_LINES = 5000
+
+    let jobId = ''
+    let headerLine = ''
+    let pending: string[] = []
+    let lineBuffer = ''
+    let processed = 0, skipped = 0, chunksSent = 0
+
+    const flushChunk = async (lines: string[]) => {
+      if (!lines.length) return
+      if (abortRef.current) throw new Error('Cancelled by user')
+      const res = await processImagePatchChunk(jobId, headerLine, lines.join('\n'))
+      processed += res.processed
+      skipped   += res.skipped
+      chunksSent++
+      setState(s => ({ ...s, currentChunk: chunksSent, processed, skipped }))
+    }
+
+    try {
+      const stream = file.stream().pipeThrough(new TextDecoderStream('utf-8'))
+      const reader = stream.getReader()
+      let firstChunk = true
+
+      // eslint-disable-next-line no-constant-condition
+      outer: while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        lineBuffer += value
+        const parts = lineBuffer.split('\n')
+        lineBuffer = parts.pop() ?? ''
+
+        for (const line of parts) {
+          if (firstChunk) {
+            headerLine = line
+            firstChunk = false
+            jobId = await createImagePatchJob(filename)
+            setState(s => ({ ...s, phase: 'uploading' }))
+            continue
+          }
+          if (!line.trim()) continue
+          pending.push(line)
+          if (pending.length >= CHUNK_LINES) {
+            if (abortRef.current) break outer
+            await flushChunk(pending)
+            pending = []
+          }
+        }
+      }
+
+      if (lineBuffer.trim()) pending.push(lineBuffer)
+      if (pending.length) await flushChunk(pending)
+      if (!headerLine) throw new Error('File appears empty or has no header row.')
+
+      const result = await finishImagePatchJob(jobId)
+      setState(s => ({ ...s, phase: 'done', result }))
+      onDone()
+
+    } catch (e) {
+      const msg = String(e)
+      if (jobId) await failCsvImportJob(jobId, msg).catch(() => {})
+      setState(s => ({
+        ...s, phase: 'error',
+        error: msg.includes('Cancelled') ? 'Import cancelled.' : 'Patch failed: ' + msg,
+      }))
+    }
+  }
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handleFile(file)
+  }
+
+  return (
+    <>
+      <h2 className={styles.cardTitle}>Patch Product Images</h2>
+      <p className={styles.cardDesc}>
+        Upload a CSV with <code>code</code> (barcode) plus any of <code>image_front_url</code>,{' '}
+        <code>image_ingredients_url</code>, <code>image_nutrition_url</code>. Only existing
+        products are updated — no new products are created and no AI classification runs.
+        Ideal for applying OFF image URLs to an already-imported product catalogue.
+      </p>
+
+      {state.phase === 'idle' && (
+        <div
+          className={`${styles.dropzone} ${dragOver ? styles.dropzoneActive : ''}`}
+          onDrop={onDrop}
+          onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+          onDragLeave={() => setDragOver(false)}
+          onClick={() => fileRef.current?.click()}
+        >
+          <div className={styles.dropzoneIcon}>⬆</div>
+          <div className={styles.dropzoneText}>Drop image CSV here, or click to browse</div>
+          <div className={styles.dropzoneHint}>
+            Required columns: <strong>code</strong> + at least one image URL column
+          </div>
+          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" className={styles.hiddenInput}
+            onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+        </div>
+      )}
+
+      {state.phase === 'reading' && (
+        <div className={styles.progressBox}>
+          <div className={styles.progressLabel}>Reading {state.filename}…</div>
+          <div className={styles.spinnerInline} />
+        </div>
+      )}
+
+      {state.phase === 'uploading' && (
+        <div className={styles.progressBox}>
+          <div className={styles.progressHeader}>
+            <span className={styles.progressFilename}>{state.filename}</span>
+            <span className={styles.progressPct}>Streaming…</span>
+          </div>
+          <div className={styles.progressBar}>
+            <div className={styles.progressFill} style={{ width: '100%', opacity: 0.4 }} />
+          </div>
+          <div className={styles.progressStats}>
+            <Stat label="Chunks sent" value={state.currentChunk.toLocaleString()} />
+            <Stat label="Updated" value={state.processed.toLocaleString()} color="success" />
+            <Stat label="Not found" value={state.skipped.toLocaleString()} />
+          </div>
+          <button className={styles.cancelBtn} onClick={() => { abortRef.current = true }}>
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {state.phase === 'done' && state.result && (
+        <div className={styles.doneBox}>
+          <div className={styles.doneTitle}>Image patch complete</div>
+          <div className={styles.doneStats}>
+            <Stat label="Products updated" value={state.result.products_upserted.toLocaleString()} color="success" large />
+            <Stat label="Not found" value={state.result.products_skipped.toLocaleString()} />
+          </div>
+          <button className={styles.importBtn} onClick={reset}>Patch Another File</button>
+        </div>
+      )}
+
+      {state.phase === 'error' && (
+        <div className={styles.errorBox}>
+          <div className={styles.errorText}>{state.error}</div>
+          <button className={styles.importBtn} onClick={reset}>Try Again</button>
+        </div>
+      )}
+    </>
   )
 }
 
