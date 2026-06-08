@@ -9,12 +9,22 @@ import styles from './Products.module.css'
 const PAGE_SIZE = 24
 
 const ALLERGEN_LABELS: Record<string, string> = {
+  'gluten': 'Gluten', 'wheat': 'Wheat', 'milk': 'Milk', 'eggs': 'Eggs',
+  'peanuts': 'Peanuts', 'tree-nuts': 'Tree Nuts', 'soy': 'Soy', 'fish': 'Fish',
+  'shellfish': 'Shellfish', 'sesame': 'Sesame', 'celery': 'Celery',
+  'mustard': 'Mustard', 'lupin': 'Lupin', 'sulphites': 'Sulphites',
+  // en: prefixed fallbacks (from raw OFF import data)
   'en:milk': 'Milk', 'en:eggs': 'Eggs', 'en:gluten': 'Gluten', 'en:peanuts': 'Peanuts',
   'en:tree-nuts': 'Tree Nuts', 'en:soy': 'Soy', 'en:fish': 'Fish', 'en:shellfish': 'Shellfish',
   'en:sesame': 'Sesame', 'en:celery': 'Celery', 'en:mustard': 'Mustard', 'en:lupin': 'Lupin',
   'en:sulphur-dioxide-and-sulphites': 'Sulphites',
 }
 const DIET_LABELS: Record<string, string> = {
+  'vegan': 'Vegan', 'vegetarian': 'Vegetarian', 'gluten-free': 'Gluten Free',
+  'dairy-free': 'Dairy Free', 'keto': 'Keto', 'paleo': 'Paleo',
+  'halal': 'Halal', 'kosher': 'Kosher', 'low-sodium': 'Low Sodium',
+  'low-sugar': 'Low Sugar', 'organic': 'Organic', 'non-gmo': 'Non-GMO',
+  // en: prefixed fallbacks
   'en:vegan-status-by-ingredients': 'Vegan', 'en:vegetarian-status-by-ingredients': 'Vegetarian',
   'en:gluten-free': 'Gluten Free', 'en:no-gluten': 'Gluten Free', 'en:no-lactose': 'Lactose Free',
   'en:organic': 'Organic', 'en:palm-oil-free': 'Palm Oil Free', 'en:low-sugar': 'Low Sugar',
@@ -30,19 +40,6 @@ const QUALITY_FILTERS: { value: QualityFilter; label: string }[] = [
   { value: 'needs_review',        label: 'Needs Review' },
   { value: 'user_submitted',      label: 'User Submitted' },
 ]
-
-function NutriScore({ grade }: { grade?: string }) {
-  if (!grade || grade === '') return null
-  const g = grade.toUpperCase()
-  const colors: Record<string, string> = { A: '#038141', B: '#85bb2f', C: '#fecb02', D: '#ee8100', E: '#e63e11' }
-  const bg = colors[g]
-  if (!bg) return null
-  return (
-    <span className={styles.nutriBadge} style={{ background: bg, color: g === 'C' ? '#333' : 'white' }}>
-      {g}
-    </span>
-  )
-}
 
 function MissingBadges({ p }: { p: Product }) {
   const missing: string[] = []
@@ -72,13 +69,18 @@ function ProductCard({
   onReject(p: Product): void
   onNameSaved(id: string, name: string): void
 }) {
-  const allergens = (p.allergen_tags ?? []).slice(0, 4)
-  const diets = (p.diet_tags ?? []).slice(0, 3)
+  const allergens = (p.allergen_tags ?? []).slice(0, 5)
+  const diets = (p.diet_tags ?? []).slice(0, 4)
   const hasIngredients = p.ingredients_text?.trim().length > 0
   const isUserSubmitted = !p.off_id
   const isMissingName = !p.name?.trim()
   const isPending = p.status === 'pending'
-  const categoryName = p.ai_category_id ? categories.get(p.ai_category_id) : null
+
+  // Resolve category names from the join table (human-assigned) first, fall back to AI category
+  const catIds = (p.product_categories ?? []).map(r => r.category_id)
+  const categoryNames = catIds.length > 0
+    ? catIds.map(id => categories.get(id)).filter(Boolean) as string[]
+    : (p.ai_category_id ? [categories.get(p.ai_category_id)].filter(Boolean) as string[] : [])
 
   const [nameInput, setNameInput] = useState('')
   const [saving, setSaving] = useState(false)
@@ -147,26 +149,24 @@ function ProductCard({
             )}
           </div>
         ) : (
-          <div className={styles.nameRow}>
-            <p className={styles.productName}>{p.name || <span className={styles.unnamed}>(unnamed)</span>}</p>
-            <NutriScore grade={p.nutriscore_grade} />
-          </div>
+          <p className={styles.productName}>{p.name || <span className={styles.unnamed}>(unnamed)</span>}</p>
         )}
 
         {p.brand && <p className={styles.brandName}>{p.brand}{p.quantity ? ' · ' + p.quantity : ''}</p>}
 
         <MissingBadges p={p} />
 
-        {/* Category + NOVA row */}
-        <div className={styles.metaRow}>
-          {categoryName && (
-            <span className={styles.categoryTag}>{categoryName}</span>
-          )}
-          {p.nova_group != null && (
-            <span className={styles.novaTag}>NOVA {p.nova_group}</span>
-          )}
-          <NutriScore grade={p.nutriscore_grade} />
-        </div>
+        {/* Categories */}
+        {categoryNames.length > 0 && (
+          <div className={styles.metaRow}>
+            {categoryNames.slice(0, 3).map(name => (
+              <span key={name} className={styles.categoryTag}>{name}</span>
+            ))}
+            {categoryNames.length > 3 && (
+              <span className={styles.moreTag}>+{categoryNames.length - 3}</span>
+            )}
+          </div>
+        )}
 
         {/* Allergens */}
         <div className={styles.tagRow}>
@@ -177,8 +177,8 @@ function ProductCard({
                 {allergens.map(t => (
                   <span key={t} className={styles.allergenTag}>{fmtTag(ALLERGEN_LABELS, t)}</span>
                 ))}
-                {(p.allergen_tags ?? []).length > 4 && (
-                  <span className={styles.moreTag}>+{(p.allergen_tags ?? []).length - 4}</span>
+                {(p.allergen_tags ?? []).length > 5 && (
+                  <span className={styles.moreTag}>+{(p.allergen_tags ?? []).length - 5}</span>
                 )}
               </>
             ) : (
@@ -196,8 +196,8 @@ function ProductCard({
                 {diets.map(t => (
                   <span key={t} className={styles.dietTag}>{fmtTag(DIET_LABELS, t)}</span>
                 ))}
-                {(p.diet_tags ?? []).length > 3 && (
-                  <span className={styles.moreTag}>+{(p.diet_tags ?? []).length - 3}</span>
+                {(p.diet_tags ?? []).length > 4 && (
+                  <span className={styles.moreTag}>+{(p.diet_tags ?? []).length - 4}</span>
                 )}
               </>
             ) : (
