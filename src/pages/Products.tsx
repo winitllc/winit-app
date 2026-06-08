@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getProducts, approveProduct, rejectProduct, type Product, type ProductStatus } from '../lib/supabase'
+import { getProducts, approveProduct, rejectProduct, type Product, type ProductStatus, type QualityFilter } from '../lib/supabase'
 import styles from './Products.module.css'
 
 const PAGE_SIZE = 24
@@ -21,6 +21,14 @@ const DIET_LABELS: Record<string, string> = {
 const fmtTag = (map: Record<string, string>, tag: string) =>
   map[tag] ?? tag.replace(/^en:/, '').replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
 
+const QUALITY_FILTERS: { value: QualityFilter; label: string; icon: string }[] = [
+  { value: 'missing_name',        label: 'Missing Name',        icon: '🏷' },
+  { value: 'missing_ingredients', label: 'Missing Ingredients', icon: '📋' },
+  { value: 'missing_image',       label: 'Missing Image',       icon: '🖼' },
+  { value: 'needs_review',        label: 'Needs Review',        icon: '🔍' },
+  { value: 'user_submitted',      label: 'User Submitted',      icon: '👤' },
+]
+
 function NutriScore({ grade }: { grade?: string }) {
   if (!grade || grade === '') return null
   const g = grade.toUpperCase()
@@ -34,10 +42,26 @@ function NutriScore({ grade }: { grade?: string }) {
   )
 }
 
+function MissingBadges({ p }: { p: Product }) {
+  const missing: string[] = []
+  if (!p.name?.trim()) missing.push('Name')
+  if (!p.ingredients_text?.trim()) missing.push('Ingredients')
+  if (!p.image_front_url?.trim()) missing.push('Image')
+  if (!missing.length) return null
+  return (
+    <div className={styles.missingRow}>
+      {missing.map(m => (
+        <span key={m} className={styles.missingBadge}>Missing {m}</span>
+      ))}
+    </div>
+  )
+}
+
 function ProductCard({ p, onApprove, onReject }: { p: Product; onApprove(p: Product): void; onReject(p: Product): void }) {
   const allergens = (p.allergen_tags ?? []).slice(0, 4)
   const diets = (p.diet_tags ?? []).slice(0, 3)
-  const hasIngredients = p.ingredients_text && p.ingredients_text.trim().length > 0
+  const hasIngredients = p.ingredients_text?.trim().length > 0
+  const isUserSubmitted = !p.off_id
 
   return (
     <article className={styles.card}>
@@ -56,14 +80,19 @@ function ProductCard({ p, onApprove, onReject }: { p: Product; onApprove(p: Prod
         <span className={styles.statusPill + ' ' + styles['sp_' + p.status]}>
           {p.status === 'approved' ? '● Approved' : p.status === 'rejected' ? '● Rejected' : '● Pending'}
         </span>
+        {isUserSubmitted && (
+          <span className={styles.userSubmittedPill}>👤 User</span>
+        )}
       </Link>
 
       <div className={styles.cardBody}>
         <div className={styles.nameRow}>
-          <p className={styles.productName}>{p.name || '(unnamed product)'}</p>
+          <p className={styles.productName}>{p.name || <span className={styles.unnamed}>(unnamed)</span>}</p>
           <NutriScore grade={p.nutriscore_grade} />
         </div>
         {p.brand && <p className={styles.brandName}>{p.brand}{p.quantity ? ' · ' + p.quantity : ''}</p>}
+
+        <MissingBadges p={p} />
 
         {p.nova_group != null && (
           <span className={styles.novaTag}>NOVA {p.nova_group}</span>
@@ -94,11 +123,13 @@ function ProductCard({ p, onApprove, onReject }: { p: Product; onApprove(p: Prod
           </div>
         )}
 
-        {hasIngredients && (
-          <p className={styles.ingredientsSnippet}>
-            {p.ingredients_text!.slice(0, 110)}{p.ingredients_text!.length > 110 ? '…' : ''}
-          </p>
-        )}
+        <div className={styles.ingredientsBlock}>
+          <span className={styles.ingredientsLabel}>Ingredients</span>
+          {hasIngredients
+            ? <p className={styles.ingredientsSnippet}>{p.ingredients_text}</p>
+            : <p className={styles.ingredientsMissing}>No ingredients listed</p>
+          }
+        </div>
       </div>
 
       <div className={styles.cardFooter}>
@@ -124,30 +155,45 @@ export default function Products() {
   const [status, setStatus] = useState<ProductStatus | ''>(
     (searchParams.get('status') as ProductStatus | null) ?? 'pending'
   )
+  const [qualityFilter, setQualityFilter] = useState<QualityFilter | ''>(
+    (searchParams.get('quality') as QualityFilter | null) ?? ''
+  )
   const [toast, setToast] = useState('')
   const timer = useRef<ReturnType<typeof setTimeout>>()
 
-  const load = useCallback(async (pg = page, q = search, st = status) => {
+  const load = useCallback(async (pg = page, q = search, st = status, qf = qualityFilter) => {
     setLoading(true)
     try {
-      const res = await getProducts({ status: st, search: q, page: pg, pageSize: PAGE_SIZE })
+      const res = await getProducts({ status: st, search: q, page: pg, pageSize: PAGE_SIZE, qualityFilter: qf })
       setProducts(res.products)
       setTotal(res.total)
     } finally {
       setLoading(false)
     }
-  }, [page, search, status])
+  }, [page, search, status, qualityFilter])
 
-  useEffect(() => { load(0, search, status) }, [status]) // eslint-disable-line
+  useEffect(() => { load(0, search, status, qualityFilter) }, [status, qualityFilter]) // eslint-disable-line
 
   const onSearch = (q: string) => {
     setSearch(q)
     clearTimeout(timer.current)
-    timer.current = setTimeout(() => { setPage(0); load(0, q, status) }, 400)
+    timer.current = setTimeout(() => { setPage(0); load(0, q, status, qualityFilter) }, 400)
   }
 
   const onStatus = (st: ProductStatus | '') => {
-    setStatus(st); setPage(0); setSearchParams(st ? { status: st } : {})
+    setStatus(st); setPage(0)
+    const p: Record<string, string> = {}
+    if (st) p.status = st
+    if (qualityFilter) p.quality = qualityFilter
+    setSearchParams(p)
+  }
+
+  const onQualityFilter = (qf: QualityFilter | '') => {
+    setQualityFilter(qf); setPage(0)
+    const p: Record<string, string> = {}
+    if (status) p.status = status
+    if (qf) p.quality = qf
+    setSearchParams(p)
   }
 
   const flash = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000) }
@@ -180,6 +226,21 @@ export default function Products() {
               className={styles.tab + (status === s ? ' ' + styles.tabActive : '') + (s ? ' ' + styles['tab_' + s] : '')}
               onClick={() => onStatus(s)}>
               {s === '' ? 'All' : s[0].toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.qualityFilters}>
+        <span className={styles.qualityLabel}>Filter by:</span>
+        <div className={styles.qualityChips}>
+          {QUALITY_FILTERS.map(f => (
+            <button
+              key={f.value}
+              className={styles.qualityChip + (qualityFilter === f.value ? ' ' + styles.qualityChipActive : '')}
+              onClick={() => onQualityFilter(qualityFilter === f.value ? '' : f.value)}
+            >
+              {f.icon} {f.label}
             </button>
           ))}
         </div>

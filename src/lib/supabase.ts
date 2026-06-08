@@ -136,13 +136,16 @@ async function del(path: string, filter: string): Promise<void> {
   await fetch(`${SUPABASE_URL}/rest/v1/${path}?${filter}`, { method: 'DELETE', headers })
 }
 
+export type QualityFilter = 'missing_name' | 'missing_ingredients' | 'missing_image' | 'needs_review' | 'user_submitted'
+
 export async function getProducts(opts: {
   status?: ProductStatus | ''
   search?: string
   page?: number
   pageSize?: number
+  qualityFilter?: QualityFilter | ''
 }): Promise<{ products: Product[]; total: number }> {
-  const { status, search, page = 0, pageSize = 25 } = opts
+  const { status, search, page = 0, pageSize = 25, qualityFilter } = opts
   const from = page * pageSize
   const to = from + pageSize - 1
 
@@ -151,6 +154,11 @@ export async function getProducts(opts: {
   if (search?.trim()) {
     url.searchParams.set('or', `(name.ilike.*${search}*,brand.ilike.*${search}*,barcode.ilike.*${search}*)`)
   }
+  if (qualityFilter === 'missing_name') url.searchParams.set('name', 'is.null')
+  if (qualityFilter === 'missing_ingredients') url.searchParams.set('ingredients_text', 'is.null')
+  if (qualityFilter === 'missing_image') url.searchParams.set('image_front_url', 'is.null')
+  if (qualityFilter === 'needs_review') url.searchParams.set('categorization_status', 'eq.needs_review')
+  if (qualityFilter === 'user_submitted') url.searchParams.set('off_id', 'is.null')
   url.searchParams.set('order', 'created_at.desc')
   // Exclude nutrition blob from list queries — large and not shown in the card view
   url.searchParams.set('select', 'id,barcode,name,brand,quantity,image_front_url,ingredients_text,allergen_tags,diet_tags,status,nutriscore_grade,nova_group,categorization_status,ai_category_id,ai_subcategory_id,ai_confidence,created_at,updated_at,approved_at,off_id')

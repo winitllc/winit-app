@@ -272,16 +272,115 @@
   color: var(--neutral-500);
 }
 
-/* ── Ingredients snippet ─────────────────────────────────────────────────────── */
+/* ── Quality filter chips ────────────────────────────────────────────────────── */
+.qualityFilters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.qualityLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--neutral-400);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.qualityChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.qualityChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  border: 1.5px solid var(--neutral-200);
+  background: white;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--neutral-600);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.qualityChip:hover {
+  background: var(--neutral-50);
+  border-color: var(--neutral-300);
+}
+.qualityChipActive {
+  background: #fef9c3;
+  border-color: #ca8a04;
+  color: #713f12;
+  font-weight: 600;
+}
+
+/* ── Missing data badges ─────────────────────────────────────────────────────── */
+.missingRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.missingBadge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+.unnamed {
+  color: var(--neutral-400);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ── User-submitted pill ─────────────────────────────────────────────────────── */
+.userSubmittedPill {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  border-radius: 99px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  background: rgba(219,234,254,.92);
+  color: #1e40af;
+}
+
+/* ── Ingredients block ───────────────────────────────────────────────────────── */
+.ingredientsBlock {
+  margin-top: 4px;
+  border-top: 1px dashed var(--neutral-100);
+  padding-top: 6px;
+}
+.ingredientsLabel {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--neutral-400);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 3px;
+}
 .ingredientsSnippet {
   font-size: 0.73rem;
   color: var(--neutral-500);
   line-height: 1.5;
-  margin-top: 2px;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.ingredientsMissing {
+  font-size: 0.73rem;
+  color: var(--neutral-350, #c4c4c4);
+  font-style: italic;
 }
 
 /* ── Card footer ─────────────────────────────────────────────────────────────── */
