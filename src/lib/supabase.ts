@@ -156,7 +156,7 @@ export async function getProducts(opts: {
   url.searchParams.set('select', 'id,barcode,name,brand,quantity,image_front_url,ingredients_text,allergen_tags,diet_tags,status,nutriscore_grade,nova_group,categorization_status,ai_category_id,ai_subcategory_id,ai_confidence,created_at,updated_at,approved_at,off_id')
 
   const res = await fetch(url.toString(), {
-    headers: { ...headers, Range: `${from}-${to}`, Prefer: 'count=exact' },
+    headers: { ...headers, Range: `${from}-${to}`, Prefer: 'count=estimated' },
   })
   if (!res.ok) throw new Error(`getProducts failed: ${res.status}`)
   const total = parseInt((res.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0
@@ -470,14 +470,12 @@ export async function bulkAiClassify(
 }
 
 export async function getProductStats(): Promise<{ pending: number; approved: number; rejected: number; total: number }> {
-  const countOf = (h: Headers) => parseInt((h.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0
-  const [r1, r2, r3] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/products?status=eq.pending&select=id`, { headers: { ...headers, Prefer: 'count=exact', Range: '0-0' } }),
-    fetch(`${SUPABASE_URL}/rest/v1/products?status=eq.approved&select=id`, { headers: { ...headers, Prefer: 'count=exact', Range: '0-0' } }),
-    fetch(`${SUPABASE_URL}/rest/v1/products?status=eq.rejected&select=id`, { headers: { ...headers, Prefer: 'count=exact', Range: '0-0' } }),
-  ])
-  const p = countOf(r1.headers), a = countOf(r2.headers), r = countOf(r3.headers)
-  return { pending: p, approved: a, rejected: r, total: p + a + r }
+  const rows = await get<{ pending_count: number; approved_count: number; rejected_count: number; total_count: number }[]>(
+    'product_stats', { select: 'pending_count,approved_count,rejected_count,total_count', id: 'eq.1' }
+  )
+  const r = rows?.[0]
+  if (!r) return { pending: 0, approved: 0, rejected: 0, total: 0 }
+  return { pending: r.pending_count, approved: r.approved_count, rejected: r.rejected_count, total: r.total_count }
 }
 
 // ─── AI Review Queue ──────────────────────────────────────────────────────────
@@ -500,7 +498,7 @@ export async function getReviewQueue(opts: {
   }
 
   const res = await fetch(url.toString(), {
-    headers: { ...headers, Range: `${from}-${to}`, Prefer: 'count=exact' },
+    headers: { ...headers, Range: `${from}-${to}`, Prefer: 'count=estimated' },
   })
   if (!res.ok) throw new Error(`getReviewQueue failed: ${res.status}`)
   const total = parseInt((res.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0
