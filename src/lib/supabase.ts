@@ -152,7 +152,8 @@ export async function getProducts(opts: {
     url.searchParams.set('or', `(name.ilike.*${search}*,brand.ilike.*${search}*,barcode.ilike.*${search}*)`)
   }
   url.searchParams.set('order', 'created_at.desc')
-  url.searchParams.set('select', '*')
+  // Exclude nutrition blob from list queries — large and not shown in the card view
+  url.searchParams.set('select', 'id,barcode,name,brand,quantity,image_front_url,ingredients_text,allergen_tags,diet_tags,status,nutriscore_grade,nova_group,categorization_status,ai_category_id,ai_subcategory_id,ai_confidence,created_at,updated_at,approved_at,off_id')
 
   const res = await fetch(url.toString(), {
     headers: { ...headers, Range: `${from}-${to}`, Prefer: 'count=exact' },
