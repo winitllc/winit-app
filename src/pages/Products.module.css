@@ -212,6 +212,73 @@
   flex-shrink: 0;
 }
 
+/* ── Inline name edit ────────────────────────────────────────────────────────── */
+.inlineNameEdit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.inlineNameInput {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1.5px solid var(--neutral-200);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--neutral-800);
+  background: var(--neutral-50);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  min-width: 0;
+}
+.inlineNameInput::placeholder { color: var(--neutral-400); font-weight: 400; }
+.inlineNameInput:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+  background: white;
+}
+.inlineNameInputActive {
+  border-color: var(--primary);
+  background: white;
+}
+.inlineNameSave {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  animation: fadeInScale 0.15s ease;
+}
+.inlineNameSave:hover { opacity: 0.88; }
+.inlineNameSave:active { transform: scale(0.96); }
+.inlineNameSave:disabled { opacity: 0.5; cursor: default; }
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Meta row (category + NOVA) ──────────────────────────────────────────────── */
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.categoryTag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
 /* ── NOVA tag ────────────────────────────────────────────────────────────────── */
 .novaTag {
   display: inline-block;
@@ -270,6 +337,11 @@
   border-radius: 5px;
   background: var(--neutral-100);
   color: var(--neutral-500);
+}
+.noneTag {
+  font-size: 0.7rem;
+  color: var(--neutral-350, #c8c8c8);
+  font-style: italic;
 }
 
 /* ── Quality filter chips ────────────────────────────────────────────────────── */

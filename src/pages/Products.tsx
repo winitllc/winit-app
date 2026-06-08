@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getProducts, getQualityFilterCounts, approveProduct, rejectProduct, type Product, type ProductStatus, type QualityFilter } from '../lib/supabase'
+import {
+  getProducts, getQualityFilterCounts, getCategories, approveProduct, rejectProduct, updateProduct,
+  type Product, type ProductStatus, type QualityFilter, type AppCategory,
+} from '../lib/supabase'
 import styles from './Products.module.css'
 
 const PAGE_SIZE = 24
@@ -56,11 +59,48 @@ function MissingBadges({ p }: { p: Product }) {
   )
 }
 
-function ProductCard({ p, onApprove, onReject }: { p: Product; onApprove(p: Product): void; onReject(p: Product): void }) {
+function ProductCard({
+  p,
+  categories,
+  onApprove,
+  onReject,
+  onNameSaved,
+}: {
+  p: Product
+  categories: Map<string, string>
+  onApprove(p: Product): void
+  onReject(p: Product): void
+  onNameSaved(id: string, name: string): void
+}) {
   const allergens = (p.allergen_tags ?? []).slice(0, 4)
   const diets = (p.diet_tags ?? []).slice(0, 3)
   const hasIngredients = p.ingredients_text?.trim().length > 0
   const isUserSubmitted = !p.off_id
+  const isMissingName = !p.name?.trim()
+  const isPending = p.status === 'pending'
+  const categoryName = p.ai_category_id ? categories.get(p.ai_category_id) : null
+
+  const [nameInput, setNameInput] = useState('')
+  const [saving, setSaving] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleSaveName = async () => {
+    const trimmed = nameInput.trim()
+    if (!trimmed) return
+    setSaving(true)
+    try {
+      await updateProduct(p.id, { name: trimmed })
+      onNameSaved(p.id, trimmed)
+      setNameInput('')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSaveName()
+    if (e.key === 'Escape') setNameInput('')
+  }
 
   return (
     <article className={styles.card}>
@@ -85,43 +125,88 @@ function ProductCard({ p, onApprove, onReject }: { p: Product; onApprove(p: Prod
       </Link>
 
       <div className={styles.cardBody}>
-        <div className={styles.nameRow}>
-          <p className={styles.productName}>{p.name || <span className={styles.unnamed}>(unnamed)</span>}</p>
-          <NutriScore grade={p.nutriscore_grade} />
-        </div>
+        {/* Name row — inline edit for pending products with missing name */}
+        {isMissingName && isPending ? (
+          <div className={styles.inlineNameEdit}>
+            <input
+              ref={inputRef}
+              className={styles.inlineNameInput + (nameInput.trim() ? ' ' + styles.inlineNameInputActive : '')}
+              placeholder="Enter product name…"
+              value={nameInput}
+              onChange={e => setNameInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            {nameInput.trim() && (
+              <button
+                className={styles.inlineNameSave}
+                onClick={handleSaveName}
+                disabled={saving}
+              >
+                {saving ? '…' : 'Save'}
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className={styles.nameRow}>
+            <p className={styles.productName}>{p.name || <span className={styles.unnamed}>(unnamed)</span>}</p>
+            <NutriScore grade={p.nutriscore_grade} />
+          </div>
+        )}
+
         {p.brand && <p className={styles.brandName}>{p.brand}{p.quantity ? ' · ' + p.quantity : ''}</p>}
 
         <MissingBadges p={p} />
 
-        {p.nova_group != null && (
-          <span className={styles.novaTag}>NOVA {p.nova_group}</span>
-        )}
+        {/* Category + NOVA row */}
+        <div className={styles.metaRow}>
+          {categoryName && (
+            <span className={styles.categoryTag}>{categoryName}</span>
+          )}
+          {p.nova_group != null && (
+            <span className={styles.novaTag}>NOVA {p.nova_group}</span>
+          )}
+          <NutriScore grade={p.nutriscore_grade} />
+        </div>
 
-        {allergens.length > 0 && (
-          <div className={styles.tagRow}>
-            <span className={styles.tagRowLabel}>Allergens</span>
-            <div className={styles.tagList}>
-              {allergens.map(t => (
-                <span key={t} className={styles.allergenTag}>{fmtTag(ALLERGEN_LABELS, t)}</span>
-              ))}
-              {(p.allergen_tags ?? []).length > 4 && (
-                <span className={styles.moreTag}>+{(p.allergen_tags ?? []).length - 4}</span>
-              )}
-            </div>
+        {/* Allergens */}
+        <div className={styles.tagRow}>
+          <span className={styles.tagRowLabel}>Allergens</span>
+          <div className={styles.tagList}>
+            {allergens.length > 0 ? (
+              <>
+                {allergens.map(t => (
+                  <span key={t} className={styles.allergenTag}>{fmtTag(ALLERGEN_LABELS, t)}</span>
+                ))}
+                {(p.allergen_tags ?? []).length > 4 && (
+                  <span className={styles.moreTag}>+{(p.allergen_tags ?? []).length - 4}</span>
+                )}
+              </>
+            ) : (
+              <span className={styles.noneTag}>None listed</span>
+            )}
           </div>
-        )}
+        </div>
 
-        {diets.length > 0 && (
-          <div className={styles.tagRow}>
-            <span className={styles.tagRowLabel}>Diet</span>
-            <div className={styles.tagList}>
-              {diets.map(t => (
-                <span key={t} className={styles.dietTag}>{fmtTag(DIET_LABELS, t)}</span>
-              ))}
-            </div>
+        {/* Diet flags */}
+        <div className={styles.tagRow}>
+          <span className={styles.tagRowLabel}>Diet</span>
+          <div className={styles.tagList}>
+            {diets.length > 0 ? (
+              <>
+                {diets.map(t => (
+                  <span key={t} className={styles.dietTag}>{fmtTag(DIET_LABELS, t)}</span>
+                ))}
+                {(p.diet_tags ?? []).length > 3 && (
+                  <span className={styles.moreTag}>+{(p.diet_tags ?? []).length - 3}</span>
+                )}
+              </>
+            ) : (
+              <span className={styles.noneTag}>None listed</span>
+            )}
           </div>
-        )}
+        </div>
 
+        {/* Ingredients */}
         <div className={styles.ingredientsBlock}>
           <span className={styles.ingredientsLabel}>Ingredients</span>
           {hasIngredients
@@ -158,6 +243,7 @@ export default function Products() {
     (searchParams.get('quality') as QualityFilter | null) ?? ''
   )
   const [filterCounts, setFilterCounts] = useState<Record<QualityFilter, number> | null>(null)
+  const [categories, setCategories] = useState<Map<string, string>>(new Map())
   const [toast, setToast] = useState('')
   const timer = useRef<ReturnType<typeof setTimeout>>()
 
@@ -176,6 +262,9 @@ export default function Products() {
 
   useEffect(() => {
     getQualityFilterCounts().then(setFilterCounts).catch(() => {})
+    getCategories().then((cats: AppCategory[]) => {
+      setCategories(new Map(cats.map(c => [c.id, c.display_name])))
+    }).catch(() => {})
   }, [])
 
   const onSearch = (q: string) => {
@@ -201,8 +290,13 @@ export default function Products() {
   }
 
   const flash = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000) }
-  const approve = async (p: Product) => { await approveProduct(p.id); flash('"' + p.name + '" approved'); load() }
-  const reject  = async (p: Product) => { await rejectProduct(p.id);  flash('"' + p.name + '" rejected');  load() }
+  const approve = async (p: Product) => { await approveProduct(p.id); flash('"' + (p.name || 'Product') + '" approved'); load() }
+  const reject  = async (p: Product) => { await rejectProduct(p.id);  flash('"' + (p.name || 'Product') + '" rejected');  load() }
+
+  const handleNameSaved = (id: string, name: string) => {
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, name } : p))
+    flash('Name saved')
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -270,7 +364,16 @@ export default function Products() {
       ) : (
         <>
           <div className={styles.grid}>
-            {products.map(p => <ProductCard key={p.id} p={p} onApprove={approve} onReject={reject} />)}
+            {products.map(p => (
+              <ProductCard
+                key={p.id}
+                p={p}
+                categories={categories}
+                onApprove={approve}
+                onReject={reject}
+                onNameSaved={handleNameSaved}
+              />
+            ))}
           </div>
           <div className={styles.pagination}>
             <span className={styles.pgInfo}>{total.toLocaleString()} products · page {page + 1} of {totalPages}</span>
@@ -286,4 +389,3 @@ export default function Products() {
     </div>
   )
 }
-
