@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getProducts, approveProduct, rejectProduct, type Product, type ProductStatus, type QualityFilter } from '../lib/supabase'
+import { getProducts, getQualityFilterCounts, approveProduct, rejectProduct, type Product, type ProductStatus, type QualityFilter } from '../lib/supabase'
 import styles from './Products.module.css'
 
 const PAGE_SIZE = 24
@@ -21,12 +21,11 @@ const DIET_LABELS: Record<string, string> = {
 const fmtTag = (map: Record<string, string>, tag: string) =>
   map[tag] ?? tag.replace(/^en:/, '').replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
 
-const QUALITY_FILTERS: { value: QualityFilter; label: string; icon: string }[] = [
-  { value: 'missing_name',        label: 'Missing Name',        icon: '🏷' },
-  { value: 'missing_ingredients', label: 'Missing Ingredients', icon: '📋' },
-  { value: 'missing_image',       label: 'Missing Image',       icon: '🖼' },
-  { value: 'needs_review',        label: 'Needs Review',        icon: '🔍' },
-  { value: 'user_submitted',      label: 'User Submitted',      icon: '👤' },
+const QUALITY_FILTERS: { value: QualityFilter; label: string }[] = [
+  { value: 'missing_name',        label: 'Missing Name' },
+  { value: 'missing_ingredients', label: 'Missing Ingredients' },
+  { value: 'needs_review',        label: 'Needs Review' },
+  { value: 'user_submitted',      label: 'User Submitted' },
 ]
 
 function NutriScore({ grade }: { grade?: string }) {
@@ -158,6 +157,7 @@ export default function Products() {
   const [qualityFilter, setQualityFilter] = useState<QualityFilter | ''>(
     (searchParams.get('quality') as QualityFilter | null) ?? ''
   )
+  const [filterCounts, setFilterCounts] = useState<Record<QualityFilter, number> | null>(null)
   const [toast, setToast] = useState('')
   const timer = useRef<ReturnType<typeof setTimeout>>()
 
@@ -173,6 +173,10 @@ export default function Products() {
   }, [page, search, status, qualityFilter])
 
   useEffect(() => { load(0, search, status, qualityFilter) }, [status, qualityFilter]) // eslint-disable-line
+
+  useEffect(() => {
+    getQualityFilterCounts().then(setFilterCounts).catch(() => {})
+  }, [])
 
   const onSearch = (q: string) => {
     setSearch(q)
@@ -232,7 +236,7 @@ export default function Products() {
       </div>
 
       <div className={styles.qualityFilters}>
-        <span className={styles.qualityLabel}>Filter by:</span>
+        <span className={styles.qualityLabel}>Filter:</span>
         <div className={styles.qualityChips}>
           {QUALITY_FILTERS.map(f => (
             <button
@@ -240,7 +244,12 @@ export default function Products() {
               className={styles.qualityChip + (qualityFilter === f.value ? ' ' + styles.qualityChipActive : '')}
               onClick={() => onQualityFilter(qualityFilter === f.value ? '' : f.value)}
             >
-              {f.icon} {f.label}
+              {f.label}
+              {filterCounts && (
+                <span className={styles.chipCount + (qualityFilter === f.value ? ' ' + styles.chipCountActive : '')}>
+                  {filterCounts[f.value].toLocaleString()}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -277,3 +286,4 @@ export default function Products() {
     </div>
   )
 }
+

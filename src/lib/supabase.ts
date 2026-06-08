@@ -136,7 +136,7 @@ async function del(path: string, filter: string): Promise<void> {
   await fetch(`${SUPABASE_URL}/rest/v1/${path}?${filter}`, { method: 'DELETE', headers })
 }
 
-export type QualityFilter = 'missing_name' | 'missing_ingredients' | 'missing_image' | 'needs_review' | 'user_submitted'
+export type QualityFilter = 'missing_name' | 'missing_ingredients' | 'needs_review' | 'user_submitted'
 
 export async function getProducts(opts: {
   status?: ProductStatus | ''
@@ -156,8 +156,11 @@ export async function getProducts(opts: {
   }
   if (qualityFilter === 'missing_name') url.searchParams.set('name', 'is.null')
   if (qualityFilter === 'missing_ingredients') url.searchParams.set('ingredients_text', 'is.null')
-  if (qualityFilter === 'missing_image') url.searchParams.set('image_front_url', 'is.null')
-  if (qualityFilter === 'needs_review') url.searchParams.set('categorization_status', 'eq.needs_review')
+  if (qualityFilter === 'needs_review') {
+    // Products that have enough data to be reviewed (name + ingredients present)
+    url.searchParams.append('name', 'not.is.null')
+    url.searchParams.append('ingredients_text', 'not.is.null')
+  }
   if (qualityFilter === 'user_submitted') url.searchParams.set('off_id', 'is.null')
   url.searchParams.set('order', 'created_at.desc')
   // Exclude nutrition blob from list queries — large and not shown in the card view
@@ -484,6 +487,22 @@ export async function getProductStats(): Promise<{ pending: number; approved: nu
   const r = rows?.[0]
   if (!r) return { pending: 0, approved: 0, rejected: 0, total: 0 }
   return { pending: r.pending_count, approved: r.approved_count, rejected: r.rejected_count, total: r.total_count }
+}
+
+export async function getQualityFilterCounts(): Promise<Record<QualityFilter, number>> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_quality_filter_counts`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({}),
+  })
+  if (!res.ok) return { missing_name: 0, missing_ingredients: 0, needs_review: 0, user_submitted: 0 }
+  const data = await res.json() as Record<string, number>
+  return {
+    missing_name:        data.missing_name        ?? 0,
+    missing_ingredients: data.missing_ingredients ?? 0,
+    needs_review:        data.needs_review        ?? 0,
+    user_submitted:      data.user_submitted       ?? 0,
+  }
 }
 
 // ─── AI Review Queue ──────────────────────────────────────────────────────────

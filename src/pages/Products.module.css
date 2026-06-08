@@ -318,6 +318,23 @@
   color: #713f12;
   font-weight: 600;
 }
+.chipCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--neutral-100);
+  color: var(--neutral-500);
+  margin-left: 2px;
+}
+.chipCountActive {
+  background: #fde68a;
+  color: #78350f;
+}
 
 /* ── Missing data badges ─────────────────────────────────────────────────────── */
 .missingRow {
