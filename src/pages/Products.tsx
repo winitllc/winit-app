@@ -34,6 +34,50 @@ const DIET_LABELS: Record<string, string> = {
 const fmtTag = (map: Record<string, string>, tag: string) =>
   map[tag] ?? tag.replace(/^en:/, '').replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
 
+// Derive allergens from ingredients text — mirrors the logic in ProductEdit
+const ALLERGEN_KEYWORDS: [string, string[]][] = [
+  ['gluten',    ['wheat','gluten','barley','rye','oats','spelt','kamut','farro','durum','bulgur','semolina']],
+  ['wheat',     ['wheat','whole grain wheat','whole wheat','durum','semolina','spelt','farro','bulgur']],
+  ['milk',      ['milk','dairy','lactose','cream','butter','cheese','whey','casein','ghee']],
+  ['eggs',      ['egg','eggs','albumin','mayonnaise','meringue','ovalbumin']],
+  ['peanuts',   ['peanut','groundnut','arachis']],
+  ['tree-nuts', ['almond','cashew','walnut','pecan','pistachio','hazelnut','filbert','brazil nut','macadamia','pine nut']],
+  ['soy',       ['soy','soya','tofu','tempeh','miso','edamame','soybean','soy lecithin']],
+  ['fish',      ['fish','anchovy','bass','cod','salmon','tuna','trout','herring','sardine','halibut']],
+  ['shellfish', ['shellfish','shrimp','crab','lobster','crayfish','prawn','clam','oyster','scallop','mussel']],
+  ['sesame',    ['sesame','tahini']],
+  ['mustard',   ['mustard']],
+  ['celery',    ['celery','celeriac']],
+  ['lupin',     ['lupin','lupine']],
+  ['sulphites', ['sulphite','sulfite','sulphur dioxide','sulfur dioxide']],
+]
+
+const DIET_DISQUALIFY: Record<string, RegExp[]> = {
+  'gluten-free': [/wheat/,/gluten/,/barley/,/\brye\b/,/\boats\b/,/spelt/,/semolina/,/durum/,/bulgur/,/farro/,/kamut/],
+  'dairy-free':  [/\bmilk\b/,/\bdairy\b/,/lactose/,/\bcream\b/,/\bbutter\b/,/\bcheese\b/,/\bwhey\b/,/\bcasein\b/,/\bghee\b/],
+  'vegan':       [/\bmilk\b/,/\bdairy\b/,/lactose/,/\bcream\b/,/\bbutter\b/,/\bcheese\b/,/\bwhey\b/,/\bcasein\b/,/\begg\b/,/\beggs\b/,/albumin/,/\bhoney\b/,/gelatin/,/\bmeat\b/,/chicken/,/\bbeef\b/,/\bpork\b/,/\bfish\b/,/shellfish/],
+  'vegetarian':  [/\bmeat\b/,/chicken/,/\bbeef\b/,/\bpork\b/,/veal/,/\blamb\b/,/bacon/,/gelatin/,/\blard\b/,/tallow/,/\bfish\b/,/shellfish/,/anchovy/],
+  'keto':        [/\bsugar\b/,/wheat/,/\bflour\b/,/\brice\b/,/\bcorn\b/,/potato/,/\boats\b/,/\bhoney\b/,/syrup/],
+  'paleo':       [/wheat/,/\bflour\b/,/grain/,/\bdairy\b/,/\bmilk\b/,/\bcream\b/,/\bcheese\b/,/legume/,/\bpeanut\b/,/\bsoy\b/,/\bcorn\b/,/\bsugar\b/,/syrup/],
+}
+
+function getEffectiveTags(storedTags: string[], ingredientsText: string, type: 'allergens' | 'diets'): string[] {
+  // If stored tags exist (product has been reviewed/saved), use them as-is
+  if (storedTags.length > 0) return storedTags
+
+  // Otherwise derive from ingredients text
+  const text = ingredientsText?.toLowerCase() ?? ''
+  if (!text) return []
+
+  if (type === 'allergens') {
+    return ALLERGEN_KEYWORDS.filter(([, kws]) => kws.some(kw => text.includes(kw))).map(([name]) => name)
+  } else {
+    return (['gluten-free','dairy-free','vegan','vegetarian','keto','paleo'] as const).filter(
+      diet => !(DIET_DISQUALIFY[diet] ?? []).some(re => re.test(text))
+    )
+  }
+}
+
 const QUALITY_FILTERS: { value: QualityFilter; label: string }[] = [
   { value: 'missing_name',        label: 'Missing Name' },
   { value: 'missing_ingredients', label: 'Missing Ingredients' },
@@ -69,8 +113,8 @@ function ProductCard({
   onReject(p: Product): void
   onNameSaved(id: string, name: string): void
 }) {
-  const allergens = (p.allergen_tags ?? []).slice(0, 5)
-  const diets = (p.diet_tags ?? []).slice(0, 4)
+  const allergens = getEffectiveTags(p.allergen_tags ?? [], p.ingredients_text, 'allergens').slice(0, 5)
+  const diets = getEffectiveTags(p.diet_tags ?? [], p.ingredients_text, 'diets').slice(0, 4)
   const hasIngredients = p.ingredients_text?.trim().length > 0
   const isUserSubmitted = !p.off_id
   const isMissingName = !p.name?.trim()
@@ -177,8 +221,8 @@ function ProductCard({
                 {allergens.map(t => (
                   <span key={t} className={styles.allergenTag}>{fmtTag(ALLERGEN_LABELS, t)}</span>
                 ))}
-                {(p.allergen_tags ?? []).length > 5 && (
-                  <span className={styles.moreTag}>+{(p.allergen_tags ?? []).length - 5}</span>
+                {getEffectiveTags(p.allergen_tags ?? [], p.ingredients_text, 'allergens').length > 5 && (
+                  <span className={styles.moreTag}>+{getEffectiveTags(p.allergen_tags ?? [], p.ingredients_text, 'allergens').length - 5}</span>
                 )}
               </>
             ) : (
@@ -196,8 +240,8 @@ function ProductCard({
                 {diets.map(t => (
                   <span key={t} className={styles.dietTag}>{fmtTag(DIET_LABELS, t)}</span>
                 ))}
-                {(p.diet_tags ?? []).length > 4 && (
-                  <span className={styles.moreTag}>+{(p.diet_tags ?? []).length - 4}</span>
+                {getEffectiveTags(p.diet_tags ?? [], p.ingredients_text, 'diets').length > 4 && (
+                  <span className={styles.moreTag}>+{getEffectiveTags(p.diet_tags ?? [], p.ingredients_text, 'diets').length - 4}</span>
                 )}
               </>
             ) : (
