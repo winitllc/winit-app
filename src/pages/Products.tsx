@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   getProducts, getQualityFilterCounts, getCategories, approveProduct, rejectProduct, updateProduct,
@@ -101,20 +102,39 @@ function MissingBadges({ p }: { p: Product }) {
 }
 
 function IngredientsPreview({ text }: { text: string }) {
-  const [tooltip, setTooltip] = useState<{ x: number; y: number } | null>(null)
-  const hasText = text?.trim().length > 0
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const hasText = !!text?.trim()
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!hasText) return
     const rect = e.currentTarget.getBoundingClientRect()
-    setTooltip({ x: rect.left, y: rect.top })
+    setPos({ x: rect.left, y: rect.top })
   }
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!hasText || !pos) return
+    setPos({ x: e.clientX, y: e.clientY })
+  }
+
+  const tooltip = pos && hasText
+    ? createPortal(
+        <div
+          className={styles.ingredientsTooltip}
+          style={{ left: pos.x, top: pos.y }}
+        >
+          <div className={styles.ingredientsTooltipLabel}>Full Ingredients</div>
+          <div className={styles.ingredientsTooltipText}>{text}</div>
+        </div>,
+        document.body
+      )
+    : null
 
   return (
     <div
       className={styles.ingredientsBlock + (hasText ? ' ' + styles.ingredientsBlockHoverable : '')}
       onMouseEnter={handleMouseEnter}
-      onMouseLeave={() => setTooltip(null)}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setPos(null)}
     >
       <span className={styles.ingredientsLabel}>
         Ingredients
@@ -124,15 +144,7 @@ function IngredientsPreview({ text }: { text: string }) {
         ? <p className={styles.ingredientsSnippet}>{text}</p>
         : <p className={styles.ingredientsMissing}>No ingredients listed</p>
       }
-      {tooltip && hasText && (
-        <div
-          className={styles.ingredientsTooltip}
-          style={{ left: tooltip.x, top: tooltip.y }}
-        >
-          <div className={styles.ingredientsTooltipLabel}>Full Ingredients</div>
-          <div className={styles.ingredientsTooltipText}>{text}</div>
-        </div>
-      )}
+      {tooltip}
     </div>
   )
 }
