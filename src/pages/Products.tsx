@@ -100,6 +100,43 @@ function MissingBadges({ p }: { p: Product }) {
   )
 }
 
+function IngredientsPreview({ text }: { text: string }) {
+  const [tooltip, setTooltip] = useState<{ x: number; y: number } | null>(null)
+  const hasText = text?.trim().length > 0
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!hasText) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    setTooltip({ x: rect.left, y: rect.top })
+  }
+
+  return (
+    <div
+      className={styles.ingredientsBlock + (hasText ? ' ' + styles.ingredientsBlockHoverable : '')}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={() => setTooltip(null)}
+    >
+      <span className={styles.ingredientsLabel}>
+        Ingredients
+        {hasText && <span className={styles.ingredientsHint}>hover to expand</span>}
+      </span>
+      {hasText
+        ? <p className={styles.ingredientsSnippet}>{text}</p>
+        : <p className={styles.ingredientsMissing}>No ingredients listed</p>
+      }
+      {tooltip && hasText && (
+        <div
+          className={styles.ingredientsTooltip}
+          style={{ left: tooltip.x, top: tooltip.y }}
+        >
+          <div className={styles.ingredientsTooltipLabel}>Full Ingredients</div>
+          <div className={styles.ingredientsTooltipText}>{text}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ProductCard({
   p,
   categories,
@@ -251,13 +288,7 @@ function ProductCard({
         </div>
 
         {/* Ingredients */}
-        <div className={styles.ingredientsBlock}>
-          <span className={styles.ingredientsLabel}>Ingredients</span>
-          {hasIngredients
-            ? <p className={styles.ingredientsSnippet}>{p.ingredients_text}</p>
-            : <p className={styles.ingredientsMissing}>No ingredients listed</p>
-          }
-        </div>
+        <IngredientsPreview text={p.ingredients_text} />
       </div>
 
       <div className={styles.cardFooter}>

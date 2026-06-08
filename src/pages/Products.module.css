@@ -447,9 +447,13 @@
   margin-top: 4px;
   border-top: 1px dashed var(--neutral-100);
   padding-top: 6px;
+  position: relative;
 }
+.ingredientsBlockHoverable { cursor: default; }
 .ingredientsLabel {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.65rem;
   font-weight: 700;
   color: var(--neutral-400);
@@ -457,6 +461,16 @@
   letter-spacing: 0.07em;
   margin-bottom: 3px;
 }
+.ingredientsHint {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--neutral-300);
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.ingredientsBlock:hover .ingredientsHint { opacity: 1; }
 .ingredientsSnippet {
   font-size: 0.73rem;
   color: var(--neutral-500);
@@ -470,6 +484,45 @@
   font-size: 0.73rem;
   color: var(--neutral-350, #c4c4c4);
   font-style: italic;
+}
+
+/* ── Ingredients tooltip ─────────────────────────────────────────────────────── */
+.ingredientsTooltip {
+  position: fixed;
+  z-index: 9999;
+  width: 320px;
+  max-width: 90vw;
+  max-height: 280px;
+  background: white;
+  border: 1.5px solid var(--neutral-150, #ececec);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.08);
+  padding: 12px 14px;
+  pointer-events: none;
+  animation: tooltipFadeIn 0.12s ease;
+  overflow: hidden;
+  transform: translateY(-100%) translateY(-10px);
+}
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: translateY(-100%) translateY(-4px); }
+  to   { opacity: 1; transform: translateY(-100%) translateY(-10px); }
+}
+.ingredientsTooltipLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--neutral-400);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 6px;
+}
+.ingredientsTooltipText {
+  font-size: 0.78rem;
+  color: var(--neutral-700);
+  line-height: 1.6;
+  overflow-y: auto;
+  max-height: 220px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* ── Card footer ─────────────────────────────────────────────────────────────── */
