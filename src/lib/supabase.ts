@@ -154,12 +154,11 @@ export async function getProducts(opts: {
   if (search?.trim()) {
     url.searchParams.set('or', `(name.ilike.*${search}*,brand.ilike.*${search}*,barcode.ilike.*${search}*)`)
   }
-  if (qualityFilter === 'missing_name') url.searchParams.set('name', 'is.null')
-  if (qualityFilter === 'missing_ingredients') url.searchParams.set('ingredients_text', 'is.null')
+  if (qualityFilter === 'missing_name') url.searchParams.set('name', 'eq.')
+  if (qualityFilter === 'missing_ingredients') url.searchParams.set('ingredients_text', 'eq.')
   if (qualityFilter === 'needs_review') {
-    // Products that have enough data to be reviewed (name + ingredients present)
-    url.searchParams.append('name', 'not.is.null')
-    url.searchParams.append('ingredients_text', 'not.is.null')
+    // Products with name and ingredients filled in — ready to be reviewed
+    url.searchParams.set('and', '(name.neq.,ingredients_text.neq.)')
   }
   if (qualityFilter === 'user_submitted') url.searchParams.set('off_id', 'is.null')
   url.searchParams.set('order', 'created_at.desc')
