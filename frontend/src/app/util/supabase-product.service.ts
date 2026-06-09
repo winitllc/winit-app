@@ -73,9 +73,8 @@ export class SupabaseProductService {
     const from = page * pageSize;
     const to = from + pageSize - 1;
 
-    // Fetch approved + pending products in this category via the join, with correct pagination
-    const prodUrl = new URL(`${SUPABASE_URL}/rest/v1/products`);
-    prodUrl.searchParams.set('status', 'in.(approved,pending)');
+    // Fetch eligible products in this category via the join, with correct pagination
+    const prodUrl = new URL(`${SUPABASE_URL}/rest/v1/products_app_visible`);
     prodUrl.searchParams.set('select', '*,product_categories!inner(category_id)');
     prodUrl.searchParams.set('product_categories.category_id', `eq.${categoryId}`);
     prodUrl.searchParams.set('order', 'name.asc');
@@ -97,13 +96,12 @@ export class SupabaseProductService {
     const from = page * pageSize;
     const to = from + pageSize - 1;
 
-    const url = new URL(`${SUPABASE_URL}/rest/v1/products`);
+    const url = new URL(`${SUPABASE_URL}/rest/v1/products_app_visible`);
     const q = query.trim();
     if (q) {
       // Search name, brand, barcode, ingredients, and tag arrays
       url.searchParams.set('or', `(name.ilike.*${q}*,brand.ilike.*${q}*,barcode.ilike.*${q}*,ingredients_text.ilike.*${q}*,generic_name.ilike.*${q}*,allergen_tags.cs.{${q}},diet_tags.cs.{${q}},custom_tags.cs.{${q}},label_tags.cs.{${q}},off_categories_tags.cs.{${q}})`);
     }
-    url.searchParams.set('status', 'in.(approved,pending)');
     url.searchParams.set('order', 'name.asc');
     url.searchParams.set('select', '*');
 
@@ -118,7 +116,7 @@ export class SupabaseProductService {
   }
 
   async getProductByBarcode(barcode: string): Promise<SupabaseProduct | null> {
-    const url = new URL(`${SUPABASE_URL}/rest/v1/products`);
+    const url = new URL(`${SUPABASE_URL}/rest/v1/products_app_visible`);
     url.searchParams.set('barcode', `eq.${barcode}`);
     url.searchParams.set('select', '*');
     const res = await fetch(url.toString(), { headers: this.headers });
@@ -128,7 +126,7 @@ export class SupabaseProductService {
   }
 
   async getProductById(id: string): Promise<SupabaseProduct | null> {
-    const url = new URL(`${SUPABASE_URL}/rest/v1/products`);
+    const url = new URL(`${SUPABASE_URL}/rest/v1/products_app_visible`);
     url.searchParams.set('id', `eq.${id}`);
     url.searchParams.set('select', '*');
     const res = await fetch(url.toString(), { headers: this.headers });
