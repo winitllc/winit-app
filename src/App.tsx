@@ -5,8 +5,9 @@ import ProductEdit from './pages/ProductEdit'
 import Import from './pages/Import'
 import Users from './pages/Users'
 import Catalog from './pages/Catalog'
-import Contributions from './pages/Contributions'
 import ReviewQueue from './pages/ReviewQueue'
+import Contributions from './pages/Contributions'
+import Ingredients from './pages/Ingredients'
 import styles from './App.module.css'
 
 export default function App() {
@@ -47,6 +48,10 @@ export default function App() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
               Contributions
             </NavLink>
+            <NavLink to="/ingredients" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+              Ingredients
+            </NavLink>
           </nav>
         </aside>
         <main className={styles.content}>
@@ -60,6 +65,7 @@ export default function App() {
             <Route path="/catalog" element={<Catalog />} />
             <Route path="/review" element={<ReviewQueue />} />
             <Route path="/contributions" element={<Contributions />} />
+            <Route path="/ingredients" element={<Ingredients />} />
           </Routes>
         </main>
       </div>

@@ -500,6 +500,71 @@ export async function getQualityFilterCounts(status?: ProductStatus | ''): Promi
   }
 }
 
+// ─── Ingredients ─────────────────────────────────────────────────────────────
+
+export interface UnknownIngredient {
+  name: string
+  product_count: number
+  is_classified: boolean
+  allergen_tags: string[]
+  notes: string
+}
+
+export interface IngredientClassification {
+  name: string
+  allergen_tags: string[]
+  notes: string
+  classified_at: string
+  classified_by: string
+}
+
+export async function getUnknownIngredients(opts: {
+  search?: string
+  page?: number
+  pageSize?: number
+}): Promise<{ items: UnknownIngredient[]; total: number }> {
+  const { search, page = 0, pageSize = 50 } = opts
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_unknown_ingredients`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      p_search:    search?.trim() || null,
+      p_page:      page,
+      p_page_size: pageSize,
+    }),
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`getUnknownIngredients failed: ${res.status} ${body}`)
+  }
+  const raw = await res.json()
+  const data = (Array.isArray(raw) ? raw[0] : raw) as { items?: UnknownIngredient[]; total?: number } | null
+  return { items: data?.items ?? [], total: data?.total ?? 0 }
+}
+
+export async function classifyIngredient(
+  name: string,
+  allergenTags: string[],
+  notes: string,
+): Promise<{ affected_products: number; auto_approved: number }> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/classify_ingredient`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      p_name:          name,
+      p_allergen_tags: allergenTags,
+      p_notes:         notes,
+    }),
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`classifyIngredient failed: ${res.status} ${body}`)
+  }
+  const raw = await res.json()
+  const data = (Array.isArray(raw) ? raw[0] : raw) as { affected_products?: number; auto_approved?: number } | null
+  return { affected_products: data?.affected_products ?? 0, auto_approved: data?.auto_approved ?? 0 }
+}
+
 // ─── AI Review Queue ──────────────────────────────────────────────────────────
 
 export async function backfillReviewReasons(): Promise<void> {
