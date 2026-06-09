@@ -166,9 +166,8 @@ export async function getProducts(opts: {
     url.searchParams.set('ingredients_text', 'eq.')
   }
   if (qualityFilter === 'needs_review') {
-    // Products with both name and ingredients present — ready for human review
-    url.searchParams.set('name', 'neq.')
-    url.searchParams.set('ingredients_text', 'neq.')
+    // Use PostgREST and() compound filter — direct neq. on empty strings is unreliable
+    url.searchParams.set('and', '(name.gt.,ingredients_text.gt.)')
   }
   if (qualityFilter === 'user_submitted') {
     url.searchParams.set('off_id', 'is.null')
