@@ -154,16 +154,16 @@ export async function getProducts(opts: {
   const url = new URL(`${SUPABASE_URL}/rest/v1/products`)
   if (status) url.searchParams.set('status', `eq.${status}`)
 
-  // Search and quality filters are applied as independent AND conditions
   const searchTerm = search?.trim()
   if (searchTerm) {
     url.searchParams.set('or', `(name.ilike.*${searchTerm}*,brand.ilike.*${searchTerm}*,barcode.ilike.*${searchTerm}*)`)
   }
+
   if (qualityFilter === 'missing_name') {
-    url.searchParams.append('or', `(name.is.null,name.eq.)`)
+    url.searchParams.set('name', 'eq.')
   }
   if (qualityFilter === 'missing_ingredients') {
-    url.searchParams.append('or', `(ingredients_text.is.null,ingredients_text.eq.)`)
+    url.searchParams.set('ingredients_text', 'eq.')
   }
   if (qualityFilter === 'needs_review') {
     url.searchParams.set('has_unknown_ingredients', 'eq.true')
