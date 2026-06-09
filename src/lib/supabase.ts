@@ -159,8 +159,11 @@ export async function getProducts(opts: {
   if (qualityFilter === 'missing_name') url.searchParams.set('name', 'eq.')
   if (qualityFilter === 'missing_ingredients') url.searchParams.set('ingredients_text', 'eq.')
   if (qualityFilter === 'needs_review') {
-    // Products with name and ingredients filled in — ready to be reviewed
-    url.searchParams.set('and', '(name.neq.,ingredients_text.neq.)')
+    // Products with both name and ingredients present — ready for human review
+    url.searchParams.set('name', 'not.is.null')
+    url.searchParams.append('name', 'neq.')
+    url.searchParams.set('ingredients_text', 'not.is.null')
+    url.searchParams.append('ingredients_text', 'neq.')
   }
   if (qualityFilter === 'user_submitted') url.searchParams.set('off_id', 'is.null')
   url.searchParams.set('order', 'created_at.desc')
