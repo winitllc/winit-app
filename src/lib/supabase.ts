@@ -46,6 +46,7 @@ export interface Product {
   ai_model: string | null
   categorization_status: CategorizationStatus | null
   review_priority: number | null
+  review_reasons: string[]
   product_categories?: { category_id: string }[]
 }
 
@@ -506,6 +507,20 @@ export async function getQualityFilterCounts(): Promise<Record<QualityFilter, nu
 }
 
 // ─── AI Review Queue ──────────────────────────────────────────────────────────
+
+export async function backfillReviewReasons(): Promise<void> {
+  // Run up to 5 batches of 500 to cover most backlogs without blocking
+  for (let i = 0; i < 5; i++) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/backfill_review_reasons`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ batch_size: 500 }),
+    })
+    if (!res.ok) return
+    const updated: number = await res.json()
+    if (updated === 0) break
+  }
+}
 
 export async function getReviewQueue(opts: {
   page?: number

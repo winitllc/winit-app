@@ -229,6 +229,33 @@
 .classPillSub    { background: #ede9fe; color: #5b21b6; }
 .classPillNone   { color: var(--neutral-300); font-style: italic; font-size: 0.76rem; }
 
+/* ── Review reason badges ────────────────────────────────────────────────────── */
+.reasonBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+.reasonBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.reasonBadge svg { flex-shrink: 0; }
+.reasonBadge_missing  { background: #fee2e2; color: #b91c1c; }
+.reasonBadge_low_conf { background: #fef3c7; color: #92400e; }
+.reasonBadge_unknown  { background: #fef3c7; color: #92400e; }
+.reasonBadge_conflict { background: #fee2e2; color: #b91c1c; }
+.reasonBadge_user     { background: #ede9fe; color: #5b21b6; }
+.reasonBadge_class    { background: #e0f2fe; color: #0369a1; }
+.reasonBadge_default  { background: var(--neutral-100); color: var(--neutral-600); }
+
 /* ── AI reason ───────────────────────────────────────────────────────────────── */
 .reason {
   font-size: 0.78rem;

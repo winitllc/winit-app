@@ -5,6 +5,7 @@ import {
   rejectClassification,
   reclassifyProduct,
   bulkAiClassify,
+  backfillReviewReasons,
   getTaxonomyParents,
   getTaxonomySubcategories,
   type Product,
@@ -25,6 +26,25 @@ function priorityColor(priority: number): string {
   if (priority >= 40) return '#ef4444'
   if (priority >= 20) return '#f59e0b'
   return '#22c55e'
+}
+
+type BadgeVariant = 'missing' | 'low_conf' | 'unknown' | 'conflict' | 'user' | 'class' | 'default'
+
+function reasonVariant(reason: string): BadgeVariant {
+  const r = reason.toLowerCase()
+  if (r.includes('missing')) return 'missing'
+  if (r.includes('confidence')) return 'low_conf'
+  if (r.includes('unknown ingredient')) return 'unknown'
+  if (r.includes('conflict')) return 'conflict'
+  if (r.includes('user-submitted')) return 'user'
+  if (r.includes('classification') || r.includes('allergen')) return 'class'
+  return 'default'
+}
+
+function ReasonBadge({ reason }: { reason: string }) {
+  const variant = reasonVariant(reason)
+  const cls = `${styles.reasonBadge} ${styles[`reasonBadge_${variant}`]}`
+  return <span className={cls}>{reason}</span>
 }
 
 interface EditState {
@@ -96,6 +116,13 @@ function ReviewCard({
             </div>
           </div>
         </div>
+
+        {/* Review reason badges — shown prominently so admin knows why this is here */}
+        {(product.review_reasons ?? []).length > 0 && (
+          <div className={styles.reasonBadges}>
+            {(product.review_reasons ?? []).map(r => <ReasonBadge key={r} reason={r} />)}
+          </div>
+        )}
 
         {/* Overall confidence */}
         <div className={styles.confidenceRow}>
@@ -244,12 +271,6 @@ export default function ReviewQueue() {
   const [classifyProgress, setClassifyProgress] = useState({ done: 0, total: 0 })
   const timer = useRef<ReturnType<typeof setTimeout>>()
 
-  useEffect(() => {
-    Promise.all([getTaxonomyParents(), getTaxonomySubcategories()])
-      .then(([p, s]) => { setParents(p); setSubcats(s) })
-      .catch(console.error)
-  }, [])
-
   const load = useCallback(async (pg = page, q = search) => {
     setLoading(true)
     try {
@@ -261,7 +282,13 @@ export default function ReviewQueue() {
     }
   }, [page, search])
 
-  useEffect(() => { load(0, '') }, []) // eslint-disable-line
+  useEffect(() => {
+    // Backfill review_reasons for existing products silently, then load queue
+    backfillReviewReasons().catch(() => {}).finally(() => load(0, ''))
+    Promise.all([getTaxonomyParents(), getTaxonomySubcategories()])
+      .then(([p, s]) => { setParents(p); setSubcats(s) })
+      .catch(console.error)
+  }, []) // eslint-disable-line
 
   const flash = (msg: string, type = 'success') => {
     setToast({ msg, type })
