@@ -148,41 +148,21 @@ export async function getProducts(opts: {
   qualityFilter?: QualityFilter | ''
 }): Promise<{ products: Product[]; total: number }> {
   const { status, search, page = 0, pageSize = 25, qualityFilter } = opts
-  const from = page * pageSize
-  const to = from + pageSize - 1
 
-  const url = new URL(`${SUPABASE_URL}/rest/v1/products`)
-  if (status) url.searchParams.set('status', `eq.${status}`)
-
-  const searchTerm = search?.trim()
-  if (searchTerm) {
-    url.searchParams.set('or', `(name.ilike.*${searchTerm}*,brand.ilike.*${searchTerm}*,barcode.ilike.*${searchTerm}*)`)
-  }
-
-  if (qualityFilter === 'missing_name') {
-    url.searchParams.set('name', 'eq.')
-  }
-  if (qualityFilter === 'missing_ingredients') {
-    url.searchParams.set('ingredients_text', 'eq.')
-  }
-  if (qualityFilter === 'needs_review') {
-    // Use PostgREST and() compound filter — direct neq. on empty strings is unreliable
-    url.searchParams.set('and', '(name.gt.,ingredients_text.gt.)')
-  }
-  if (qualityFilter === 'user_submitted') {
-    url.searchParams.set('off_id', 'is.null')
-  }
-  url.searchParams.set('order', 'created_at.desc')
-  // Exclude nutrition blob from list queries — large and not shown in the card view
-  url.searchParams.set('select', 'id,barcode,name,brand,quantity,image_front_url,ingredients_text,allergen_tags,diet_tags,status,categorization_status,ai_category_id,ai_confidence,off_id,review_reasons,has_unknown_ingredients,created_at,updated_at,approved_at,product_categories(category_id)')
-
-  const res = await fetch(url.toString(), {
-    headers: { ...headers, Range: `${from}-${to}`, Prefer: 'count=estimated' },
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_products_filtered`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      p_status:         status || null,
+      p_search:         search?.trim() || null,
+      p_quality_filter: qualityFilter || null,
+      p_page:           page,
+      p_page_size:      pageSize,
+    }),
   })
   if (!res.ok) throw new Error(`getProducts failed: ${res.status}`)
-  const total = parseInt((res.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0
-  const products: Product[] = await res.json()
-  return { products, total }
+  const data = await res.json() as { products: Product[]; total: number }
+  return { products: data.products ?? [], total: data.total ?? 0 }
 }
 
 export async function getProduct(id: string): Promise<Product> {
