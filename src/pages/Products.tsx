@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  getProducts, getQualityFilterCounts, getCategories, approveProduct, rejectProduct, updateProduct,
+  getProducts, getQualityFilterCounts, getCategories, getProductStats, approveProduct, rejectProduct, updateProduct,
   type Product, type ProductStatus, type QualityFilter, type AppCategory,
 } from '../lib/supabase'
 import styles from './Products.module.css'
@@ -330,9 +330,15 @@ export default function Products() {
     (searchParams.get('quality') as QualityFilter | null) ?? ''
   )
   const [filterCounts, setFilterCounts] = useState<Record<QualityFilter, number> | null>(null)
+  const [statusCounts, setStatusCounts] = useState<{ pending: number; approved: number; rejected: number; total: number } | null>(null)
   const [categories, setCategories] = useState<Map<string, string>>(new Map())
   const [toast, setToast] = useState('')
   const timer = useRef<ReturnType<typeof setTimeout>>()
+
+  const refreshCounts = useCallback(() => {
+    getQualityFilterCounts().then(setFilterCounts).catch(() => {})
+    getProductStats().then(setStatusCounts).catch(() => {})
+  }, [])
 
   const load = useCallback(async (pg = page, q = search, st = status, qf = qualityFilter) => {
     setLoading(true)
@@ -348,11 +354,11 @@ export default function Products() {
   useEffect(() => { load(0, search, status, qualityFilter) }, [status, qualityFilter]) // eslint-disable-line
 
   useEffect(() => {
-    getQualityFilterCounts().then(setFilterCounts).catch(() => {})
+    refreshCounts()
     getCategories().then((cats: AppCategory[]) => {
       setCategories(new Map(cats.map(c => [c.id, c.display_name])))
     }).catch(() => {})
-  }, [])
+  }, []) // eslint-disable-line
 
   const onSearch = (q: string) => {
     setSearch(q)
@@ -377,8 +383,8 @@ export default function Products() {
   }
 
   const flash = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000) }
-  const approve = async (p: Product) => { await approveProduct(p.id); flash('"' + (p.name || 'Product') + '" approved'); load() }
-  const reject  = async (p: Product) => { await rejectProduct(p.id);  flash('"' + (p.name || 'Product') + '" rejected');  load() }
+  const approve = async (p: Product) => { await approveProduct(p.id); flash('"' + (p.name || 'Product') + '" approved'); load(); refreshCounts() }
+  const reject  = async (p: Product) => { await rejectProduct(p.id);  flash('"' + (p.name || 'Product') + '" rejected');  load(); refreshCounts() }
 
   const handleNameSaved = (id: string, name: string) => {
     setProducts(prev => prev.map(p => p.id === id ? { ...p, name } : p))
@@ -406,13 +412,24 @@ export default function Products() {
             value={search} onChange={e => onSearch(e.target.value)} />
         </div>
         <div className={styles.tabs}>
-          {(['', 'pending', 'approved', 'rejected'] as const).map(s => (
-            <button key={s}
-              className={styles.tab + (status === s ? ' ' + styles.tabActive : '') + (s ? ' ' + styles['tab_' + s] : '')}
-              onClick={() => onStatus(s)}>
-              {s === '' ? 'All' : s[0].toUpperCase() + s.slice(1)}
-            </button>
-          ))}
+          {(['', 'pending', 'approved', 'rejected'] as const).map(s => {
+            const count = s === '' ? statusCounts?.total
+              : s === 'pending' ? statusCounts?.pending
+              : s === 'approved' ? statusCounts?.approved
+              : statusCounts?.rejected
+            return (
+              <button key={s}
+                className={styles.tab + (status === s ? ' ' + styles.tabActive : '') + (s ? ' ' + styles['tab_' + s] : '')}
+                onClick={() => onStatus(s)}>
+                {s === '' ? 'All' : s[0].toUpperCase() + s.slice(1)}
+                {count != null && (
+                  <span className={styles.tabCount + (status === s ? ' ' + styles.tabCountActive : '')}>
+                    {count.toLocaleString()}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
