@@ -101,6 +101,54 @@ function MissingBadges({ p }: { p: Product }) {
   )
 }
 
+type ReviewBadgeVariant = 'danger' | 'warning' | 'info' | 'neutral'
+
+function reviewBadgeVariant(reason: string): ReviewBadgeVariant {
+  const r = reason.toLowerCase()
+  if (r.includes('missing') || r.includes('conflict') || r.includes('duplicate')) return 'danger'
+  if (r.includes('confidence') || r.includes('unknown ingredient')) return 'warning'
+  if (r.includes('user-submitted') || r.includes('allergen') || r.includes('classification')) return 'info'
+  return 'neutral'
+}
+
+function ReviewReasonBadges({ p, active }: { p: Product; active: boolean }) {
+  if (!active) return null
+
+  // Combine DB-stored reasons with any client-detectable ones not yet backfilled
+  const reasons: string[] = [...(p.review_reasons ?? [])]
+
+  if (!p.name?.trim() && !reasons.some(r => r.toLowerCase().includes('missing product name')))
+    reasons.push('Missing product name')
+  if (!p.ingredients_text?.trim() && !reasons.some(r => r.toLowerCase().includes('missing ingredient')))
+    reasons.push('Missing ingredients')
+  if (!p.off_id && !reasons.some(r => r.toLowerCase().includes('user-submitted')))
+    reasons.push('User-submitted changes pending approval')
+  if ((p.ai_confidence ?? 1) < 0.55 && p.ai_confidence !== null && !reasons.some(r => r.toLowerCase().includes('confidence')))
+    reasons.push('AI confidence below threshold')
+  if (!p.categorization_status || p.categorization_status === 'unclassified') {
+    if (p.name?.trim() && p.ingredients_text?.trim() && !reasons.some(r => r.toLowerCase().includes('allergen')))
+      reasons.push('Missing allergen classification')
+  }
+
+  // Fallback: if nothing specific, the product is just awaiting admin sign-off
+  if (reasons.length === 0) reasons.push('Pending admin approval')
+
+  const variantClass: Record<ReviewBadgeVariant, string> = {
+    danger:  styles.reviewReasonDanger,
+    warning: styles.reviewReasonWarning,
+    info:    styles.reviewReasonInfo,
+    neutral: styles.reviewReasonNeutral,
+  }
+
+  return (
+    <div className={styles.reviewReasonRow}>
+      {reasons.map(r => (
+        <span key={r} className={`${styles.reviewReasonBadge} ${variantClass[reviewBadgeVariant(r)]}`}>{r}</span>
+      ))}
+    </div>
+  )
+}
+
 function IngredientsPreview({ text }: { text: string }) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
   const hasText = !!text?.trim()
@@ -152,12 +200,14 @@ function IngredientsPreview({ text }: { text: string }) {
 function ProductCard({
   p,
   categories,
+  showReviewReasons,
   onApprove,
   onReject,
   onNameSaved,
 }: {
   p: Product
   categories: Map<string, string>
+  showReviewReasons: boolean
   onApprove(p: Product): void
   onReject(p: Product): void
   onNameSaved(id: string, name: string): void
@@ -248,6 +298,7 @@ function ProductCard({
         {p.brand && <p className={styles.brandName}>{p.brand}{p.quantity ? ' · ' + p.quantity : ''}</p>}
 
         <MissingBadges p={p} />
+        <ReviewReasonBadges p={p} active={showReviewReasons} />
 
         {/* Categories */}
         {categoryNames.length > 0 && (
@@ -473,6 +524,7 @@ export default function Products() {
                 key={p.id}
                 p={p}
                 categories={categories}
+                showReviewReasons={qualityFilter === 'needs_review'}
                 onApprove={approve}
                 onReject={reject}
                 onNameSaved={handleNameSaved}

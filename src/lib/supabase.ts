@@ -168,7 +168,7 @@ export async function getProducts(opts: {
   if (qualityFilter === 'user_submitted') url.searchParams.set('off_id', 'is.null')
   url.searchParams.set('order', 'created_at.desc')
   // Exclude nutrition blob from list queries — large and not shown in the card view
-  url.searchParams.set('select', 'id,barcode,name,brand,quantity,image_front_url,ingredients_text,allergen_tags,diet_tags,status,categorization_status,ai_category_id,created_at,updated_at,approved_at,off_id,product_categories(category_id)')
+  url.searchParams.set('select', 'id,barcode,name,brand,quantity,image_front_url,ingredients_text,allergen_tags,diet_tags,status,categorization_status,ai_category_id,ai_confidence,off_id,review_reasons,created_at,updated_at,approved_at,product_categories(category_id)')
 
   const res = await fetch(url.toString(), {
     headers: { ...headers, Range: `${from}-${to}`, Prefer: 'count=estimated' },
