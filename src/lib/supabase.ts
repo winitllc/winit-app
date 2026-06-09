@@ -166,7 +166,9 @@ export async function getProducts(opts: {
     url.searchParams.set('ingredients_text', 'eq.')
   }
   if (qualityFilter === 'needs_review') {
-    url.searchParams.set('has_unknown_ingredients', 'eq.true')
+    // Products with both name and ingredients present — ready for human review
+    url.searchParams.set('name', 'neq.')
+    url.searchParams.set('ingredients_text', 'neq.')
   }
   if (qualityFilter === 'user_submitted') {
     url.searchParams.set('off_id', 'is.null')
