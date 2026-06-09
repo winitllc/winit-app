@@ -565,6 +565,42 @@ export async function classifyIngredient(
   return { affected_products: data?.affected_products ?? 0, auto_approved: data?.auto_approved ?? 0 }
 }
 
+export async function getProductsForIngredient(
+  ingredientName: string,
+  opts: { page?: number; pageSize?: number } = {},
+): Promise<{ products: Product[]; total: number }> {
+  const { page = 0, pageSize = 24 } = opts
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_products_for_ingredient`, {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_ingredient_name: ingredientName, p_page: page, p_page_size: pageSize }),
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`getProductsForIngredient failed: ${res.status} ${body}`)
+  }
+  const raw = await res.json()
+  const data = (Array.isArray(raw) ? raw[0] : raw) as { products?: Product[]; total?: number } | null
+  return { products: data?.products ?? [], total: data?.total ?? 0 }
+}
+
+export async function deleteUnknownIngredient(
+  name: string,
+): Promise<{ deleted_products: number }> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/delete_unknown_ingredient`, {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_name: name }),
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`deleteUnknownIngredient failed: ${res.status} ${body}`)
+  }
+  const raw = await res.json()
+  const data = (Array.isArray(raw) ? raw[0] : raw) as { deleted_products?: number } | null
+  return { deleted_products: data?.deleted_products ?? 0 }
+}
+
 // ─── AI Review Queue ──────────────────────────────────────────────────────────
 
 export async function backfillReviewReasons(): Promise<void> {
