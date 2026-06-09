@@ -384,6 +384,7 @@ export default function Products() {
   const [statusCounts, setStatusCounts] = useState<{ pending: number; approved: number; rejected: number; total: number } | null>(null)
   const [categories, setCategories] = useState<Map<string, string>>(new Map())
   const [toast, setToast] = useState('')
+  const [loadError, setLoadError] = useState('')
   const timer = useRef<ReturnType<typeof setTimeout>>()
 
   const refreshCounts = useCallback((st = status) => {
@@ -393,10 +394,15 @@ export default function Products() {
 
   const load = useCallback(async (pg = page, q = search, st = status, qf = qualityFilter) => {
     setLoading(true)
+    setLoadError('')
     try {
       const res = await getProducts({ status: st, search: q, page: pg, pageSize: PAGE_SIZE, qualityFilter: qf })
       setProducts(res.products)
       setTotal(res.total)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setLoadError(msg)
+      console.error('getProducts failed:', msg)
     } finally {
       setLoading(false)
     }
@@ -508,6 +514,12 @@ export default function Products() {
 
       {loading ? (
         <div className={styles.spinnerWrap}><div className={styles.spinner}/></div>
+      ) : loadError ? (
+        <div className={styles.empty}>
+          <p style={{ color: 'var(--error-500)', fontWeight: 600 }}>Failed to load products</p>
+          <p style={{ fontSize: '0.85rem', marginTop: 4, color: 'var(--neutral-400)', fontFamily: 'monospace' }}>{loadError}</p>
+          <button style={{ marginTop: 12, padding: '6px 16px', borderRadius: 6, border: '1px solid var(--neutral-300)', cursor: 'pointer', background: 'white' }} onClick={() => load()}>Retry</button>
+        </div>
       ) : products.length === 0 ? (
         <div className={styles.empty}>
           <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ opacity: .18, marginBottom: 16 }}>

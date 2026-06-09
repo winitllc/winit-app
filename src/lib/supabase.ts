@@ -160,9 +160,14 @@ export async function getProducts(opts: {
       p_page_size:      pageSize,
     }),
   })
-  if (!res.ok) throw new Error(`getProducts failed: ${res.status}`)
-  const data = await res.json() as { products: Product[]; total: number }
-  return { products: data.products ?? [], total: data.total ?? 0 }
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`getProducts failed: ${res.status} ${body}`)
+  }
+  const raw = await res.json()
+  // PostgREST may return the scalar directly or wrap it in an array
+  const data = (Array.isArray(raw) ? raw[0] : raw) as { products?: Product[]; total?: number } | null
+  return { products: data?.products ?? [], total: data?.total ?? 0 }
 }
 
 export async function getProduct(id: string): Promise<Product> {
