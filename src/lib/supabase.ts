@@ -153,22 +153,27 @@ export async function getProducts(opts: {
 
   const url = new URL(`${SUPABASE_URL}/rest/v1/products`)
   if (status) url.searchParams.set('status', `eq.${status}`)
-  if (search?.trim()) {
-    url.searchParams.set('or', `(name.ilike.*${search}*,brand.ilike.*${search}*,barcode.ilike.*${search}*)`)
+
+  // Search and quality filters are applied as independent AND conditions
+  const searchTerm = search?.trim()
+  if (searchTerm) {
+    url.searchParams.set('or', `(name.ilike.*${searchTerm}*,brand.ilike.*${searchTerm}*,barcode.ilike.*${searchTerm}*)`)
   }
-  if (qualityFilter === 'missing_name') url.searchParams.set('name', 'eq.')
-  if (qualityFilter === 'missing_ingredients') url.searchParams.set('ingredients_text', 'eq.')
+  if (qualityFilter === 'missing_name') {
+    url.searchParams.append('or', `(name.is.null,name.eq.)`)
+  }
+  if (qualityFilter === 'missing_ingredients') {
+    url.searchParams.append('or', `(ingredients_text.is.null,ingredients_text.eq.)`)
+  }
   if (qualityFilter === 'needs_review') {
-    // Products with both name and ingredients present — ready for human review
-    url.searchParams.set('name', 'not.is.null')
-    url.searchParams.append('name', 'neq.')
-    url.searchParams.set('ingredients_text', 'not.is.null')
-    url.searchParams.append('ingredients_text', 'neq.')
+    url.searchParams.set('has_unknown_ingredients', 'eq.true')
   }
-  if (qualityFilter === 'user_submitted') url.searchParams.set('off_id', 'is.null')
+  if (qualityFilter === 'user_submitted') {
+    url.searchParams.set('off_id', 'is.null')
+  }
   url.searchParams.set('order', 'created_at.desc')
   // Exclude nutrition blob from list queries — large and not shown in the card view
-  url.searchParams.set('select', 'id,barcode,name,brand,quantity,image_front_url,ingredients_text,allergen_tags,diet_tags,status,categorization_status,ai_category_id,ai_confidence,off_id,review_reasons,created_at,updated_at,approved_at,product_categories(category_id)')
+  url.searchParams.set('select', 'id,barcode,name,brand,quantity,image_front_url,ingredients_text,allergen_tags,diet_tags,status,categorization_status,ai_category_id,ai_confidence,off_id,review_reasons,has_unknown_ingredients,created_at,updated_at,approved_at,product_categories(category_id)')
 
   const res = await fetch(url.toString(), {
     headers: { ...headers, Range: `${from}-${to}`, Prefer: 'count=estimated' },
@@ -493,11 +498,11 @@ export async function getProductStats(): Promise<{ pending: number; approved: nu
   return { pending: r.pending_count, approved: r.approved_count, rejected: r.rejected_count, total: r.total_count }
 }
 
-export async function getQualityFilterCounts(): Promise<Record<QualityFilter, number>> {
+export async function getQualityFilterCounts(status?: ProductStatus | ''): Promise<Record<QualityFilter, number>> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_quality_filter_counts`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({}),
+    body: JSON.stringify({ p_status: status || null }),
   })
   if (!res.ok) return { missing_name: 0, missing_ingredients: 0, needs_review: 0, user_submitted: 0 }
   const data = await res.json() as Record<string, number>

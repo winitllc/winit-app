@@ -386,10 +386,10 @@ export default function Products() {
   const [toast, setToast] = useState('')
   const timer = useRef<ReturnType<typeof setTimeout>>()
 
-  const refreshCounts = useCallback(() => {
-    getQualityFilterCounts().then(setFilterCounts).catch(() => {})
+  const refreshCounts = useCallback((st = status) => {
+    getQualityFilterCounts(st).then(setFilterCounts).catch(() => {})
     getProductStats().then(setStatusCounts).catch(() => {})
-  }, [])
+  }, [status])
 
   const load = useCallback(async (pg = page, q = search, st = status, qf = qualityFilter) => {
     setLoading(true)
@@ -405,11 +405,11 @@ export default function Products() {
   useEffect(() => { load(0, search, status, qualityFilter) }, [status, qualityFilter]) // eslint-disable-line
 
   useEffect(() => {
-    refreshCounts()
+    refreshCounts(status)
     getCategories().then((cats: AppCategory[]) => {
       setCategories(new Map(cats.map(c => [c.id, c.display_name])))
     }).catch(() => {})
-  }, []) // eslint-disable-line
+  }, [status]) // eslint-disable-line
 
   const onSearch = (q: string) => {
     setSearch(q)
