@@ -27,6 +27,7 @@ export class MealPlansPage implements OnInit {
   selectedPlan: MealPlan | null = null;
   days: MealPlanDay[] = [];
   expandedDayId: string | null = null;
+  proInitials = '';
 
   loadingPlans = true;
   loadingDays = false;
@@ -44,6 +45,15 @@ export class MealPlansPage implements OnInit {
     const nav = this.router.getCurrentNavigation();
     const state = nav?.extras?.state as { professional?: Professional } | undefined;
     this.professional = state?.professional ?? null;
+
+    if (this.professional) {
+      this.proInitials = this.professional.name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+    }
 
     if (!this.professional) {
       this.loadingPlans = false;

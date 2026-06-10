@@ -25,23 +25,24 @@
   </div>
 
   <!-- Content -->
-  <ng-container *ngIf="!loadingPlans && !errorPlans && professional">
+  <ng-container *ngIf="!loadingPlans && !errorPlans">
+  <ng-container *ngIf="professional; let pro">
 
     <!-- Pro Hero -->
     <div class="pro-hero">
       <div class="pro-avatar-wrap">
         <img
-          *ngIf="professional.photo_url"
-          [src]="professional.photo_url"
-          [alt]="professional.name"
+          *ngIf="pro.photo_url"
+          [src]="pro.photo_url"
+          [alt]="pro.name"
           class="pro-avatar">
-        <div class="pro-avatar-fallback" *ngIf="!professional.photo_url">
-          {{professional.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}}
+        <div class="pro-avatar-fallback" *ngIf="!pro.photo_url">
+          {{proInitials}}
         </div>
       </div>
       <div class="pro-info">
-        <h2 class="pro-name">{{professional.name}}</h2>
-        <p class="pro-title" *ngIf="professional.title">{{professional.title}}</p>
+        <h2 class="pro-name">{{pro.name}}</h2>
+        <p class="pro-title" *ngIf="pro.title">{{pro.title}}</p>
         <span class="verified-badge">
           <ion-icon name="checkmark-circle" class="verified-icon"></ion-icon>
           Verified
@@ -144,6 +145,7 @@
       </div>
     </div>
 
+  </ng-container>
   </ng-container>
 
 </ion-content>
