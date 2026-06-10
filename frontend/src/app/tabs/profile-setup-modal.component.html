@@ -7,7 +7,7 @@
 
   <div class="setup-shell" *ngIf="!loading">
 
-    <!-- Header row: step pills + skip -->
+    <!-- Header row: step pills + close X -->
     <div class="setup-header">
       <div class="step-pills">
         <div
@@ -17,7 +17,9 @@
           [class.done]="i < currentIndex"
         ></div>
       </div>
-      <button class="skip-btn" (click)="skip()">Skip</button>
+      <button class="close-btn" (click)="skip()" aria-label="Close">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
     </div>
 
     <!-- Question -->
@@ -73,7 +75,7 @@
       </div>
 
       <button class="next-btn" (click)="next()">
-        {{ currentIndex < steps.length - 1 ? 'Next' : 'Done' }}
+        {{ currentIndex < steps.length - 1 ? 'Save & Continue' : 'Save' }}
         <span class="next-arrow">→</span>
       </button>
     </div>

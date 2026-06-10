@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { WinitAuthService } from '../util/winit-auth.service';
-import { ProfileSetupService } from '../util/profile-setup.service';
 import { ProfileSetupModalComponent } from './profile-setup-modal.component';
 
 @Component({
@@ -14,14 +13,17 @@ export class TabsPage implements OnInit {
   constructor(
     private winitAuth: WinitAuthService,
     private modalCtrl: ModalController,
-    private setupService: ProfileSetupService,
   ) {}
 
   async ngOnInit(): Promise<void> {
-    const should = await this.setupService.shouldShow();
-    if (should) {
-      await this.showSetupModal();
+    try {
+      const profile = await this.winitAuth.getProfile();
+      if (profile?.onboarding_completed) return;
+    } catch {
+      // If we can't fetch profile (not logged in, network error), skip the modal
+      return;
     }
+    await this.showSetupModal();
   }
 
   private async showSetupModal(): Promise<void> {
@@ -29,16 +31,13 @@ export class TabsPage implements OnInit {
       component: ProfileSetupModalComponent,
       cssClass: 'profile-setup-modal',
       backdropDismiss: false,
-      breakpoints: [0, 0.92],
-      initialBreakpoint: 0.92,
       handle: false,
     });
     await modal.present();
 
     const { data } = await modal.onDidDismiss();
 
-    // Persist selections to WINIT Supabase user profile
-    if (data && !data.skipped && (data.allergies?.length || data.diets?.length || data.conditions?.length)) {
+    if (data?.completed) {
       try {
         await this.winitAuth.updateProfile({
           allergy_ids: data.allergies ?? [],

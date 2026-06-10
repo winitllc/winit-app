@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
-import { ProfileSetupService } from '../util/profile-setup.service';
 import { WinitCatalogService, CatalogCategory } from '../util/winit-catalog.service';
 
 type Step = 'allergies' | 'diets' | 'conditions';
@@ -28,7 +27,6 @@ export class ProfileSetupModalComponent implements OnInit {
   constructor(
     private modalCtrl: ModalController,
     private catalog: WinitCatalogService,
-    private setupService: ProfileSetupService,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -118,14 +116,12 @@ export class ProfileSetupModalComponent implements OnInit {
   }
 
   async skip(): Promise<void> {
-    await this.setupService.markDismissed();
-    this.modalCtrl.dismiss({ skipped: true });
+    this.modalCtrl.dismiss({ completed: false });
   }
 
   private async finish(): Promise<void> {
-    await this.setupService.markDismissed();
     this.modalCtrl.dismiss({
-      skipped: false,
+      completed: true,
       allergies:  Array.from(this.selectedAllergies),
       diets:      Array.from(this.selectedDiets),
       conditions: Array.from(this.selectedConditions),
