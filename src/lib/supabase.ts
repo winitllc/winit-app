@@ -601,6 +601,231 @@ export async function deleteUnknownIngredient(
   return { deleted_products: data?.deleted_products ?? 0 }
 }
 
+// ─── Professionals ────────────────────────────────────────────────────────────
+
+export interface Professional {
+  id: string
+  name: string
+  slug: string
+  title: string
+  bio: string
+  photo_url: string
+  specialties: string[]
+  website_url: string
+  email: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface MealPlan {
+  id: string
+  professional_id: string
+  name: string
+  description: string
+  is_public: boolean
+  share_token: string
+  created_at: string
+  updated_at: string
+}
+
+export interface MealPlanDay {
+  id: string
+  meal_plan_id: string
+  day_number: number
+  label: string
+  sort_order: number
+}
+
+export interface Meal {
+  id: string
+  day_id: string
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  sort_order: number
+}
+
+export interface MealFood {
+  id: string
+  meal_id: string
+  name: string
+  notes: string
+  sort_order: number
+}
+
+export interface ReferralInvite {
+  id: string
+  professional_id: string
+  meal_plan_id: string | null
+  token: string
+  click_count: number
+  created_at: string
+}
+
+export interface ReferralConversion {
+  id: string
+  invite_id: string
+  professional_id: string
+  status: 'invited' | 'downloaded' | 'active'
+  created_at: string
+  activated_at: string | null
+}
+
+export interface MealPlanFull extends MealPlan {
+  days: (MealPlanDay & {
+    meals: (Meal & { foods: MealFood[] })[]
+  })[]
+}
+
+export async function getProfessionals(): Promise<Professional[]> {
+  return get<Professional[]>('professionals', { order: 'created_at.desc', select: '*' })
+}
+
+export async function getProfessionalBySlug(slug: string): Promise<Professional | null> {
+  const rows = await get<Professional[]>('professionals', { slug: `eq.${slug}`, select: '*' })
+  return rows?.[0] ?? null
+}
+
+export async function getProfessional(id: string): Promise<Professional | null> {
+  const rows = await get<Professional[]>('professionals', { id: `eq.${id}`, select: '*' })
+  return rows?.[0] ?? null
+}
+
+export async function createProfessional(data: Partial<Professional>): Promise<Professional> {
+  const rows = await post<Professional[]>('professionals', data)
+  return (rows as Professional[])[0]
+}
+
+export async function updateProfessional(id: string, data: Partial<Professional>): Promise<void> {
+  await patch('professionals', { ...data, updated_at: new Date().toISOString() }, `id=eq.${id}`)
+}
+
+export async function deleteProfessional(id: string): Promise<void> {
+  await del('professionals', `id=eq.${id}`)
+}
+
+export async function getMealPlans(professionalId: string): Promise<MealPlan[]> {
+  return get<MealPlan[]>('meal_plans', {
+    professional_id: `eq.${professionalId}`,
+    order: 'created_at.desc',
+    select: '*',
+  })
+}
+
+export async function getMealPlanByToken(token: string): Promise<MealPlan | null> {
+  const rows = await get<MealPlan[]>('meal_plans', { share_token: `eq.${token}`, select: '*' })
+  return rows?.[0] ?? null
+}
+
+export async function createMealPlan(data: Partial<MealPlan>): Promise<MealPlan> {
+  const rows = await post<MealPlan[]>('meal_plans', data)
+  return (rows as MealPlan[])[0]
+}
+
+export async function updateMealPlan(id: string, data: Partial<MealPlan>): Promise<void> {
+  await patch('meal_plans', { ...data, updated_at: new Date().toISOString() }, `id=eq.${id}`)
+}
+
+export async function deleteMealPlan(id: string): Promise<void> {
+  await del('meal_plans', `id=eq.${id}`)
+}
+
+export async function getMealPlanFull(mealPlanId: string): Promise<MealPlanFull | null> {
+  const plans = await get<MealPlan[]>('meal_plans', { id: `eq.${mealPlanId}`, select: '*' })
+  const plan = plans?.[0]
+  if (!plan) return null
+
+  const days = await get<MealPlanDay[]>('meal_plan_days', {
+    meal_plan_id: `eq.${mealPlanId}`,
+    order: 'sort_order.asc,day_number.asc',
+    select: '*',
+  })
+
+  const mealPlanFull: MealPlanFull = { ...plan, days: [] }
+
+  for (const day of days) {
+    const meals = await get<Meal[]>('meals', { day_id: `eq.${day.id}`, order: 'sort_order.asc', select: '*' })
+    const fullMeals: (Meal & { foods: MealFood[] })[] = []
+    for (const meal of meals) {
+      const foods = await get<MealFood[]>('meal_foods', { meal_id: `eq.${meal.id}`, order: 'sort_order.asc', select: '*' })
+      fullMeals.push({ ...meal, foods })
+    }
+    mealPlanFull.days.push({ ...day, meals: fullMeals })
+  }
+
+  return mealPlanFull
+}
+
+export async function saveMealPlanFull(plan: MealPlanFull): Promise<void> {
+  await patch('meal_plans', { name: plan.name, description: plan.description, updated_at: new Date().toISOString() }, `id=eq.${plan.id}`)
+  const existingDays = await get<MealPlanDay[]>('meal_plan_days', { meal_plan_id: `eq.${plan.id}`, select: 'id' })
+  for (const d of existingDays) await del('meal_plan_days', `id=eq.${d.id}`)
+
+  for (let di = 0; di < plan.days.length; di++) {
+    const day = plan.days[di]
+    const newDays = await post<MealPlanDay[]>('meal_plan_days', {
+      meal_plan_id: plan.id,
+      day_number: day.day_number,
+      label: day.label,
+      sort_order: di,
+    })
+    const newDay = (newDays as MealPlanDay[])[0]
+
+    for (let mi = 0; mi < day.meals.length; mi++) {
+      const meal = day.meals[mi]
+      const newMeals = await post<Meal[]>('meals', { day_id: newDay.id, meal_type: meal.meal_type, sort_order: mi })
+      const newMeal = (newMeals as Meal[])[0]
+
+      for (let fi = 0; fi < meal.foods.length; fi++) {
+        const food = meal.foods[fi]
+        await post('meal_foods', { meal_id: newMeal.id, name: food.name, notes: food.notes, sort_order: fi })
+      }
+    }
+  }
+}
+
+export async function createReferralInvite(professionalId: string, mealPlanId?: string): Promise<ReferralInvite> {
+  const rows = await post<ReferralInvite[]>('referral_invites', {
+    professional_id: professionalId,
+    meal_plan_id: mealPlanId ?? null,
+  })
+  return (rows as ReferralInvite[])[0]
+}
+
+export async function getReferralInviteByToken(token: string): Promise<ReferralInvite | null> {
+  const rows = await get<ReferralInvite[]>('referral_invites', { token: `eq.${token}`, select: '*' })
+  if (!rows?.[0]) return null
+  await patch('referral_invites', { click_count: (rows[0].click_count || 0) + 1 }, `id=eq.${rows[0].id}`)
+  return rows[0]
+}
+
+export async function getReferralStats(professionalId: string): Promise<{
+  invited: number
+  downloaded: number
+  active: number
+  total_clicks: number
+}> {
+  const [conversions, invites] = await Promise.all([
+    get<ReferralConversion[]>('referral_conversions', { professional_id: `eq.${professionalId}`, select: 'status' }),
+    get<ReferralInvite[]>('referral_invites', { professional_id: `eq.${professionalId}`, select: 'click_count' }),
+  ])
+  const total_clicks = invites.reduce((sum, i) => sum + (i.click_count || 0), 0)
+  return {
+    invited: conversions.filter(c => c.status === 'invited').length,
+    downloaded: conversions.filter(c => c.status === 'downloaded').length,
+    active: conversions.filter(c => c.status === 'active').length,
+    total_clicks,
+  }
+}
+
+export async function recordReferralConversion(inviteId: string, professionalId: string, status: 'invited' | 'downloaded' | 'active' = 'invited'): Promise<void> {
+  await post('referral_conversions', {
+    invite_id: inviteId,
+    professional_id: professionalId,
+    status,
+    activated_at: status === 'active' ? new Date().toISOString() : null,
+  })
+}
+
 // ─── AI Review Queue ──────────────────────────────────────────────────────────
 
 export async function backfillReviewReasons(): Promise<void> {

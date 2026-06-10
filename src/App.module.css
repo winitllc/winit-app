@@ -65,3 +65,18 @@
   padding: 32px;
   min-height: 100vh;
 }
+
+.navDivider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 8px 8px 4px;
+}
+
+.navSection {
+  padding: 4px 12px 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
