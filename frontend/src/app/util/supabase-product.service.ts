@@ -62,57 +62,37 @@ export class SupabaseProductService {
   }
 
   async getProductsByCategory(categorySlug: string, page = 0, pageSize = 24): Promise<SupabaseProductPage> {
-    const catUrl = new URL(`${SUPABASE_URL}/rest/v1/app_categories`);
-    catUrl.searchParams.set('slug', `eq.${categorySlug}`);
-    catUrl.searchParams.set('select', 'id');
-    const catRes = await fetch(catUrl.toString(), { headers: this.headers });
-    const cats = await catRes.json() as { id: string }[];
-    if (!cats.length) return { products: [], total: 0, page, pageSize };
-
-    const categoryId = cats[0].id;
-    const from = page * pageSize;
-    const to = from + pageSize - 1;
-
-    // Fetch eligible products in this category via the join, with correct pagination
-    const prodUrl = new URL(`${SUPABASE_URL}/rest/v1/products_app_visible`);
-    prodUrl.searchParams.set('select', '*,product_categories!inner(category_id)');
-    prodUrl.searchParams.set('product_categories.category_id', `eq.${categoryId}`);
-    prodUrl.searchParams.set('order', 'name.asc');
-
-    const prodRes = await fetch(prodUrl.toString(), {
-      headers: { ...this.headers, 'Prefer': 'count=exact', 'Range': `${from}-${to}` },
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_products_by_category`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ p_slug: categorySlug, p_page: page, p_page_size: pageSize }),
     });
-    if (!prodRes.ok) throw new Error(`getProductsByCategory failed: ${prodRes.status}`);
-
-    const total = parseInt((prodRes.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0;
-    const raw = await prodRes.json() as (SupabaseProduct & { product_categories: unknown[] })[];
-    // Strip the joined relation field before returning
-    const products: SupabaseProduct[] = raw.map(({ product_categories: _pc, ...p }) => p as SupabaseProduct);
-
-    return { products, total, page, pageSize };
+    if (!res.ok) throw new Error(`getProductsByCategory failed: ${res.status}`);
+    const raw = await res.json();
+    const data = (Array.isArray(raw) ? raw[0] : raw) as SupabaseProductPage | null;
+    return {
+      products: data?.products ?? [],
+      total: data?.total ?? 0,
+      page: data?.page ?? page,
+      pageSize: data?.pageSize ?? pageSize,
+    };
   }
 
   async searchProducts(query: string, page = 0, pageSize = 24): Promise<SupabaseProductPage> {
-    const from = page * pageSize;
-    const to = from + pageSize - 1;
-
-    const url = new URL(`${SUPABASE_URL}/rest/v1/products_app_visible`);
-    const q = query.trim();
-    if (q) {
-      // Search name, brand, barcode, ingredients, and tag arrays
-      url.searchParams.set('or', `(name.ilike.*${q}*,brand.ilike.*${q}*,barcode.ilike.*${q}*,ingredients_text.ilike.*${q}*,generic_name.ilike.*${q}*,allergen_tags.cs.{${q}},diet_tags.cs.{${q}},custom_tags.cs.{${q}},label_tags.cs.{${q}},off_categories_tags.cs.{${q}})`);
-    }
-    url.searchParams.set('order', 'name.asc');
-    url.searchParams.set('select', '*');
-
-    const res = await fetch(url.toString(), {
-      headers: { ...this.headers, 'Prefer': 'count=exact', 'Range': `${from}-${to}` },
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_app_products`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ p_query: query.trim(), p_page: page, p_page_size: pageSize }),
     });
     if (!res.ok) throw new Error(`searchProducts failed: ${res.status}`);
-
-    const total = parseInt((res.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0;
-    const products: SupabaseProduct[] = await res.json();
-    return { products, total, page, pageSize };
+    const raw = await res.json();
+    const data = (Array.isArray(raw) ? raw[0] : raw) as SupabaseProductPage | null;
+    return {
+      products: data?.products ?? [],
+      total: data?.total ?? 0,
+      page: data?.page ?? page,
+      pageSize: data?.pageSize ?? pageSize,
+    };
   }
 
   async getProductByBarcode(barcode: string): Promise<SupabaseProduct | null> {
