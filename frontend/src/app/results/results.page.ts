@@ -33,12 +33,14 @@ export class ResultsPage implements OnInit {
   public loading = false;
 
   private slug = '';
+  private queryStr = '';
   private nextPageRequested = false;
   private resultsSoFar = 0;
   private page = 0;
   private resultsTotal = 0;
   private pageSize = 24;
   private userAllergenIds: string[] = [];
+  private navState: Record<string, unknown> | null = null;
 
   @ViewChild(IonContent) content: IonContent | undefined;
 
@@ -50,7 +52,14 @@ export class ResultsPage implements OnInit {
     private compatibility: CompatibilityService,
   ) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Capture nav state here while getCurrentNavigation() is still active
+    const nav = this.router.getCurrentNavigation();
+    const state = nav?.extras?.state;
+    if (state) {
+      this.navState = JSON.parse(JSON.stringify(state));
+    }
+  }
 
   async ionViewWillEnter(): Promise<void> {
     try {
@@ -68,15 +77,15 @@ export class ResultsPage implements OnInit {
       this.userAllergenIds = [...allergies, ...conditions].map(s => s.toLowerCase());
       this.compatibility.setWarnings({ allergies, conditions, diets });
 
-      let nav = this.router.getCurrentNavigation() ?? this.router.lastSuccessfulNavigation;
-      if (!nav?.extras?.state) { this.loading = false; return; }
+      const state = this.navState;
+      if (!state) { this.loading = false; return; }
 
-      const state = JSON.parse(JSON.stringify(nav.extras.state));
-      this.category = state['category'] || '';
-      this.slug = state['slug'] || '';
-      const query: string = state['query'] || '';
+      this.category = (state['category'] as string) || '';
+      this.slug = (state['slug'] as string) || '';
+      const query: string = (state['query'] as string) || '';
+      this.queryStr = query;
 
-      const supabaseResults: SupabaseProductPage | null = state['supabaseResults'];
+      const supabaseResults = state['supabaseResults'] as SupabaseProductPage | null;
       if (supabaseResults?.products?.length) {
         this.products = supabaseResults.products;
         this.resultsTotal = supabaseResults.total;
@@ -84,7 +93,6 @@ export class ResultsPage implements OnInit {
         this.page = supabaseResults.page || 0;
         this.pageSize = supabaseResults.pageSize || 24;
       } else {
-        // No pre-loaded results — fetch now (lazy load on the results page)
         let result: SupabaseProductPage;
         if (this.slug) {
           result = await this.supabaseProducts.getProductsByCategory(this.slug, 0, this.pageSize);
@@ -185,7 +193,7 @@ export class ResultsPage implements OnInit {
       const nextPage = this.page + 1;
       const newResults = this.slug
         ? await this.supabaseProducts.getProductsByCategory(this.slug, nextPage, this.pageSize)
-        : await this.supabaseProducts.searchProducts(this.category, nextPage, this.pageSize);
+        : await this.supabaseProducts.searchProducts(this.queryStr, nextPage, this.pageSize);
       for (const product of newResults.products) {
         this.products.push(product);
       }
