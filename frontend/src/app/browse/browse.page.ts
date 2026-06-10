@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { AppConfig } from '../app.config';
-import { NavController, LoadingController, LoadingOptions, ModalController } from '@ionic/angular';
+import { NavController, ModalController } from '@ionic/angular';
 import { NavigationExtras } from '@angular/router';
 import { SearchProductModalComponent } from './search-productModal.page';
-import { SupabaseProductService, SupabaseCategory, SupabaseProductPage } from '../util/supabase-product.service';
+import { SupabaseProductService, SupabaseCategory } from '../util/supabase-product.service';
 
 @Component({
   selector: 'app-browse',
@@ -12,7 +12,6 @@ import { SupabaseProductService, SupabaseCategory, SupabaseProductPage } from '.
 })
 export class BrowsePage implements OnInit {
 
-  loading: HTMLIonLoadingElement | null = null;
   public categories: SupabaseCategory[] = AppConfig.categories.mainCategories.map(c => ({
     id: c.tag,
     slug: c.tag,
@@ -24,7 +23,6 @@ export class BrowsePage implements OnInit {
 
   constructor(
     public navCtrl: NavController,
-    private loadingCtrl: LoadingController,
     private modalCtrl: ModalController,
     private supabaseProducts: SupabaseProductService,
   ) {}
@@ -36,16 +34,11 @@ export class BrowsePage implements OnInit {
     } catch { /* fallback to AppConfig */ }
   }
 
-  async browseProducts(slug: string, displayName: string) {
-    try {
-      await this.presentLoading(`Loading ${displayName}…`);
-      const result: SupabaseProductPage = await this.supabaseProducts.getProductsByCategory(slug);
-      await this.dismissLoading();
-      this.pushToResultsPage(result, displayName, slug);
-    } catch (error) {
-      await this.dismissLoading();
-      console.error(`BrowsePage.browseProducts Error: ${JSON.stringify(error)}`);
-    }
+  browseProducts(slug: string, displayName: string) {
+    const navExtras: NavigationExtras = {
+      state: { supabaseResults: null, category: displayName, slug }
+    };
+    this.navCtrl.navigateForward('tabs/results', navExtras);
   }
 
   async openSearch() {
@@ -63,33 +56,11 @@ export class BrowsePage implements OnInit {
     if (data.type === 'category') {
       this.browseProducts(data.tag, data.displayName);
     } else if (data.type === 'search') {
-      try {
-        await this.presentLoading('Searching…');
-        const result = await this.supabaseProducts.searchProducts(data.query);
-        await this.dismissLoading();
-        this.pushToResultsPage(result, `"${data.query}"`, '');
-      } catch (error) {
-        await this.dismissLoading();
-        console.error(`BrowsePage.openSearch Error: ${JSON.stringify(error)}`);
-      }
+      const navExtras: NavigationExtras = {
+        state: { supabaseResults: null, category: `"${data.query}"`, slug: '', query: data.query }
+      };
+      this.navCtrl.navigateForward('tabs/results', navExtras);
     }
   }
-
-  private pushToResultsPage(result: SupabaseProductPage, category: string, slug: string): void {
-    const navExtras: NavigationExtras = {
-      state: { supabaseResults: result, category, slug }
-    };
-    this.navCtrl.navigateForward('tabs/results', navExtras);
-  }
-
-  private async presentLoading(message: string) {
-    await this.dismissLoading();
-    const loadingOpts: LoadingOptions = { message, showBackdrop: true, spinner: 'circular', cssClass: 'loading-modal' };
-    this.loading = await this.loadingCtrl.create(loadingOpts);
-    this.loading.present();
-  }
-
-  async dismissLoading() {
-    await this.loading?.dismiss();
-  }
 }
+

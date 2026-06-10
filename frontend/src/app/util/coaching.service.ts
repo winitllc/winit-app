@@ -14,6 +14,7 @@ export interface Professional {
   email: string | null;
   website_url: string | null;
   created_at: string;
+  meal_plan_count: number;
 }
 
 export interface MealPlan {
@@ -58,11 +59,16 @@ export class CoachingService {
 
   async getProfessionals(): Promise<Professional[]> {
     const url = new URL(`${SUPABASE_URL}/rest/v1/professionals`);
-    url.searchParams.set('select', '*');
+    url.searchParams.set('select', '*,meal_plans(count)');
+    url.searchParams.set('status', 'eq.approved');
     url.searchParams.set('order', 'name.asc');
     const res = await fetch(url.toString(), { headers: this.headers });
     if (!res.ok) throw new Error(`getProfessionals failed: ${res.status}`);
-    return res.json();
+    const rows: any[] = await res.json();
+    return rows.map(r => ({
+      ...r,
+      meal_plan_count: Array.isArray(r['meal_plans']) ? (r['meal_plans'][0]?.count ?? 0) : 0,
+    }));
   }
 
   async getMealPlans(professionalId: string): Promise<MealPlan[]> {

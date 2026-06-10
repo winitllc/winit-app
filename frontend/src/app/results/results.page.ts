@@ -74,14 +74,30 @@ export class ResultsPage implements OnInit {
       const state = JSON.parse(JSON.stringify(nav.extras.state));
       this.category = state['category'] || '';
       this.slug = state['slug'] || '';
+      const query: string = state['query'] || '';
 
-      const supabaseResults: SupabaseProductPage = state['supabaseResults'];
+      const supabaseResults: SupabaseProductPage | null = state['supabaseResults'];
       if (supabaseResults?.products?.length) {
         this.products = supabaseResults.products;
         this.resultsTotal = supabaseResults.total;
         this.resultsSoFar = supabaseResults.products.length;
         this.page = supabaseResults.page || 0;
         this.pageSize = supabaseResults.pageSize || 24;
+      } else {
+        // No pre-loaded results — fetch now (lazy load on the results page)
+        let result: SupabaseProductPage;
+        if (this.slug) {
+          result = await this.supabaseProducts.getProductsByCategory(this.slug, 0, this.pageSize);
+        } else if (query) {
+          result = await this.supabaseProducts.searchProducts(query, 0, this.pageSize);
+        } else {
+          this.loading = false;
+          return;
+        }
+        this.products = result.products;
+        this.resultsTotal = result.total;
+        this.resultsSoFar = result.products.length;
+        this.page = 0;
       }
     } catch (error) {
       console.error(`ResultsPage.ionViewWillEnter Error: ${JSON.stringify(error)}`);

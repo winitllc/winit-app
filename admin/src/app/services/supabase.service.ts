@@ -2,6 +2,23 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 
 export type ProductStatus = 'pending' | 'approved' | 'rejected';
+export type CoachStatus = 'pending' | 'approved' | 'blocked';
+
+export interface CoachRow {
+  id: string;
+  name: string;
+  slug: string;
+  title: string;
+  bio: string;
+  photo_url: string;
+  specialties: string[];
+  email: string;
+  website_url: string;
+  status: CoachStatus;
+  is_active: boolean;
+  created_at: string;
+  meal_plan_count: number;
+}
 
 export interface Product {
   id: string;
@@ -256,5 +273,32 @@ export class SupabaseService {
 
   async setUserActive(userId: string, active: boolean): Promise<void> {
     await this.patch('winit_profiles', { is_active: active }, `id=eq.${userId}`);
+  }
+
+  async getProfessionals(opts: { status?: string; search?: string; page?: number; pageSize?: number } = {}): Promise<{ professionals: CoachRow[]; total: number }> {
+    const { status, search, page = 0, pageSize = 25 } = opts;
+    const url = new URL(`${this.url}/rest/v1/professionals`);
+    let select = '*,meal_plans(count)';
+    url.searchParams.set('select', select);
+    if (status) url.searchParams.set('status', `eq.${status}`);
+    if (search) url.searchParams.set('or', `(name.ilike.*${search}*,email.ilike.*${search}*)`);
+    url.searchParams.set('order', 'created_at.desc');
+    url.searchParams.set('limit', String(pageSize));
+    url.searchParams.set('offset', String(page * pageSize));
+    const res = await fetch(url.toString(), {
+      headers: { ...this.headers, 'Prefer': 'count=exact' },
+    });
+    if (!res.ok) throw new Error(`getProfessionals failed: ${res.status}`);
+    const total = parseInt((res.headers.get('Content-Range') || '').split('/')[1] ?? '0', 10) || 0;
+    const rows: any[] = await res.json();
+    const professionals: CoachRow[] = rows.map(r => ({
+      ...r,
+      meal_plan_count: Array.isArray(r['meal_plans']) ? (r['meal_plans'][0]?.count ?? 0) : 0,
+    }));
+    return { professionals, total };
+  }
+
+  async setProfessionalStatus(id: string, status: CoachStatus): Promise<void> {
+    await this.patch('professionals', { status }, `id=eq.${id}`);
   }
 }

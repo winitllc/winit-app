@@ -225,6 +225,23 @@
 .card-footer {
   border-top: 1px solid #f1f5f9;
   padding-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.meal-plan-stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #64748b;
+
+  ion-icon {
+    font-size: 0.95rem;
+    color: #94a3b8;
+  }
 }
 
 .footer-cta {

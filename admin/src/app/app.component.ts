@@ -41,6 +41,10 @@ import { CommonModule } from '@angular/common';
             <mat-icon matListItemIcon>download</mat-icon>
             <span matListItemTitle>Import</span>
           </a>
+          <a mat-list-item routerLink="/coaches" routerLinkActive="active-link">
+            <mat-icon matListItemIcon>sports_martial_arts</mat-icon>
+            <span matListItemTitle>Coaches</span>
+          </a>
         </mat-nav-list>
       </mat-sidenav>
 

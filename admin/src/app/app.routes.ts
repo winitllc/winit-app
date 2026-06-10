@@ -22,4 +22,8 @@ export const routes: Routes = [
     path: 'import',
     loadComponent: () => import('./pages/import/import.component').then(m => m.ImportComponent),
   },
+  {
+    path: 'coaches',
+    loadComponent: () => import('./pages/coaches/coaches.component').then(m => m.CoachesAdminComponent),
+  },
 ];
