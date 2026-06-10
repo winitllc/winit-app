@@ -12,7 +12,7 @@ export class CoachesPage implements OnInit {
   loading = true;
   error = false;
 
-  readonly specialtyColors: Record<string, string> = {
+  private readonly specialtyColors: Record<string, string> = {
     'Gluten-Free': '#10b981',
     'Dairy-Free': '#3b82f6',
     'Vegan': '#6b7280',
@@ -42,6 +42,23 @@ export class CoachesPage implements OnInit {
 
   specialtyColor(s: string): string {
     return this.specialtyColors[s] ?? '#64748b';
+  }
+
+  specialtyStyle(s: string): Record<string, string> {
+    const c = this.specialtyColor(s);
+    return { 'background': c + '18', 'color': c, 'border-color': c + '40' };
+  }
+
+  hasSpecialties(pro: Professional): boolean {
+    return pro.specialties.length > 0;
+  }
+
+  visibleSpecialties(pro: Professional): string[] {
+    return pro.specialties.slice(0, 4);
+  }
+
+  extraCount(pro: Professional): number {
+    return pro.specialties.length > 4 ? pro.specialties.length - 4 : 0;
   }
 
   initials(name: string): string {

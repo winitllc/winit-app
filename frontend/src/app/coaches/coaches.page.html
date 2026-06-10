@@ -47,8 +47,7 @@
             *ngIf="pro.photo_url"
             [src]="pro.photo_url"
             [alt]="pro.name"
-            class="avatar"
-            (error)="$any($event.target).style.display='none'">
+            class="avatar">
           <div class="avatar-fallback" *ngIf="!pro.photo_url">
             {{initials(pro.name)}}
           </div>
@@ -70,17 +69,15 @@
 
       <p class="coach-bio" *ngIf="pro.bio">{{pro.bio}}</p>
 
-      <div class="specialties-row" *ngIf="pro.specialties?.length > 0">
+      <div class="specialties-row" *ngIf="hasSpecialties(pro)">
         <span
           class="specialty-chip"
-          *ngFor="let s of pro.specialties.slice(0, 4)"
-          [style.background]="specialtyColor(s) + '18'"
-          [style.color]="specialtyColor(s)"
-          [style.border-color]="specialtyColor(s) + '40'">
+          *ngFor="let s of visibleSpecialties(pro)"
+          [ngStyle]="specialtyStyle(s)">
           {{s}}
         </span>
-        <span class="specialty-more" *ngIf="pro.specialties.length > 4">
-          +{{pro.specialties.length - 4}} more
+        <span class="specialty-more" *ngIf="extraCount(pro) > 0">
+          +{{extraCount(pro)}} more
         </span>
       </div>
 
