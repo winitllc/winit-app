@@ -1,0 +1,149 @@
+<ion-header class="mp-header">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="tabs/coaches" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title class="mp-title">Meal Plans</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="mp-content">
+
+  <!-- No context state -->
+  <div *ngIf="!loadingPlans && (errorPlans || !professional)" class="state-wrap">
+    <div class="state-icon">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+    </div>
+    <p class="state-text">Please select a coach first.</p>
+    <ion-button fill="outline" color="primary" routerLink="/tabs/coaches">Go to Coaches</ion-button>
+  </div>
+
+  <!-- Loading plans -->
+  <div *ngIf="loadingPlans" class="state-wrap">
+    <ion-spinner name="circular" class="state-spinner"></ion-spinner>
+    <p class="state-text">Loading meal plans…</p>
+  </div>
+
+  <!-- Content -->
+  <ng-container *ngIf="!loadingPlans && !errorPlans && professional">
+
+    <!-- Pro Hero -->
+    <div class="pro-hero">
+      <div class="pro-avatar-wrap">
+        <img
+          *ngIf="professional.photo_url"
+          [src]="professional.photo_url"
+          [alt]="professional.name"
+          class="pro-avatar">
+        <div class="pro-avatar-fallback" *ngIf="!professional.photo_url">
+          {{professional.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}}
+        </div>
+      </div>
+      <div class="pro-info">
+        <h2 class="pro-name">{{professional.name}}</h2>
+        <p class="pro-title" *ngIf="professional.title">{{professional.title}}</p>
+        <span class="verified-badge">
+          <ion-icon name="checkmark-circle" class="verified-icon"></ion-icon>
+          Verified
+        </span>
+      </div>
+    </div>
+
+    <!-- Empty plans -->
+    <div *ngIf="plans.length === 0" class="state-wrap">
+      <div class="state-icon">
+        <ion-icon name="document-text-outline"></ion-icon>
+      </div>
+      <p class="state-text">No meal plans available yet.</p>
+    </div>
+
+    <!-- Plan selector -->
+    <div *ngIf="plans.length > 0" class="plan-selector-section">
+      <h3 class="section-label">Select a Plan</h3>
+      <div class="plan-chips-scroll">
+        <div
+          class="plan-chip"
+          *ngFor="let plan of plans"
+          [class.plan-chip-active]="selectedPlan?.id === plan.id"
+          (click)="selectPlan(plan)">
+          <ion-icon name="document-text-outline" class="chip-icon"></ion-icon>
+          {{plan.name}}
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected plan detail -->
+    <div *ngIf="selectedPlan" class="plan-detail">
+      <div class="plan-header-card">
+        <div class="plan-icon-wrap">
+          <ion-icon name="nutrition-outline"></ion-icon>
+        </div>
+        <div class="plan-header-info">
+          <h2 class="plan-name">{{selectedPlan.name}}</h2>
+          <p class="plan-desc" *ngIf="selectedPlan.description">{{selectedPlan.description}}</p>
+        </div>
+      </div>
+
+      <!-- Loading days -->
+      <div *ngIf="loadingDays" class="state-wrap-inline">
+        <ion-spinner name="circular" class="inline-spinner"></ion-spinner>
+        <span>Loading days…</span>
+      </div>
+
+      <!-- Days accordion -->
+      <div *ngIf="!loadingDays && days.length > 0" class="days-list">
+        <div class="days-count">{{days.length}} day{{days.length !== 1 ? 's' : ''}} in this plan</div>
+
+        <div class="day-card" *ngFor="let day of days">
+          <div class="day-header" (click)="toggleDay(day.id)">
+            <div class="day-header-left">
+              <div class="day-badge">{{day.day_number}}</div>
+              <div class="day-header-info">
+                <span class="day-label">{{day.label}}</span>
+                <span class="day-meta">{{foodCount(day)}} item{{foodCount(day) !== 1 ? 's' : ''}}</span>
+              </div>
+            </div>
+            <ion-icon
+              name="chevron-down-outline"
+              class="day-chevron"
+              [class.rotated]="expandedDayId === day.id">
+            </ion-icon>
+          </div>
+
+          <div class="day-body" *ngIf="expandedDayId === day.id">
+            <div
+              class="meal-section"
+              *ngFor="let meal of day.meals"
+              [class.meal-empty]="meal.foods.length === 0">
+
+              <div class="meal-header">
+                <span class="meal-emoji">{{mealIcons[meal.meal_type]}}</span>
+                <span class="meal-label">{{mealLabels[meal.meal_type]}}</span>
+                <span class="meal-count">{{meal.foods.length}}</span>
+              </div>
+
+              <div class="food-list" *ngIf="meal.foods.length > 0">
+                <div class="food-item" *ngFor="let food of meal.foods">
+                  <div class="food-dot"></div>
+                  <div class="food-info">
+                    <span class="food-name">{{food.name}}</span>
+                    <span class="food-notes" *ngIf="food.notes">{{food.notes}}</span>
+                  </div>
+                </div>
+              </div>
+
+              <p class="meal-empty-text" *ngIf="meal.foods.length === 0">Nothing added yet</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty days -->
+      <div *ngIf="!loadingDays && days.length === 0" class="state-wrap-inline">
+        <p class="state-text">No days have been added to this plan yet.</p>
+      </div>
+    </div>
+
+  </ng-container>
+
+</ion-content>

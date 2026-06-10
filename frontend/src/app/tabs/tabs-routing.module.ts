@@ -28,6 +28,14 @@ const routes: Routes = [
         loadChildren: () => import('../results/results.module').then(m => m.ResultsPageModule)
       },
       {
+        path: 'coaches',
+        loadChildren: () => import('../coaches/coaches.module').then(m => m.CoachesPageModule)
+      },
+      {
+        path: 'meal-plans',
+        loadChildren: () => import('../meal-plans/meal-plans.module').then(m => m.MealPlansPageModule)
+      },
+      {
         path: '',
         redirectTo: 'browse',
         pathMatch: 'full'

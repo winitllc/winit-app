@@ -1,0 +1,96 @@
+<ion-header class="coaches-header">
+  <ion-toolbar>
+    <ion-title class="coaches-title">Coaches</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="coaches-content">
+
+  <!-- Hero -->
+  <div class="hero-section">
+    <h1 class="hero-heading">Your <span class="hero-accent">coaching team</span></h1>
+    <p class="hero-sub">Connect with certified nutrition professionals</p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="state-wrap">
+    <ion-spinner name="circular" class="state-spinner"></ion-spinner>
+    <p class="state-text">Loading coaches…</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!loading && error" class="state-wrap">
+    <div class="state-icon error-icon">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+    </div>
+    <p class="state-text">Could not load coaches. Check your connection.</p>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading && !error && professionals.length === 0" class="state-wrap">
+    <div class="state-icon">
+      <ion-icon name="people-outline"></ion-icon>
+    </div>
+    <p class="state-text">No coaches available yet.</p>
+  </div>
+
+  <!-- Cards -->
+  <div *ngIf="!loading && !error && professionals.length > 0" class="coaches-list">
+    <div
+      class="coach-card"
+      *ngFor="let pro of professionals"
+      (click)="viewPlans(pro)">
+
+      <div class="card-top">
+        <div class="avatar-wrap">
+          <img
+            *ngIf="pro.photo_url"
+            [src]="pro.photo_url"
+            [alt]="pro.name"
+            class="avatar"
+            (error)="$any($event.target).style.display='none'">
+          <div class="avatar-fallback" *ngIf="!pro.photo_url">
+            {{initials(pro.name)}}
+          </div>
+        </div>
+
+        <div class="card-info">
+          <h2 class="coach-name">{{pro.name}}</h2>
+          <p class="coach-title" *ngIf="pro.title">{{pro.title}}</p>
+          <div class="verified-badge">
+            <ion-icon name="checkmark-circle" class="verified-icon"></ion-icon>
+            Verified Professional
+          </div>
+        </div>
+
+        <div class="card-arrow">
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </div>
+      </div>
+
+      <p class="coach-bio" *ngIf="pro.bio">{{pro.bio}}</p>
+
+      <div class="specialties-row" *ngIf="pro.specialties?.length > 0">
+        <span
+          class="specialty-chip"
+          *ngFor="let s of pro.specialties.slice(0, 4)"
+          [style.background]="specialtyColor(s) + '18'"
+          [style.color]="specialtyColor(s)"
+          [style.border-color]="specialtyColor(s) + '40'">
+          {{s}}
+        </span>
+        <span class="specialty-more" *ngIf="pro.specialties.length > 4">
+          +{{pro.specialties.length - 4}} more
+        </span>
+      </div>
+
+      <div class="card-footer">
+        <div class="footer-cta">
+          <ion-icon name="nutrition-outline"></ion-icon>
+          View Meal Plans
+        </div>
+      </div>
+    </div>
+  </div>
+
+</ion-content>
