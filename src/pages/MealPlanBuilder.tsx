@@ -68,6 +68,7 @@ export default function MealPlanBuilder() {
           description: '',
           is_public: true,
           share_token: '',
+          slug: '',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           days: [newDay(tempId, 1) as MealPlanDay & { meals: (Meal & { foods: MealFood[] })[] }],

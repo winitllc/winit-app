@@ -156,7 +156,7 @@ export class ProDashboardPage implements OnInit {
 
   async sharePlan(plan: ProMealPlan) {
     if (!this.pro) return;
-    const url = this.proAuth.buildShareUrl(this.pro.slug, plan.id);
+    const url = this.proAuth.buildShareUrl(this.pro.slug, plan.slug);
     try {
       await navigator.clipboard.writeText(url);
       await this.toast('Plan link copied!', 'success');

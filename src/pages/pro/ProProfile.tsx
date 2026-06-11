@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getProfessionalBySlug, getMealPlans, createReferralInvite, Professional, MealPlan } from '../../lib/supabase'
+import { getProfessionalBySlug, getMealPlans, createReferralInvite, recordReferralConversion, Professional, MealPlan } from '../../lib/supabase'
 import styles from './ProProfile.module.css'
 
 const SPECIALTY_COLORS: Record<string, string> = {
@@ -14,6 +14,12 @@ const SPECIALTY_COLORS: Record<string, string> = {
   'Nut-Free': '#f97316',
   'Diabetic-Friendly': '#06b6d4',
   'Heart-Healthy': '#ec4899',
+}
+
+const APP_SCHEME = 'winit://'
+
+function tryOpenApp(slug: string) {
+  window.location.href = `${APP_SCHEME}pro/${slug}`
 }
 
 export default function ProProfile() {
@@ -32,6 +38,22 @@ export default function ProProfile() {
         setPro(p)
         const mp = await getMealPlans(p.id)
         setPlans(mp.filter(m => m.is_public))
+
+        // Track referral click if ?ref= param present
+        const urlParams = new URLSearchParams(window.location.search)
+        const ref = urlParams.get('ref')
+        if (ref) {
+          try {
+            const inviteRes = await fetch(
+              `https://twosrdqyaxhdfyqgefjm.supabase.co/rest/v1/referral_invites?token=eq.${ref}&select=*`,
+              { headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3b3NyZHF5YXhoZGZ5cWdlZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMDQzMDksImV4cCI6MjA5NTU4MDMwOX0.qJ8ZQaMobmuL29-A3swShTbF-D7SVf1oUK9LU7vO7RE', Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3b3NyZHF5YXhoZGZ5cWdlZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMDQzMDksImV4cCI6MjA5NTU4MDMwOX0.qJ8ZQaMobmuL29-A3swShTbF-D7SVf1oUK9LU7vO7RE` } }
+            )
+            if (inviteRes.ok) {
+              const invites = await inviteRes.json()
+              if (invites?.[0]) await recordReferralConversion(invites[0].id, invites[0].professional_id, 'invited')
+            }
+          } catch { /* non-critical */ }
+        }
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
@@ -41,7 +63,7 @@ export default function ProProfile() {
     if (!pro) return
     try {
       const invite = await createReferralInvite(pro.id)
-      const link = `${window.location.origin}/invite/${invite.token}`
+      const link = `${window.location.origin}/pro/${pro.slug}?ref=${invite.token}`
       await navigator.clipboard.writeText(link)
       alert('Profile invite link copied to clipboard!')
     } catch {
@@ -53,7 +75,7 @@ export default function ProProfile() {
     if (!pro) return
     try {
       const invite = await createReferralInvite(pro.id, plan.id)
-      const link = `${window.location.origin}/invite/${invite.token}`
+      const link = `${window.location.origin}/pro/${pro.slug}/meal-plan/${plan.slug}?ref=${invite.token}`
       await navigator.clipboard.writeText(link)
       setCopiedPlanId(plan.id)
       setTimeout(() => setCopiedPlanId(null), 2000)
@@ -107,6 +129,10 @@ export default function ProProfile() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
               Share Profile
             </button>
+            <button className={styles.shareBtn} style={{ background: 'var(--neutral-800)' }} onClick={() => tryOpenApp(pro.slug)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              Open in App
+            </button>
           </div>
         </header>
 
@@ -150,7 +176,7 @@ export default function ProProfile() {
                         {plan.description && <p className={styles.planDesc}>{plan.description}</p>}
                       </div>
                       <div className={styles.planActions}>
-                        <Link to={`/plan/${plan.share_token}`} className={styles.planViewBtn}>
+                        <Link to={`/pro/${pro.slug}/meal-plan/${plan.slug}`} className={styles.planViewBtn}>
                           View Plan
                         </Link>
                         <button
@@ -200,7 +226,7 @@ export default function ProProfile() {
               </div>
               <h3 className={styles.appCardTitle}>Try WINIT App</h3>
               <p className={styles.appCardText}>Scan food labels, track your diet, and get personalized recommendations.</p>
-              <button className={styles.appCardBtn}>Download App</button>
+              <button className={styles.appCardBtn} onClick={() => tryOpenApp(pro.slug)}>Open in App</button>
             </div>
           </aside>
         </div>

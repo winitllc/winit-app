@@ -40,6 +40,7 @@ export interface ProMealPlan {
   name: string;
   description: string | null;
   is_public: boolean;
+  slug: string;
   created_at: string;
 }
 
@@ -148,7 +149,7 @@ export class ProAuthService {
 
   async getMealPlans(proId: string): Promise<ProMealPlan[]> {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/meal_plans?professional_id=eq.${proId}&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/meal_plans?professional_id=eq.${proId}&order=created_at.desc&select=id,name,description,is_public,slug,created_at`,
       { headers: { ...this.authHeaders, 'apikey': SUPABASE_ANON_KEY } }
     );
     if (!res.ok) return [];
@@ -189,8 +190,8 @@ export class ProAuthService {
     });
   }
 
-  buildShareUrl(slug: string, planId?: string): string {
+  buildShareUrl(slug: string, planSlug?: string): string {
     const base = `https://winit.com/pro/${slug}`;
-    return planId ? `${base}?plan=${planId}` : base;
+    return planSlug ? `${base}/meal-plan/${planSlug}` : base;
   }
 }

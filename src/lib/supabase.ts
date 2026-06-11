@@ -625,6 +625,7 @@ export interface MealPlan {
   description: string
   is_public: boolean
   share_token: string
+  slug: string
   created_at: string
   updated_at: string
 }
@@ -714,6 +715,26 @@ export async function getMealPlans(professionalId: string): Promise<MealPlan[]> 
 export async function getMealPlanByToken(token: string): Promise<MealPlan | null> {
   const rows = await get<MealPlan[]>('meal_plans', { share_token: `eq.${token}`, select: '*' })
   return rows?.[0] ?? null
+}
+
+export interface MealPlanPublic extends MealPlan {
+  professional_name: string
+  professional_slug: string
+  professional_title: string | null
+  professional_photo_url: string | null
+}
+
+export async function getMealPlanByProSlug(proSlug: string, planSlug: string): Promise<MealPlanPublic | null> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_meal_plan_by_pro_slug`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ p_pro_slug: proSlug, p_plan_slug: planSlug }),
+  })
+  if (!res.ok) return null
+  const data = await res.json()
+  if (!data) return null
+  // PostgREST may return array or scalar
+  return (Array.isArray(data) ? data[0] : data) as MealPlanPublic | null
 }
 
 export async function createMealPlan(data: Partial<MealPlan>): Promise<MealPlan> {

@@ -218,7 +218,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: plans } = await admin
       .from("meal_plans")
-      .select("id, name, description, is_public, created_at")
+      .select("id, name, description, is_public, slug, created_at")
       .eq("professional_id", pro.id)
       .eq("is_public", true)
       .order("created_at", { ascending: false });

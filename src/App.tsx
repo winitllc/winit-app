@@ -13,6 +13,7 @@ import MealPlans from './pages/MealPlans'
 import MealPlanBuilder from './pages/MealPlanBuilder'
 import MealPlanView from './pages/MealPlanView'
 import ProProfile from './pages/pro/ProProfile'
+import MealPlanPage from './pages/pro/MealPlanPage'
 import ReferralDashboard from './pages/ReferralDashboard'
 import styles from './App.module.css'
 
@@ -22,6 +23,7 @@ export default function App() {
       <Routes>
         {/* Public routes — no sidebar */}
         <Route path="/pro/:slug" element={<ProProfile />} />
+        <Route path="/pro/:slug/meal-plan/:planSlug" element={<MealPlanPage />} />
         <Route path="/plan/:token" element={<MealPlanView />} />
         <Route path="/invite/:token" element={<MealPlanView />} />
 
