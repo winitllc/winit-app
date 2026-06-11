@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Router, NavigationExtras } from '@angular/router';
+import { Router, NavigationExtras, ActivatedRoute } from '@angular/router';
 import { NavController, InfiniteScrollCustomEvent, IonContent } from '@ionic/angular';
 import { CompatibilityService } from '../util/compatibility.service';
 import { SupabaseProduct, SupabaseProductPage, SupabaseProductService } from '../util/supabase-product.service';
@@ -40,26 +40,19 @@ export class ResultsPage implements OnInit {
   private resultsTotal = 0;
   private pageSize = 24;
   private userAllergenIds: string[] = [];
-  private navState: Record<string, unknown> | null = null;
 
   @ViewChild(IonContent) content: IonContent | undefined;
 
   constructor(
     private navCtrl: NavController,
     private router: Router,
+    private route: ActivatedRoute,
     private winitAuth: WinitAuthService,
     private supabaseProducts: SupabaseProductService,
     private compatibility: CompatibilityService,
   ) {}
 
-  ngOnInit() {
-    // Capture nav state here while getCurrentNavigation() is still active
-    const nav = this.router.getCurrentNavigation();
-    const state = nav?.extras?.state;
-    if (state) {
-      this.navState = JSON.parse(JSON.stringify(state));
-    }
-  }
+  ngOnInit() {}
 
   async ionViewWillEnter(): Promise<void> {
     try {
@@ -77,36 +70,24 @@ export class ResultsPage implements OnInit {
       this.userAllergenIds = [...allergies, ...conditions].map(s => s.toLowerCase());
       this.compatibility.setWarnings({ allergies, conditions, diets });
 
-      const state = this.navState;
-      if (!state) { this.loading = false; return; }
-
-      this.category = (state['category'] as string) || '';
-      this.slug = (state['slug'] as string) || '';
-      const query: string = (state['query'] as string) || '';
+      const params = this.route.snapshot.queryParamMap;
+      this.slug = params.get('slug') ?? '';
+      this.category = params.get('category') ?? '';
+      const query = params.get('query') ?? '';
       this.queryStr = query;
 
-      const supabaseResults = state['supabaseResults'] as SupabaseProductPage | null;
-      if (supabaseResults?.products?.length) {
-        this.products = supabaseResults.products;
-        this.resultsTotal = supabaseResults.total;
-        this.resultsSoFar = supabaseResults.products.length;
-        this.page = supabaseResults.page || 0;
-        this.pageSize = supabaseResults.pageSize || 24;
+      if (!this.slug && !query) { this.loading = false; return; }
+
+      let result: SupabaseProductPage;
+      if (this.slug) {
+        result = await this.supabaseProducts.getProductsByCategory(this.slug, 0, this.pageSize);
       } else {
-        let result: SupabaseProductPage;
-        if (this.slug) {
-          result = await this.supabaseProducts.getProductsByCategory(this.slug, 0, this.pageSize);
-        } else if (query) {
-          result = await this.supabaseProducts.searchProducts(query, 0, this.pageSize);
-        } else {
-          this.loading = false;
-          return;
-        }
-        this.products = result.products;
-        this.resultsTotal = result.total;
-        this.resultsSoFar = result.products.length;
-        this.page = 0;
+        result = await this.supabaseProducts.searchProducts(query, 0, this.pageSize);
       }
+      this.products = result.products;
+      this.resultsTotal = result.total;
+      this.resultsSoFar = result.products.length;
+      this.page = 0;
     } catch (error) {
       console.error(`ResultsPage.ionViewWillEnter Error: ${JSON.stringify(error)}`);
     } finally {

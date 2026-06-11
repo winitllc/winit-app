@@ -82,6 +82,8 @@ export class WinitAuthService {
   }
 
   async restoreSession(): Promise<WinitSession | null> {
+    const loggedOut = await this.storage.get('winit_logged_out');
+    if (loggedOut) return null;
     const token = await this.storage.get('winit_access_token');
     const refresh = await this.storage.get('winit_refresh_token');
     if (!token) return null;
@@ -115,6 +117,7 @@ export class WinitAuthService {
 
   async logout(): Promise<void> {
     WinitAuthService.AccessToken = '';
+    await this.storage.set('winit_logged_out', true);
     await this.storage.remove('winit_access_token');
     await this.storage.remove('winit_refresh_token');
     await this.storage.remove('winit_user');
@@ -122,6 +125,7 @@ export class WinitAuthService {
 
   private async persistSession(session: WinitSession): Promise<void> {
     WinitAuthService.AccessToken = session.access_token;
+    await this.storage.remove('winit_logged_out');
     await this.storage.set('winit_access_token', session.access_token);
     await this.storage.set('winit_refresh_token', session.refresh_token);
     await this.storage.set('winit_user', session.user);

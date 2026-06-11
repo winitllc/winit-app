@@ -80,7 +80,7 @@ export class ProfilePage {
   private logout(): void {
     this.winitAuth.logout().then(async () => {
       await this.storage.remove('accessToken');
-      this.navCtrl.navigateRoot('');
+      this.navCtrl.navigateRoot('/signin');
     });
   }
 }

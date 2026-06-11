@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AppConfig } from '../app.config';
 import { NavController, ModalController } from '@ionic/angular';
-import { NavigationExtras } from '@angular/router';
 import { SearchProductModalComponent } from './search-productModal.page';
 import { SupabaseProductService, SupabaseCategory } from '../util/supabase-product.service';
 
@@ -35,10 +34,7 @@ export class BrowsePage implements OnInit {
   }
 
   browseProducts(slug: string, displayName: string) {
-    const navExtras: NavigationExtras = {
-      state: { supabaseResults: null, category: displayName, slug }
-    };
-    this.navCtrl.navigateForward('tabs/results', navExtras);
+    this.navCtrl.navigateForward(`tabs/results?slug=${encodeURIComponent(slug)}&category=${encodeURIComponent(displayName)}`);
   }
 
   async openSearch() {
@@ -56,10 +52,7 @@ export class BrowsePage implements OnInit {
     if (data.type === 'category') {
       this.browseProducts(data.tag, data.displayName);
     } else if (data.type === 'search') {
-      const navExtras: NavigationExtras = {
-        state: { supabaseResults: null, category: `"${data.query}"`, slug: '', query: data.query }
-      };
-      this.navCtrl.navigateForward('tabs/results', navExtras);
+      this.navCtrl.navigateForward(`tabs/results?query=${encodeURIComponent(data.query)}&category=${encodeURIComponent('"' + data.query + '"')}`);
     }
   }
 }
