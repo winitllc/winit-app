@@ -614,6 +614,7 @@ export interface Professional {
   website_url: string
   email: string
   is_active: boolean
+  status: 'pending' | 'approved' | 'blocked'
   created_at: string
   updated_at: string
 }

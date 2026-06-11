@@ -186,6 +186,15 @@ Deno.serve(async (req: Request) => {
     const { data: { user }, error: userErr } = await client.auth.getUser();
     if (userErr || !user) return json({ error: "Unauthorized" }, 401);
 
+    const admin = adminClient();
+    const { data: existing, error: fetchErr } = await admin
+      .from("professionals")
+      .select("status")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+    if (fetchErr || !existing) return json({ error: "Profile not found" }, 404);
+    if (existing.status !== "approved") return json({ error: "Account not approved" }, 403);
+
     const body = await req.json();
     const allowed = ["name", "title", "bio", "specialties", "certifications", "website", "photo_url"];
     const updates: Record<string, unknown> = {};
@@ -193,7 +202,6 @@ Deno.serve(async (req: Request) => {
       if (key in body) updates[key] = body[key];
     }
 
-    const admin = adminClient();
     const { data: pro, error } = await admin
       .from("professionals")
       .update(updates)

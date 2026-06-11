@@ -18,6 +18,82 @@
   p { margin: 0; font-size: 0.9rem; }
 }
 
+/* Status Gate (pending / blocked screens) */
+.status-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 40px 32px;
+  text-align: center;
+  gap: 12px;
+}
+
+.status-gate-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+
+  ion-icon { font-size: 2rem; }
+
+  &.pending-icon { background: rgba(251, 191, 36, 0.12); color: #d97706; }
+  &.blocked-icon { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+}
+
+.status-gate-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.status-gate-body {
+  font-size: 0.88rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 300px;
+}
+
+.status-gate-meta { margin-top: 4px; }
+
+/* Status Pills */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 100px;
+  padding: 4px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  ion-icon { font-size: 0.8rem; }
+}
+
+.status-approved { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
+.status-pending  { background: rgba(251, 191, 36, 0.15); color: #d97706; }
+.status-blocked  { background: rgba(239, 68, 68, 0.1);  color: #dc2626; }
+
+.ghost-status-btn {
+  margin-top: 8px;
+  height: 42px;
+  padding: 0 24px;
+  background: none;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 11px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+}
+
 /* Hero */
 .dash-hero {
   background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 100%);
@@ -53,20 +129,6 @@
 .hero-name { font-size: 1.15rem; font-weight: 800; color: #fff; margin: 0 0 3px; }
 .hero-title { font-size: 0.82rem; color: rgba(255,255,255,0.65); margin: 0 0 8px; }
 
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 100px;
-  padding: 3px 10px;
-  font-size: 0.72rem;
-  font-weight: 700;
-
-  ion-icon { font-size: 0.8rem; }
-
-  &.badge-pending { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
-  &.badge-approved { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
-}
 
 /* Stats */
 .stats-row {
