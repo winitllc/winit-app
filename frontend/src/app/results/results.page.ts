@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Router, NavigationExtras } from '@angular/router';
+import { NavigationExtras } from '@angular/router';
 import { NavController, InfiniteScrollCustomEvent, IonContent } from '@ionic/angular';
 import { CompatibilityService } from '../util/compatibility.service';
 import { SupabaseProduct, SupabaseProductPage, SupabaseProductService } from '../util/supabase-product.service';
@@ -45,7 +45,6 @@ export class ResultsPage implements OnInit {
 
   constructor(
     private navCtrl: NavController,
-    private router: Router,
     private winitAuth: WinitAuthService,
     private supabaseProducts: SupabaseProductService,
     private compatibility: CompatibilityService,
@@ -69,14 +68,15 @@ export class ResultsPage implements OnInit {
       this.userAllergenIds = [...allergies, ...conditions].map(s => s.toLowerCase());
       this.compatibility.setWarnings({ allergies, conditions, diets });
 
-      // Use Router.url directly — ActivatedRoute.snapshot is stale when Ionic
-      // reuses a cached page component (ionViewWillEnter fires but snapshot
-      // still holds the previous navigation's params)
-      const currentUrl = new URL('http://x' + this.router.url);
-      this.slug = currentUrl.searchParams.get('slug') ?? '';
-      this.category = currentUrl.searchParams.get('category') ?? '';
-      const query = currentUrl.searchParams.get('query') ?? '';
+      // Read directly from the browser address bar — immune to Angular/Ionic
+      // lifecycle timing issues that make ActivatedRoute.snapshot and Router.url stale
+      const searchParams = new URLSearchParams(window.location.search);
+      this.slug = searchParams.get('slug') ?? '';
+      this.category = searchParams.get('category') ?? '';
+      const query = searchParams.get('query') ?? '';
       this.queryStr = query;
+
+      console.log(`[Results] slug="${this.slug}" category="${this.category}" query="${query}" | window.location="${window.location.href}"`);
 
       if (!this.slug && !query) { this.loading = false; return; }
 
