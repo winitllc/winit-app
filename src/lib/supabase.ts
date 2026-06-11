@@ -839,6 +839,35 @@ export async function getReferralStats(professionalId: string): Promise<{
   }
 }
 
+export type ProReferralStats = {
+  invited: number
+  downloaded: number
+  active: number
+  total_clicks: number
+}
+
+export async function getAllReferralStats(): Promise<Record<string, ProReferralStats>> {
+  const [conversions, invites] = await Promise.all([
+    get<{ professional_id: string; status: string }[]>('referral_conversions', { select: 'professional_id,status' }),
+    get<{ professional_id: string; click_count: number }[]>('referral_invites', { select: 'professional_id,click_count' }),
+  ])
+  const stats: Record<string, ProReferralStats> = {}
+  const ensure = (id: string) => {
+    if (!stats[id]) stats[id] = { invited: 0, downloaded: 0, active: 0, total_clicks: 0 }
+  }
+  for (const c of conversions) {
+    ensure(c.professional_id)
+    if (c.status === 'invited') stats[c.professional_id].invited++
+    else if (c.status === 'downloaded') stats[c.professional_id].downloaded++
+    else if (c.status === 'active') stats[c.professional_id].active++
+  }
+  for (const i of invites) {
+    ensure(i.professional_id)
+    stats[i.professional_id].total_clicks += i.click_count || 0
+  }
+  return stats
+}
+
 export async function recordReferralConversion(inviteId: string, professionalId: string, status: 'invited' | 'downloaded' | 'active' = 'invited'): Promise<void> {
   await post('referral_conversions', {
     invite_id: inviteId,

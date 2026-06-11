@@ -1,223 +1,289 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
-import { getProfessionals, getReferralStats, getMealPlans, Professional, MealPlan } from '../lib/supabase'
+import { Link } from 'react-router-dom'
+import {
+  getProfessionals, getAllReferralStats, getMealPlans,
+  Professional, MealPlan, ProReferralStats,
+} from '../lib/supabase'
 import styles from './ReferralDashboard.module.css'
 
-interface Stats { invited: number; downloaded: number; active: number; total_clicks: number }
+type SortKey = 'name' | 'invited' | 'downloaded' | 'active' | 'conversion'
+
+interface ProRow {
+  pro: Professional
+  stats: ProReferralStats
+}
 
 export default function ReferralDashboard() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const selectedProId = searchParams.get('pro') ?? ''
-
-  const [professionals, setProfessionals] = useState<Professional[]>([])
-  const [plans, setPlans] = useState<MealPlan[]>([])
-  const [stats, setStats] = useState<Stats>({ invited: 0, downloaded: 0, active: 0, total_clicks: 0 })
+  const [rows, setRows] = useState<ProRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [statsLoading, setStatsLoading] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedPlans, setExpandedPlans] = useState<MealPlan[]>([])
+  const [plansLoading, setPlansLoading] = useState(false)
+  const [sort, setSort] = useState<SortKey>('invited')
+  const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc')
 
   useEffect(() => {
-    getProfessionals().then(pros => {
-      setProfessionals(pros)
-      if (!selectedProId && pros.length > 0) {
-        setSearchParams({ pro: pros[0].id }, { replace: true })
-      }
+    Promise.all([getProfessionals(), getAllReferralStats()]).then(([pros, statsMap]) => {
+      setRows(pros.map(pro => ({
+        pro,
+        stats: statsMap[pro.id] ?? { invited: 0, downloaded: 0, active: 0, total_clicks: 0 },
+      })))
     }).finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => {
-    if (!selectedProId) return
-    setStatsLoading(true)
-    Promise.all([
-      getReferralStats(selectedProId),
-      getMealPlans(selectedProId),
-    ]).then(([s, mp]) => {
-      setStats(s)
-      setPlans(mp)
-    }).finally(() => setStatsLoading(false))
-  }, [selectedProId])
+  function toggleSort(key: SortKey) {
+    if (sort === key) setSortDir(d => d === 'desc' ? 'asc' : 'desc')
+    else { setSort(key); setSortDir('desc') }
+  }
 
-  const currentPro = professionals.find(p => p.id === selectedProId)
-  const conversionRate = stats.invited > 0 ? Math.round((stats.active / stats.invited) * 100) : 0
+  async function toggleExpand(proId: string) {
+    if (expandedId === proId) { setExpandedId(null); return }
+    setExpandedId(proId)
+    setExpandedPlans([])
+    setPlansLoading(true)
+    try {
+      const plans = await getMealPlans(proId)
+      setExpandedPlans(plans)
+    } finally {
+      setPlansLoading(false)
+    }
+  }
+
+  const totals = rows.reduce(
+    (acc, { stats }) => ({
+      invited: acc.invited + stats.invited,
+      downloaded: acc.downloaded + stats.downloaded,
+      active: acc.active + stats.active,
+      total_clicks: acc.total_clicks + stats.total_clicks,
+    }),
+    { invited: 0, downloaded: 0, active: 0, total_clicks: 0 },
+  )
+
+  const sorted = [...rows].sort((a, b) => {
+    let va = 0, vb = 0
+    if (sort === 'name') {
+      const cmp = a.pro.name.localeCompare(b.pro.name)
+      return sortDir === 'asc' ? cmp : -cmp
+    }
+    if (sort === 'invited') { va = a.stats.invited; vb = b.stats.invited }
+    else if (sort === 'downloaded') { va = a.stats.downloaded; vb = b.stats.downloaded }
+    else if (sort === 'active') { va = a.stats.active; vb = b.stats.active }
+    else if (sort === 'conversion') {
+      va = a.stats.invited > 0 ? a.stats.active / a.stats.invited : 0
+      vb = b.stats.invited > 0 ? b.stats.active / b.stats.invited : 0
+    }
+    return sortDir === 'desc' ? vb - va : va - vb
+  })
 
   if (loading) return <div className={styles.spinner} />
+
+  const expandedPro = rows.find(r => r.pro.id === expandedId)?.pro ?? null
 
   return (
     <div>
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Referral Dashboard</h1>
-          <p className={styles.subtitle}>Track client invites, downloads, and activations</p>
+          <p className={styles.subtitle}>App downloads and conversions from all practitioners</p>
         </div>
       </div>
 
-      {professionals.length === 0 ? (
+      {rows.length === 0 ? (
         <div className={styles.empty}>
           <div className={styles.emptyIcon}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
           </div>
           <p>No professionals yet.</p>
-          <Link to="/professionals" className={styles.btnPrimary}>Add a Professional</Link>
+          <Link to="/professionals" className={styles.btnPrimary}>Go to Professionals</Link>
         </div>
       ) : (
         <>
-          <div className={styles.proTabs}>
-            {professionals.map(pro => (
-              <button
-                key={pro.id}
-                className={`${styles.proTab} ${selectedProId === pro.id ? styles.proTabActive : ''}`}
-                onClick={() => setSearchParams({ pro: pro.id })}
-              >
-                {pro.photo_url ? (
-                  <img src={pro.photo_url} alt={pro.name} className={styles.proTabAvatar} />
-                ) : (
-                  <div className={styles.proTabAvatarFallback}>
-                    {pro.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </div>
-                )}
-                <span>{pro.name}</span>
-              </button>
-            ))}
+          {/* Totals */}
+          <div className={styles.totalsRow}>
+            <TotalCard label="Total Invites" value={totals.invited} color="primary" />
+            <TotalCard label="App Downloads" value={totals.downloaded} color="success" />
+            <TotalCard label="Active Users" value={totals.active} color="teal" />
+            <TotalCard label="Link Clicks" value={totals.total_clicks} color="orange" />
           </div>
 
-          {statsLoading ? (
-            <div className={styles.spinner} />
-          ) : (
-            <>
-              {/* Stats grid */}
-              <div className={styles.statsGrid}>
-                <StatCard
-                  icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>}
-                  label="Total Invited"
-                  value={stats.invited}
-                  color="primary"
-                  description="Clients who opened an invite link"
-                />
-                <StatCard
-                  icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}
-                  label="App Downloads"
-                  value={stats.downloaded}
-                  color="success"
-                  description="Clients who downloaded the app"
-                />
-                <StatCard
-                  icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>}
-                  label="Active Users"
-                  value={stats.active}
-                  color="teal"
-                  description="Clients actively using the app"
-                />
-                <StatCard
-                  icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
-                  label="Link Clicks"
-                  value={stats.total_clicks}
-                  color="orange"
-                  description="Total invite link opens"
-                />
-              </div>
+          {/* Table */}
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.th}>
+                    <SortBtn label="Practitioner" col="name" active={sort} dir={sortDir} onClick={toggleSort} />
+                  </th>
+                  <th className={styles.th}>Status</th>
+                  <th className={`${styles.th} ${styles.thNum}`}>
+                    <SortBtn label="Invites" col="invited" active={sort} dir={sortDir} onClick={toggleSort} />
+                  </th>
+                  <th className={`${styles.th} ${styles.thNum}`}>
+                    <SortBtn label="Downloads" col="downloaded" active={sort} dir={sortDir} onClick={toggleSort} />
+                  </th>
+                  <th className={`${styles.th} ${styles.thNum}`}>
+                    <SortBtn label="Active" col="active" active={sort} dir={sortDir} onClick={toggleSort} />
+                  </th>
+                  <th className={`${styles.th} ${styles.thNum}`}>
+                    <SortBtn label="Conversion" col="conversion" active={sort} dir={sortDir} onClick={toggleSort} />
+                  </th>
+                  <th className={styles.th}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map(({ pro, stats }) => {
+                  const convRate = stats.invited > 0 ? Math.round((stats.active / stats.invited) * 100) : 0
+                  const isExpanded = expandedId === pro.id
+                  return (
+                    <>
+                      <tr key={pro.id} className={`${styles.tr} ${isExpanded ? styles.trExpanded : ''}`}>
+                        <td className={styles.td}>
+                          <div className={styles.proCell}>
+                            {pro.photo_url ? (
+                              <img src={pro.photo_url} alt={pro.name} className={styles.avatar} />
+                            ) : (
+                              <div className={styles.avatarFallback}>
+                                {pro.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <div className={styles.proName}>{pro.name}</div>
+                              {pro.title && <div className={styles.proTitle}>{pro.title}</div>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className={styles.td}>
+                          <span className={`${styles.statusPill} ${styles[`status_${pro.status}`]}`}>
+                            {pro.status}
+                          </span>
+                        </td>
+                        <td className={`${styles.td} ${styles.tdNum}`}>{stats.invited.toLocaleString()}</td>
+                        <td className={`${styles.td} ${styles.tdNum}`}>{stats.downloaded.toLocaleString()}</td>
+                        <td className={`${styles.td} ${styles.tdNum}`}>{stats.active.toLocaleString()}</td>
+                        <td className={`${styles.td} ${styles.tdNum}`}>
+                          <span className={`${styles.convBadge} ${convRate >= 20 ? styles.convHigh : convRate >= 5 ? styles.convMed : styles.convLow}`}>
+                            {convRate}%
+                          </span>
+                        </td>
+                        <td className={styles.td}>
+                          <button className={styles.detailBtn} onClick={() => toggleExpand(pro.id)}>
+                            {isExpanded ? 'Hide' : 'Details'}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}><polyline points="9 18 15 12 9 6"/></svg>
+                          </button>
+                        </td>
+                      </tr>
 
-              {/* Conversion funnel */}
-              <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>Conversion Funnel</h2>
-                <div className={styles.funnel}>
-                  <FunnelStep label="Invited" value={stats.invited} max={Math.max(stats.total_clicks, 1)} color="#2563eb" icon="👋" />
-                  <FunnelArrow />
-                  <FunnelStep label="Downloaded" value={stats.downloaded} max={Math.max(stats.invited, 1)} color="#16a34a" icon="📱" />
-                  <FunnelArrow />
-                  <FunnelStep label="Active" value={stats.active} max={Math.max(stats.downloaded, 1)} color="#0891b2" icon="✅" />
-                </div>
-                {stats.invited > 0 && (
-                  <p className={styles.conversionNote}>
-                    Overall conversion rate: <strong>{conversionRate}%</strong> ({stats.active} of {stats.invited} invited clients are active)
-                  </p>
-                )}
-              </div>
+                      {isExpanded && (
+                        <tr key={`${pro.id}-detail`} className={styles.detailRow}>
+                          <td colSpan={7} className={styles.detailCell}>
+                            <div className={styles.detailContent}>
+                              {/* Funnel for this pro */}
+                              <div className={styles.detailFunnel}>
+                                <FunnelBar label="Clicks" value={stats.total_clicks} max={Math.max(stats.total_clicks, 1)} color="#6366f1" />
+                                <FunnelBar label="Invites" value={stats.invited} max={Math.max(stats.total_clicks, 1)} color="#2563eb" />
+                                <FunnelBar label="Downloads" value={stats.downloaded} max={Math.max(stats.invited, 1)} color="#16a34a" />
+                                <FunnelBar label="Active" value={stats.active} max={Math.max(stats.downloaded, 1)} color="#0891b2" />
+                              </div>
 
-              {/* Meal plans with share links */}
-              {plans.length > 0 && currentPro && (
-                <div className={styles.section}>
-                  <h2 className={styles.sectionTitle}>Share Meal Plans</h2>
-                  <p className={styles.sectionDesc}>
-                    Share these links to invite clients. Each click is tracked automatically.
-                  </p>
-                  <div className={styles.planLinks}>
-                    {plans.map(plan => (
-                      <div key={plan.id} className={styles.planLinkRow}>
-                        <div className={styles.planLinkIcon}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>
-                        </div>
-                        <div className={styles.planLinkInfo}>
-                          <span className={styles.planLinkName}>{plan.name}</span>
-                          <code className={styles.planLinkUrl}>/plan/{plan.share_token}</code>
-                        </div>
-                        <div className={styles.planLinkActions}>
-                          <Link to={`/plan/${plan.share_token}`} target="_blank" className={styles.planLinkBtn}>
-                            Preview
-                          </Link>
-                          <CopyBtn text={`${window.location.origin}/plan/${plan.share_token}`} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                              <div className={styles.detailLinks}>
+                                {/* Profile link */}
+                                <div className={styles.linkGroup}>
+                                  <p className={styles.linkGroupTitle}>Profile Link</p>
+                                  <div className={styles.planLinkRow}>
+                                    <div className={styles.planLinkIcon}>
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    </div>
+                                    <div className={styles.planLinkInfo}>
+                                      <span className={styles.planLinkName}>{pro.name}'s Profile</span>
+                                      <code className={styles.planLinkUrl}>/pro/{pro.slug}</code>
+                                    </div>
+                                    <div className={styles.planLinkActions}>
+                                      <Link to={`/pro/${pro.slug}`} target="_blank" className={styles.planLinkBtn}>View</Link>
+                                      <CopyBtn text={`${window.location.origin}/pro/${pro.slug}`} />
+                                    </div>
+                                  </div>
+                                </div>
 
-              {/* Profile link */}
-              {currentPro && (
-                <div className={styles.section}>
-                  <h2 className={styles.sectionTitle}>Profile Link</h2>
-                  <div className={styles.profileLinkRow}>
-                    <div className={styles.profileLinkInfo}>
-                      <span className={styles.planLinkName}>{currentPro.name}'s Public Profile</span>
-                      <code className={styles.planLinkUrl}>/pro/{currentPro.slug}</code>
-                    </div>
-                    <div className={styles.planLinkActions}>
-                      <Link to={`/pro/${currentPro.slug}`} target="_blank" className={styles.planLinkBtn}>View</Link>
-                      <CopyBtn text={`${window.location.origin}/pro/${currentPro.slug}`} />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+                                {/* Meal plan links */}
+                                {plansLoading ? (
+                                  <div className={styles.miniSpinner} />
+                                ) : expandedPlans.length > 0 ? (
+                                  <div className={styles.linkGroup}>
+                                    <p className={styles.linkGroupTitle}>Meal Plan Links</p>
+                                    {expandedPlans.map(plan => (
+                                      <div key={plan.id} className={styles.planLinkRow}>
+                                        <div className={styles.planLinkIcon}>
+                                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>
+                                        </div>
+                                        <div className={styles.planLinkInfo}>
+                                          <span className={styles.planLinkName}>{plan.name}</span>
+                                          <code className={styles.planLinkUrl}>/pro/{expandedPro?.slug}/meal-plan/{plan.slug}</code>
+                                        </div>
+                                        <div className={styles.planLinkActions}>
+                                          <Link
+                                            to={`/pro/${expandedPro?.slug}/meal-plan/${plan.slug}`}
+                                            target="_blank"
+                                            className={styles.planLinkBtn}
+                                          >
+                                            Preview
+                                          </Link>
+                                          <CopyBtn text={`${window.location.origin}/pro/${expandedPro?.slug}/meal-plan/${plan.slug}`} />
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
     </div>
   )
 }
 
-function StatCard({ icon, label, value, color, description }: {
-  icon: React.ReactNode; label: string; value: number; color: string; description: string
-}) {
+function TotalCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className={`${styles.statCard} ${styles[`statCard_${color}`]}`}>
-      <div className={styles.statCardIcon}>{icon}</div>
-      <div className={styles.statCardValue}>{value.toLocaleString()}</div>
-      <div className={styles.statCardLabel}>{label}</div>
-      <div className={styles.statCardDesc}>{description}</div>
+    <div className={`${styles.totalCard} ${styles[`statCard_${color}`]}`}>
+      <div className={styles.totalVal}>{value.toLocaleString()}</div>
+      <div className={styles.totalLabel}>{label}</div>
     </div>
   )
 }
 
-function FunnelStep({ label, value, max, color, icon }: {
-  label: string; value: number; max: number; color: string; icon: string
+function SortBtn({ label, col, active, dir, onClick }: {
+  label: string; col: SortKey; active: SortKey; dir: 'asc' | 'desc'
+  onClick: (col: SortKey) => void
 }) {
+  const isActive = active === col
+  return (
+    <button className={`${styles.sortBtn} ${isActive ? styles.sortBtnActive : ''}`} onClick={() => onClick(col)}>
+      {label}
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+        style={{ opacity: isActive ? 1 : 0.3, transform: isActive && dir === 'asc' ? 'rotate(180deg)' : 'none' }}>
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+  )
+}
+
+function FunnelBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0
   return (
-    <div className={styles.funnelStep}>
-      <div className={styles.funnelIcon}>{icon}</div>
-      <div className={styles.funnelBarWrap}>
-        <div className={styles.funnelBar} style={{ width: `${Math.max(pct, 4)}%`, background: color }} />
+    <div className={styles.funnelItem}>
+      <div className={styles.funnelItemLabel}>{label}</div>
+      <div className={styles.funnelItemBarWrap}>
+        <div className={styles.funnelItemBar} style={{ width: `${Math.max(pct, 2)}%`, background: color }} />
       </div>
-      <div className={styles.funnelValue} style={{ color }}>{value.toLocaleString()}</div>
-      <div className={styles.funnelLabel}>{label}</div>
-    </div>
-  )
-}
-
-function FunnelArrow() {
-  return (
-    <div className={styles.funnelArrow}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <div className={styles.funnelItemVal} style={{ color }}>{value.toLocaleString()}</div>
     </div>
   )
 }
@@ -232,15 +298,9 @@ function CopyBtn({ text }: { text: string }) {
   return (
     <button className={`${styles.planLinkBtn} ${copied ? styles.planLinkBtnCopied : ''}`} onClick={copy}>
       {copied ? (
-        <>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
-          Copied!
-        </>
+        <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!</>
       ) : (
-        <>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copy Link
-        </>
+        <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</>
       )}
     </button>
   )
