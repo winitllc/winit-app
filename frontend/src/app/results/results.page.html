@@ -27,8 +27,14 @@
 
 <ion-content class="results-content">
 
+  <!-- Loading spinner -->
+  <div class="loading-state" *ngIf="loading">
+    <ion-spinner name="circular"></ion-spinner>
+    <p>Loading products…</p>
+  </div>
+
   <!-- Product cards -->
-  <div class="product-list" *ngIf="filteredProducts.length > 0">
+  <div class="product-list" *ngIf="!loading && filteredProducts.length > 0">
     <div
       class="product-card"
       *ngFor="let product of filteredProducts"
@@ -66,7 +72,7 @@
   </div>
 
   <!-- Empty state -->
-  <div class="empty-state" *ngIf="filteredProducts.length === 0">
+  <div class="empty-state" *ngIf="!loading && filteredProducts.length === 0">
     <img src="assets/imgs/noProduct.png" class="empty-img" alt="No results">
     <p class="empty-title" *ngIf="activeFilter !== 'all'">No {{activeFilter === 'compatible' ? 'compatible' : 'incompatible'}} products</p>
     <p class="empty-title" *ngIf="activeFilter === 'all'">No products found</p>
