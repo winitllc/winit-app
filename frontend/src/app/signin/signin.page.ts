@@ -63,7 +63,11 @@ export class SigninPage implements OnInit {
   }
 
   registerActionHealthPro() {
-    this.navCtrl.navigateForward('signup');
+    this.navCtrl.navigateForward('pro-signup');
+  }
+
+  proLoginAction() {
+    this.navCtrl.navigateForward('pro-login');
   }
 
   private async presentLoading(msg = 'Please wait…') {

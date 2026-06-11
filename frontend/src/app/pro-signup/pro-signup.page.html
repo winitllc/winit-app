@@ -1,0 +1,126 @@
+<ion-content [fullscreen]="true" class="auth-content">
+
+  <!-- Step 1: Account Details -->
+  <div class="auth-screen" *ngIf="step === 1">
+    <div class="auth-hero">
+      <div class="back-icon-wrap" (click)="goBack()">
+        <ion-icon name="arrow-back-outline" class="back-icon"></ion-icon>
+      </div>
+      <div class="pro-badge">Join as a Health Professional</div>
+      <img src="../../assets/icon-only.png" class="auth-logo" alt="WINIT" />
+      <h1 class="auth-title">Create Pro Account</h1>
+      <p class="auth-sub">Help clients with nutrition and wellness</p>
+    </div>
+
+    <div class="auth-form">
+      <div class="step-indicator">
+        <div class="step-dot active"></div>
+        <div class="step-line"></div>
+        <div class="step-dot"></div>
+      </div>
+      <p class="step-label">Step 1 of 2 — Your Account</p>
+
+      <div class="name-row">
+        <div class="field-group">
+          <label class="field-label">First Name</label>
+          <div class="field-wrap">
+            <input type="text" class="field-input" placeholder="Jane" [(ngModel)]="firstName" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Last Name</label>
+          <div class="field-wrap">
+            <input type="text" class="field-input" placeholder="Smith" [(ngModel)]="lastName" />
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <div class="field-wrap">
+          <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+          <input type="email" class="field-input" placeholder="you@example.com" [(ngModel)]="email" />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <div class="field-wrap">
+          <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+          <input type="password" class="field-input" placeholder="Min. 8 characters" [(ngModel)]="password" />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Confirm Password</label>
+        <div class="field-wrap">
+          <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+          <input type="password" class="field-input" placeholder="Repeat password" [(ngModel)]="confirmPassword" />
+        </div>
+      </div>
+
+      <button class="primary-btn" (click)="nextStep()">Continue →</button>
+
+      <p class="switch-link">
+        Already have a pro account? <span (click)="goLogin()">Sign in</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Step 2: Profile Details -->
+  <div class="auth-screen" *ngIf="step === 2">
+    <div class="auth-hero compact-hero">
+      <div class="back-icon-wrap" (click)="goBack()">
+        <ion-icon name="arrow-back-outline" class="back-icon"></ion-icon>
+      </div>
+      <h1 class="auth-title">Your Profile</h1>
+      <p class="auth-sub">Help clients know who you are</p>
+    </div>
+
+    <div class="auth-form">
+      <div class="step-indicator">
+        <div class="step-dot done"></div>
+        <div class="step-line active"></div>
+        <div class="step-dot active"></div>
+      </div>
+      <p class="step-label">Step 2 of 2 — Your Profile</p>
+
+      <div class="field-group">
+        <label class="field-label">Professional Title <span class="optional">optional</span></label>
+        <div class="field-wrap">
+          <ion-icon name="ribbon-outline" class="field-icon"></ion-icon>
+          <input type="text" class="field-input" placeholder="e.g. Registered Dietitian" [(ngModel)]="title" />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Bio <span class="optional">optional</span></label>
+        <div class="field-wrap textarea-wrap">
+          <textarea class="field-input field-textarea" placeholder="Tell clients about your experience and approach…" [(ngModel)]="bio" rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Specialties <span class="optional">optional</span></label>
+        <div class="specialty-chips">
+          <button
+            class="specialty-chip"
+            *ngFor="let s of allSpecialties"
+            [class.chip-selected]="isSelected(s)"
+            (click)="toggleSpecialty(s)">
+            <ion-icon name="checkmark" *ngIf="isSelected(s)" class="chip-check"></ion-icon>
+            {{ s }}
+          </button>
+        </div>
+      </div>
+
+      <div class="pending-notice">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        <p>Your account will be reviewed before going public. You can start building meal plans right away.</p>
+      </div>
+
+      <button class="primary-btn" (click)="signupAction()">Create My Account</button>
+    </div>
+  </div>
+
+</ion-content>

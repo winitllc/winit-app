@@ -1,0 +1,263 @@
+<ion-header class="dash-header">
+  <ion-toolbar>
+    <ion-title>Pro Dashboard</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()" fill="clear">
+        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="dash-content">
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="full-loading">
+    <ion-spinner name="circular"></ion-spinner>
+    <p>Loading dashboard…</p>
+  </div>
+
+  <ng-container *ngIf="!loading && pro">
+
+    <!-- Profile Hero -->
+    <div class="dash-hero">
+      <div class="hero-avatar">
+        <img *ngIf="pro.photo_url" [src]="pro.photo_url" [alt]="pro.name" class="hero-avatar-img" />
+        <div *ngIf="!pro.photo_url" class="hero-avatar-fallback">{{ initials(pro.name) }}</div>
+      </div>
+      <div class="hero-info">
+        <h1 class="hero-name">{{ pro.name }}</h1>
+        <p class="hero-title" *ngIf="pro.title">{{ pro.title }}</p>
+        <span class="status-badge" [class.badge-pending]="pro.status === 'pending'" [class.badge-approved]="pro.status === 'approved'">
+          <ion-icon [name]="pro.status === 'approved' ? 'checkmark-circle' : 'time-outline'"></ion-icon>
+          {{ pro.status === 'approved' ? 'Approved' : 'Pending Review' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-val">{{ stats.meal_plan_count }}</span>
+        <span class="stat-label">Meal Plans</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-val">{{ stats.invite_count }}</span>
+        <span class="stat-label">Invites Sent</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-val">{{ stats.conversion_count }}</span>
+        <span class="stat-label">Downloads</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-val">{{ stats.active_count }}</span>
+        <span class="stat-label">Active Users</span>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="action-btn action-primary" (click)="showNewPlan = true">
+        <ion-icon name="add-circle-outline"></ion-icon>
+        Create Meal Plan
+      </button>
+      <button class="action-btn" (click)="shareProfile()">
+        <ion-icon name="person-outline"></ion-icon>
+        Share Profile
+      </button>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <button class="tab-btn" [class.tab-active]="activeTab === 'plans'" (click)="activeTab = 'plans'">
+        <ion-icon name="nutrition-outline"></ion-icon>
+        My Plans
+      </button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
+        <ion-icon name="person-outline"></ion-icon>
+        Profile
+      </button>
+      <button class="tab-btn" [class.tab-active]="activeTab === 'referrals'" (click)="activeTab = 'referrals'">
+        <ion-icon name="git-network-outline"></ion-icon>
+        Referrals
+      </button>
+    </div>
+
+    <!-- ── TAB: Meal Plans ── -->
+    <div *ngIf="activeTab === 'plans'" class="tab-content">
+
+      <!-- New Plan Form -->
+      <div class="new-plan-card" *ngIf="showNewPlan">
+        <h3 class="card-title">New Meal Plan</h3>
+        <div class="field-group">
+          <label class="field-label">Plan Name *</label>
+          <input class="field-input" type="text" placeholder="e.g. 7-Day Reset" [(ngModel)]="newPlanName" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Description</label>
+          <textarea class="field-input field-textarea" placeholder="Brief description…" [(ngModel)]="newPlanDesc" rows="2"></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="ghost-btn" (click)="showNewPlan = false; newPlanName = ''; newPlanDesc = ''">Cancel</button>
+          <button class="primary-btn" [disabled]="!newPlanName.trim() || creatingPlan" (click)="createPlan()">
+            {{ creatingPlan ? 'Creating…' : 'Create' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div class="empty-state" *ngIf="plans.length === 0 && !showNewPlan">
+        <ion-icon name="nutrition-outline" class="empty-icon"></ion-icon>
+        <p>No meal plans yet.</p>
+        <button class="primary-btn sm-btn" (click)="showNewPlan = true">Create your first plan</button>
+      </div>
+
+      <!-- Plan List -->
+      <div class="plan-list">
+        <div class="plan-card" *ngFor="let plan of plans">
+          <div class="plan-card-top">
+            <div class="plan-card-icon">
+              <ion-icon name="nutrition-outline"></ion-icon>
+            </div>
+            <div class="plan-card-info">
+              <p class="plan-card-name">{{ plan.name }}</p>
+              <p class="plan-card-desc" *ngIf="plan.description">{{ plan.description }}</p>
+            </div>
+            <span class="visibility-badge" [class.badge-public]="plan.is_public">
+              {{ plan.is_public ? 'Public' : 'Private' }}
+            </span>
+          </div>
+          <div class="plan-card-actions">
+            <button class="action-icon-btn" (click)="toggleVisibility(plan)">
+              <ion-icon [name]="plan.is_public ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+              {{ plan.is_public ? 'Make Private' : 'Make Public' }}
+            </button>
+            <button class="action-icon-btn" (click)="sharePlan(plan)">
+              <ion-icon name="share-outline"></ion-icon>
+              Share
+            </button>
+            <button class="action-icon-btn danger-btn" (click)="deletePlan(plan)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: Profile ── -->
+    <div *ngIf="activeTab === 'profile'" class="tab-content">
+
+      <div class="profile-section-card">
+
+        <!-- View mode -->
+        <ng-container *ngIf="!editMode">
+          <div class="profile-view-header">
+            <h3 class="card-title">Your Profile</h3>
+            <button class="edit-btn" (click)="startEdit()">
+              <ion-icon name="pencil-outline"></ion-icon>
+              Edit
+            </button>
+          </div>
+
+          <div class="profile-field">
+            <span class="pf-label">Name</span>
+            <span class="pf-val">{{ pro.name }}</span>
+          </div>
+          <div class="profile-field" *ngIf="pro.title">
+            <span class="pf-label">Title</span>
+            <span class="pf-val">{{ pro.title }}</span>
+          </div>
+          <div class="profile-field" *ngIf="pro.bio">
+            <span class="pf-label">Bio</span>
+            <span class="pf-val pf-bio">{{ pro.bio }}</span>
+          </div>
+          <div class="profile-field" *ngIf="pro.website">
+            <span class="pf-label">Website</span>
+            <span class="pf-val">{{ pro.website }}</span>
+          </div>
+          <div class="profile-field" *ngIf="pro.specialties.length > 0">
+            <span class="pf-label">Specialties</span>
+            <div class="chip-wrap">
+              <span class="chip" *ngFor="let s of pro.specialties">{{ s }}</span>
+            </div>
+          </div>
+          <div class="profile-field">
+            <span class="pf-label">Public URL</span>
+            <span class="pf-val url-val">winit.com/pro/{{ pro.slug }}</span>
+          </div>
+          <button class="share-profile-btn" (click)="shareProfile()">
+            <ion-icon name="share-outline"></ion-icon>
+            Share My Profile
+          </button>
+        </ng-container>
+
+        <!-- Edit mode -->
+        <ng-container *ngIf="editMode">
+          <h3 class="card-title">Edit Profile</h3>
+
+          <div class="field-group">
+            <label class="field-label">Display Name *</label>
+            <input class="field-input" type="text" [(ngModel)]="editName" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Professional Title</label>
+            <input class="field-input" type="text" placeholder="e.g. Registered Dietitian" [(ngModel)]="editTitle" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Bio</label>
+            <textarea class="field-input field-textarea" rows="4" placeholder="Tell clients about yourself…" [(ngModel)]="editBio"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Website</label>
+            <input class="field-input" type="url" placeholder="https://yoursite.com" [(ngModel)]="editWebsite" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Certifications <span class="hint">(comma-separated)</span></label>
+            <input class="field-input" type="text" placeholder="RD, CDN, MS…" [(ngModel)]="editCerts" />
+          </div>
+          <div class="form-actions">
+            <button class="ghost-btn" (click)="editMode = false" [disabled]="saving">Cancel</button>
+            <button class="primary-btn" (click)="saveProfile()" [disabled]="saving">
+              {{ saving ? 'Saving…' : 'Save Changes' }}
+            </button>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- ── TAB: Referrals ── -->
+    <div *ngIf="activeTab === 'referrals'" class="tab-content">
+      <div class="referral-card">
+        <div class="referral-hero">
+          <ion-icon name="git-network-outline" class="referral-hero-icon"></ion-icon>
+          <h3>Referral Activity</h3>
+          <p>Track how many users discovered WINIT through you.</p>
+        </div>
+        <div class="referral-stats">
+          <div class="ref-stat">
+            <span class="ref-val">{{ stats.invite_count }}</span>
+            <span class="ref-label">Invites Sent</span>
+          </div>
+          <div class="ref-stat">
+            <span class="ref-val">{{ stats.conversion_count }}</span>
+            <span class="ref-label">Downloads</span>
+          </div>
+          <div class="ref-stat">
+            <span class="ref-val">{{ stats.active_count }}</span>
+            <span class="ref-label">Active Users</span>
+          </div>
+        </div>
+        <div class="referral-tip">
+          <ion-icon name="bulb-outline"></ion-icon>
+          <p>Share your profile link or individual meal plans to track conversions.</p>
+        </div>
+        <button class="share-profile-btn" (click)="shareProfile()">
+          <ion-icon name="share-outline"></ion-icon>
+          Copy Profile Link
+        </button>
+      </div>
+    </div>
+
+  </ng-container>
+
+</ion-content>

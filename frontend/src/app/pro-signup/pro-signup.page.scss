@@ -1,0 +1,140 @@
+@import '../signin/signin.page.scss';
+
+.pro-badge {
+  background: rgba(3, 105, 161, 0.2);
+  color: #bae6fd;
+  border: 1px solid rgba(186, 230, 253, 0.3);
+  border-radius: 100px;
+  padding: 4px 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.compact-hero {
+  padding-top: 48px;
+  padding-bottom: 28px;
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 4px;
+}
+
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  flex-shrink: 0;
+  transition: background 0.2s;
+
+  &.active { background: #0369a1; }
+  &.done { background: #22c55e; }
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  &.active { background: #0369a1; }
+}
+
+.step-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin: 0 0 8px;
+}
+
+.name-row {
+  display: flex;
+  gap: 12px;
+
+  .field-group { flex: 1; }
+}
+
+.optional {
+  font-weight: 400;
+  color: #94a3b8;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.75rem;
+}
+
+.textarea-wrap {
+  align-items: flex-start;
+  padding: 12px 14px;
+  min-height: auto;
+}
+
+.field-textarea {
+  resize: none;
+  width: 100%;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.specialty-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.specialty-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px;
+  border-radius: 100px;
+  background: #f1f5f9;
+  border: 1.5px solid transparent;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &.chip-selected {
+    background: #e0f2fe;
+    border-color: #0369a1;
+    color: #0369a1;
+  }
+
+  &:active { transform: scale(0.96); }
+}
+
+.chip-check {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pending-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 12px 14px;
+
+  ion-icon {
+    font-size: 1.1rem;
+    color: #d97706;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  p {
+    font-size: 0.82rem;
+    color: #92400e;
+    margin: 0;
+    line-height: 1.5;
+  }
+}

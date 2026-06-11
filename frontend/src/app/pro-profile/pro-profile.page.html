@@ -1,0 +1,112 @@
+<ion-header class="profile-header">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/coaches" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>Profile</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="copyProfileUrl()">
+        <ion-icon slot="icon-only" name="share-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="profile-content">
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="state-wrap">
+    <ion-spinner name="circular"></ion-spinner>
+    <p>Loading profile…</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!loading && error" class="state-wrap">
+    <ion-icon name="alert-circle-outline" class="state-icon"></ion-icon>
+    <p>Professional not found.</p>
+  </div>
+
+  <!-- Profile -->
+  <ng-container *ngIf="!loading && !error && pro">
+
+    <!-- Hero -->
+    <div class="profile-hero">
+      <div class="avatar-ring">
+        <img *ngIf="pro.photo_url" [src]="pro.photo_url" [alt]="pro.name" class="avatar-img" />
+        <div *ngIf="!pro.photo_url" class="avatar-fallback">{{ initials(pro.name) }}</div>
+      </div>
+      <h1 class="pro-name">{{ pro.name }}</h1>
+      <p class="pro-title" *ngIf="pro.title">{{ pro.title }}</p>
+      <div class="verified-badge">
+        <ion-icon name="checkmark-circle" class="verified-icon"></ion-icon>
+        Verified Professional
+      </div>
+    </div>
+
+    <!-- Bio -->
+    <div class="section-card" *ngIf="pro.bio">
+      <h2 class="section-title">About</h2>
+      <p class="bio-text">{{ pro.bio }}</p>
+    </div>
+
+    <!-- Specialties -->
+    <div class="section-card" *ngIf="pro.specialties.length > 0">
+      <h2 class="section-title">Specialties</h2>
+      <div class="chip-wrap">
+        <span class="chip" *ngFor="let s of pro.specialties">{{ s }}</span>
+      </div>
+    </div>
+
+    <!-- Certifications -->
+    <div class="section-card" *ngIf="pro.certifications && pro.certifications.length > 0">
+      <h2 class="section-title">Certifications</h2>
+      <div class="cert-list">
+        <div class="cert-item" *ngFor="let c of pro.certifications">
+          <ion-icon name="ribbon-outline" class="cert-icon"></ion-icon>
+          <span>{{ c }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meal Plans -->
+    <div class="section-card" *ngIf="pro.meal_plans.length > 0">
+      <h2 class="section-title">Meal Plans</h2>
+      <div class="plan-list">
+        <div class="plan-item" *ngFor="let plan of pro.meal_plans">
+          <div class="plan-icon">
+            <ion-icon name="nutrition-outline"></ion-icon>
+          </div>
+          <div class="plan-info">
+            <p class="plan-name">{{ plan.name }}</p>
+            <p class="plan-desc" *ngIf="plan.description">{{ plan.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Website -->
+    <div class="section-card link-card" *ngIf="pro.website">
+      <ion-icon name="globe-outline" class="link-icon"></ion-icon>
+      <a [href]="pro.website" target="_blank" class="link-text">{{ pro.website }}</a>
+      <ion-icon name="open-outline" class="link-arrow"></ion-icon>
+    </div>
+
+    <!-- Public URL -->
+    <div class="section-card url-card">
+      <p class="url-label">Public Profile URL</p>
+      <p class="url-value">winit.com/pro/{{ pro.slug }}</p>
+      <button class="copy-btn" (click)="copyProfileUrl()">
+        <ion-icon name="copy-outline"></ion-icon>
+        Copy Link
+      </button>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <p class="cta-text">Get personalised nutrition guidance from {{ pro.name }}</p>
+      <button class="cta-btn" (click)="downloadApp()">Download WINIT App</button>
+    </div>
+
+  </ng-container>
+
+</ion-content>

@@ -1,0 +1,42 @@
+<ion-content [fullscreen]="true" class="auth-content">
+  <div class="auth-screen">
+
+    <div class="auth-hero">
+      <div class="back-icon-wrap" (click)="goBack()">
+        <ion-icon name="arrow-back-outline" class="back-icon"></ion-icon>
+      </div>
+      <div class="pro-badge">Health Professional</div>
+      <img src="../../assets/icon-only.png" class="auth-logo" alt="WINIT" />
+      <h1 class="auth-title">Pro Sign In</h1>
+      <p class="auth-sub">Access your professional dashboard</p>
+    </div>
+
+    <div class="auth-form">
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <div class="field-wrap">
+          <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+          <input type="email" class="field-input" placeholder="you@example.com" [(ngModel)]="email" />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <div class="field-wrap">
+          <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+          <input type="password" class="field-input" placeholder="Your password" [(ngModel)]="password" />
+        </div>
+      </div>
+
+      <button class="primary-btn" (click)="loginAction()">Sign In to Dashboard</button>
+
+      <p class="switch-link">
+        New professional? <span (click)="goSignup()">Create a pro account</span>
+      </p>
+      <p class="switch-link">
+        Regular user? <span (click)="goBack()">Sign in here</span>
+      </p>
+    </div>
+
+  </div>
+</ion-content>

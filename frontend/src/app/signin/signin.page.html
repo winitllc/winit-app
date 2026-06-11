@@ -34,6 +34,25 @@
       <p class="switch-link">
         New to WINIT? <span (click)="registerAction()">Create an account</span>
       </p>
+
+      <div class="pro-divider">
+        <span>or</span>
+      </div>
+
+      <div class="pro-cta-card" (click)="registerActionHealthPro()">
+        <div class="pro-cta-icon">
+          <ion-icon name="ribbon-outline"></ion-icon>
+        </div>
+        <div class="pro-cta-text">
+          <p class="pro-cta-heading">Health Professional?</p>
+          <p class="pro-cta-sub">Create meal plans & help more clients</p>
+        </div>
+        <ion-icon name="chevron-forward-outline" class="pro-cta-arrow"></ion-icon>
+      </div>
+
+      <p class="switch-link pro-login-link">
+        Pro account? <span (click)="proLoginAction()">Sign in here</span>
+      </p>
     </div>
   </div>
 

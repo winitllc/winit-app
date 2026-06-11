@@ -1,0 +1,221 @@
+.profile-header ion-toolbar {
+  --background: #fff;
+  --color: #0f172a;
+}
+
+.profile-content {
+  --background: #f8fafc;
+}
+
+.state-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 32px;
+  gap: 16px;
+  color: #94a3b8;
+  text-align: center;
+
+  ion-spinner { width: 40px; height: 40px; }
+  .state-icon { font-size: 3rem; }
+}
+
+.profile-hero {
+  background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 100%);
+  padding: 40px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.avatar-ring {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.3);
+  overflow: hidden;
+  margin-bottom: 16px;
+  background: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-img { width: 100%; height: 100%; object-fit: cover; }
+
+.avatar-fallback {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.pro-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+
+.pro-title {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.7);
+  margin: 0 0 12px;
+}
+
+.verified-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 100px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #86efac;
+
+  .verified-icon { font-size: 0.9rem; color: #22c55e; }
+}
+
+.section-card {
+  background: #fff;
+  border-radius: 16px;
+  margin: 12px 16px 0;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px;
+}
+
+.bio-text {
+  font-size: 0.93rem;
+  color: #334155;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.chip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-radius: 100px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.cert-list { display: flex; flex-direction: column; gap: 8px; }
+
+.cert-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #334155;
+
+  .cert-icon { color: #0369a1; font-size: 1rem; flex-shrink: 0; }
+}
+
+.plan-list { display: flex; flex-direction: column; gap: 10px; }
+
+.plan-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.plan-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f0f9ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  ion-icon { font-size: 1.1rem; color: #0369a1; }
+}
+
+.plan-name { font-size: 0.9rem; font-weight: 600; color: #0f172a; margin: 0 0 2px; }
+.plan-desc { font-size: 0.8rem; color: #64748b; margin: 0; }
+
+.link-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .link-icon { font-size: 1.1rem; color: #0369a1; flex-shrink: 0; }
+  .link-text { flex: 1; font-size: 0.9rem; color: #0369a1; text-decoration: none; }
+  .link-arrow { color: #94a3b8; font-size: 0.9rem; }
+}
+
+.url-card {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.url-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; font-weight: 700; }
+.url-value { font-size: 0.9rem; color: #0369a1; font-weight: 600; margin: 0; }
+
+.copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0369a1;
+  cursor: pointer;
+
+  ion-icon { font-size: 0.9rem; }
+}
+
+.cta-section {
+  margin: 16px 16px 32px;
+  background: linear-gradient(135deg, #0f172a, #1e3a5f);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.cta-text {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.8);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.cta-btn {
+  width: 100%;
+  height: 48px;
+  background: #38bdf8;
+  color: #0f172a;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: -0.1px;
+}

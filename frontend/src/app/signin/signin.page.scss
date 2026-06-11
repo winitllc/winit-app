@@ -147,7 +147,79 @@
   &:active { background: #1e293b; }
 }
 
-/* ── Switch link ──────────────────────────────── */
+/* ── Pro CTA card ─────────────────────────────── */
+.pro-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  margin: 4px 0;
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+  }
+}
+
+.pro-cta-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f0f9ff;
+  border: 1.5px solid #bae6fd;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:active { background: #e0f2fe; }
+}
+
+.pro-cta-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #0369a1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 1.1rem;
+    color: #fff;
+  }
+}
+
+.pro-cta-text {
+  flex: 1;
+}
+
+.pro-cta-heading {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 2px;
+}
+
+.pro-cta-sub {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.pro-cta-arrow {
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+.pro-login-link {
+  margin-top: -4px;
+}
+
 .switch-link {
   font-size: 0.88rem;
   color: #64748b;
